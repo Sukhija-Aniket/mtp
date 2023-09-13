@@ -199,7 +199,7 @@ main (int argc, char *argv[])
   bool pcapTracing = true;                          /* PCAP Tracing is enabled or not. */
 
   // output Objects
-  int contSize = 20;
+  int contSize = 100;
   vector<vector<DisplayObject>*> objContainers(contSize);
   for(int i=0;i<contSize;i++) {
     objContainers[i] = new vector<DisplayObject>();
@@ -272,10 +272,9 @@ main (int argc, char *argv[])
   // Ptr<WifiMac> apMac = apDevice->GetMac();
   // Ptr<WifiMacQueue> apQueue = apMac->GetTxopQueue(AcIndex::AC_BE);
   // apQueue->SetAttribute("MaxSize", QueueSizeValue(QueueSize(QueueSizeUnit::PACKETS, 500)));
-  // apQueue->TraceConnect("Enqueue", "apEnqueue", MakeBoundCallback(&MacEnqueueTrace, objContainers[8]));
-  // apQueue->TraceConnect("Dequeue", "apDequeue", MakeBoundCallback(&MacDequeueTrace, objContainers[9]));
+  // apQueue->TraceConnect("Enqueue", "apEnqueue", MakeBoundCallback(&MacEnqueueTrace, objContainers[MACENQUEUENUM]));
+  // apQueue->TraceConnect("Dequeue", "apDequeue", MakeBoundCallback(&MacDequeueTrace, objContainers[MACDEQUEUENUM]));
 
-  cout<<"or here"<<endl;
   /* Configure STA */
   wifiMac.SetType ("ns3::StaWifiMac",
                    "Ssid", SsidValue (ssid));
@@ -288,14 +287,14 @@ main (int argc, char *argv[])
   staMac->SetAttribute("BE_MaxAmpduSize", UintegerValue(0));
   Ptr<WifiMacQueue> staQueueBE = staMac->GetTxopQueue(AcIndex::AC_BE);
   staQueueBE->SetAttribute("MaxSize", QueueSizeValue(QueueSize(QueueSizeUnit::PACKETS, 500)));
-  staQueueBE->TraceConnect("Enqueue", "staEnqueueBE", MakeBoundCallback(&MacEnqueueTrace, objContainers[10]));
-  staQueueBE->TraceConnect("Dequeue", "staDequeueBE", MakeBoundCallback(&MacDequeueTrace, objContainers[11]));
+  staQueueBE->TraceConnect("Enqueue", "staEnqueueBE", MakeBoundCallback(&MacEnqueueTrace, objContainers[MACENQUEUENUM]));
+  staQueueBE->TraceConnect("Dequeue", "staDequeueBE", MakeBoundCallback(&MacDequeueTrace, objContainers[MACDEQUEUENUM]));
 
   // staMac->SetAttribute("VO_MaxAmpduSize",UintegerValue(0));
   // Ptr<WifiMacQueue> staQueueVO = staMac->GetTxopQueue(AcIndex::AC_VO);
   // staQueueVO->SetAttribute("MaxSize", QueueSizeValue(QueueSize(QueueSizeUnit::PACKETS, 500)));
-  // staQueueVO->TraceConnect("Enqueue", "staEnqueueVO", MakeBoundCallback(&MacEnqueueTrace, objContainers[12]));
-  // staQueueVO->TraceConnect("Dequeue", "staDequeueVO", MakeBoundCallback(&MacDequeueTrace, objContainers[13]));
+  // staQueueVO->TraceConnect("Enqueue", "staEnqueueVO", MakeBoundCallback(&MacEnqueueTrace, objContainers[MACENQUEUENUM]));
+  // staQueueVO->TraceConnect("Dequeue", "staDequeueVO", MakeBoundCallback(&MacDequeueTrace, objContainers[MACDEQUEUENUM]));
 
   /* Mobility model */
   MobilityHelper mobility;
@@ -312,7 +311,6 @@ main (int argc, char *argv[])
   InternetStackHelper stack;
   stack.Install (networkNodes);
 
-  cout<<"or or here"<<endl;
   // TrafficControlHelper tch;
   // tch.SetRootQueueDisc("ns3::CoDelQueueDisc", "MaxSize", StringValue("1000p"));
   // QueueDiscContainer queueContainer = tch.Install(apDevice);
@@ -334,7 +332,6 @@ main (int argc, char *argv[])
   UdpEchoServerHelper echoServer (9);
   ApplicationContainer serverApp = echoServer.Install (apWifiNode);
   udpServerSink = StaticCast<UdpEchoServer>(serverApp.Get(0));
-  cout<<"can be here"<<endl;
   // PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), 9));
   // ApplicationContainer sinkApp = sinkHelper.Install (apWifiNode);
   // sink = StaticCast<PacketSink> (sinkApp.Get (0));
@@ -346,7 +343,6 @@ main (int argc, char *argv[])
   echoClient.SetAttribute ("Interval", TimeValue (Time ("0.00001")));
   ApplicationContainer echoClientApp = echoClient.Install (staWifiNode);
 
-  cout<<"really here"<<endl;
   // OnOffHelper server ("ns3::TcpSocketFactory", (InetSocketAddress (apInterface.GetAddress (0), 9)));
   // echoClient.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
   // echoClient.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
@@ -362,19 +358,17 @@ main (int argc, char *argv[])
   echoClientApp.Start (Seconds (1.0));
   Simulator::Schedule (Seconds (1.1), &CalculateThroughput);
 
-    cout<<"simulator"<<endl;
-  Config::Connect("NodeList/1/ApplicationList/*/$ns3::UdpEchoClient/TxWithAddresses", MakeBoundCallback (&UdpEchoClientTxWithAddressesTrace, objContainers[0]));
-  Config::Connect("NodeList/1/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[1]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[2]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[3]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[4]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[5]));
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/RxWithAddresses", MakeBoundCallback(&UdpEchoServerRxWithAddressesTrace, objContainers[16]));
-  Config::Connect("NodeList/0/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[7]));
-  // Config::Connect("NodeList/0/ApplicationList/*/$ns3::PacketSink/TxWithAddresses", MakeBoundCallback(&PacketSinkApplicationTxWithAddressesTrace, objContainers[12]));
-  // Config::Connect("NodeList/0/ApplicationList/*/$ns3::UdpEchoServer/RxWithAddresses", MakeBoundCallback (&UdpEchoServerRxWithAddressesTrace, objContainers[14]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[15]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[16]));
+  Config::Connect("NodeList/1/ApplicationList/*/$ns3::UdpEchoClient/TxWithAddresses", MakeBoundCallback (&UdpEchoClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
+  Config::Connect("NodeList/1/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
+  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
+  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINENUM]));
+  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDENUM]));
+  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  Config::Connect("NodeList/0/ApplicationList/*/$ns3::UdpEchoServer/RxWithAddresses", MakeBoundCallback(&UdpEchoServerRxWithAddressesTrace, objContainers[UDPECHOSERVERTXNUM]));
+  Config::Connect("NodeList/0/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
+  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINENUM]));
+  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
+  // Config::Connect("NodeList/0/ApplicationList/*/$ns3::PacketSink/RxWithAddresses", MakeBoundCallback(&PacketSinkApplicationRxWithAddressesTrace, objContainers[PACKETSINKRXNUM]));
 
 
   if(pcapTracing) {
@@ -389,9 +383,9 @@ main (int argc, char *argv[])
   // cout<<objContainers[6]->size()<<" onOff: "<<objContainers[0]->size()<<endl;
   Simulator::Destroy ();
   FILE* fp = freopen("abc.txt", "w", stdout);
-  prettyPrint (*(objContainers[6]));
-  prettyPrint (*(objContainers[0]));
-  getTimeTrace(objContainers,fp);
+  // prettyPrint (*(objContainers[6]));
+  // prettyPrint (*(objContainers[0]));
+  getTimeTrace(objContainers, UDPECHOCLIENTTXNUM, fp);
   // displayDetails();
   // displayOutput(simulationTime);
   fclose (fp);
