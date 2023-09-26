@@ -158,6 +158,7 @@ int main (int argc, char *argv[])
   // Tracing
   std::string fileName = getFileName(__FILE__);
   wifiPhy.EnablePcap (fileName, devices);
+  wifiPhy.EnableAscii (fileName, devices);
 
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
