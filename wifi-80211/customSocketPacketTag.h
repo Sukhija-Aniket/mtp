@@ -4,25 +4,36 @@
 #include "ns3/object.h"
 #include "ns3/net-device.h"
 #include "address.h"
+#include "socket.h"
 #include <stdint.h>
+#include <ns3/object.h>
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 
 #ifndef CUSTOM_SOCKET_PRIORITY_TAG_H
-#define 
+#define CUSTOM_SOCKET_PRIORITY_TAG_H
 
 namespace ns3 {
 
-class SocketPriorityTag : public Tag
+class CustomSocketPriorityTag : public SocketPriorityTag
 {
 public:
-  SocketPriorityTag ();
+  CustomSocketPriorityTag ();
 
   /**
    * \brief Set the tag's priority
    *
    * \param priority the priority
    */
+
+
+  /**
+   * \brief Returns the Tag from packet
+   *
+   * \returns Ptr<SocketPriorityTag>
+   */
+  Ptr<SocketPriorityTag> GetCustomPriorityTag (Ptr<const Packet> pkt) const;
+
   void SetPriority (uint8_t priority);
 
   /**
@@ -57,3 +68,5 @@ private:
 };
 
 }
+
+#endif
