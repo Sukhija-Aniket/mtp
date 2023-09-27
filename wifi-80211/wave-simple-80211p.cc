@@ -112,7 +112,6 @@ static void GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize,
     }
 }
 
-
 int main (int argc, char *argv[])
 {
   std::string phyMode ("OfdmRate1MbpsBW10MHz");
