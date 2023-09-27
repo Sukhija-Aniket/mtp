@@ -1,0 +1,15 @@
+Command	                                                Description
+run or r	                                Executes the program from start to end.
+break or b [functionName] [lineNumber]	    Sets a breakpoint on a particular line
+disable	[breakpoint Number]                 Disables a breakpoint
+enable	[breakpoint Number]                 Enables a disabled breakpoint.
+next or n	                                Executes the next line of code without diving into functions.
+step	                                    Goes to the next instruction, diving into the function.
+finish                                      Come out of a function
+list or l	                                Displays the code.
+print or p or display                       Displays the value of a variable.
+undisplay                                   Removes all variables from being displayed.
+undisplay [variable number]                 Removes the value of a variable being displayed.
+quit or q	                                Exits out of GDB.
+clear	                                    Clears all breakpoints.
+continue	                                Continues normal execution
