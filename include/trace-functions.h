@@ -146,6 +146,13 @@ std::string getFileName (const std::string& filePath) {
   return fileName;
 }
 
+std::string getOutputFileName (const std::string &filePath) {
+  std::string fileName = getFileName(filePath);
+  if (fileName.find_first_of('/') == 0) fileName = "output.txt";
+  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/output.log";
+  return fileName;
+}
+
 DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string color) {
   Time now = Simulator::Now ();
   double t = now.GetNanoSeconds();
@@ -282,6 +289,7 @@ void MacEnqueueTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<
   Ptr<const Packet> pkt = item->GetPacket();
   DisplayObject obj = Trace(context, pkt, MACENQUEUE);
   (*objs).push_back(obj);
+  std::cout<<"why"<<std::endl;
 }
 
 
@@ -387,30 +395,28 @@ void getTimeTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FIL
 
   for(auto &obj: *(objGrid[clr])) {
     if (mp.find(obj.getUid()) == mp.end()) {
-      mp[obj.getUid()] = std::vector<std::pair<std::string,double>>(n,std::make_pair("",0));
+      mp[obj.getUid()] = std::vector<std::pair<std::string,double>>(n,std::make_pair("",-1));
     }
   }
-
   for(int i=0;i<n;i++) {
     for(auto &obj: *(objGrid[i])) {
       if (mp.find(obj.getUid()) == mp.end()) continue;
       mp[obj.getUid()][i] = std::make_pair(obj.getName(), obj.getTime());
     }
   }
-
   for(auto x:mp) {
     std::cout<<std::setprecision(15)<<"Uid: "<<x.first<<std::endl;
     std::vector<std::pair<double, int>> temp(n);
     for(int i=0;i<n;i++) temp[i] = std::make_pair(x.second[i].second, i);
     sort(temp.begin(),temp.end(),cmp);
     for(int i=0;i<n;i++) {
-      if (temp[i].first == 0) continue;
+      if (temp[i].first == -1) continue;
       std::cout<<std::setprecision(15)<<traceMap[temp[i].second]<<": "<<temp[i].first<<std::endl;
       // std::cout<<std::setprecision(15)<<traceMap[temp[i].second]<<": "<<temp[i].first<<": "<<x.second[temp[i].second].first<<std::endl;
     }
   }
 
-  fclose(fp);
+  // fclose(fp);
 }
 
 void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE* fp=NULL) {
