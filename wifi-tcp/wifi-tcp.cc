@@ -397,7 +397,7 @@ main (int argc, char *argv[])
   staInterface = address.Assign (staDevices);
 
   /* Populate routing table */
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+  Ipv4GlobalRoutingHelper::PopulatWeRoutingTables ();
 
   /* Install TCP Receiver on the access point */
   UdpEchoServerHelper echoServer (9);
