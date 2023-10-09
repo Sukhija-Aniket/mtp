@@ -9,10 +9,10 @@ WaveSetup::~WaveSetup () {}
 NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
 {
   /*
-    Setting up WAVE devices. With PHY & MAC using default settings. 
+    Setting up WAVE devices. With PHY & MAC using default settings.
   */
 
-    
+
 
  // The below set of helpers will help us to put together the wifi NICs we want
   YansWifiChannelHelper wifiChannel = YansWifiChannelHelper();
@@ -38,7 +38,7 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
 
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
-  						"ControlMode",StringValue ("OfdmRate3MbpsBW10MHz"), // Change to 1 Mbps
+  						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"), // Change to 1 Mbps
   						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -46,11 +46,11 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
     Ptr<WifiNetDevice> node = DynamicCast<WifiNetDevice> (devices.Get(iNode));
     Ptr<WifiPhy> nodePhy = node->GetPhy();
     // Set Tx Power to 500m
-    nodePhy->SetTxPowerStart(19.9); 
+    nodePhy->SetTxPowerStart(19.9);
     nodePhy->SetTxPowerEnd(19.9);
     // Set CSR to 700m
     nodePhy->SetCcaEdThreshold(-84.87);
-    // Set RX Sensitivity 
+    // Set RX Sensitivity
     nodePhy->SetRxSensitivity(-84.87);
   }
 

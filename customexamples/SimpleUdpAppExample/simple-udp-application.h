@@ -30,7 +30,6 @@ namespace ns3
 
     private:
 
-      WaveNetDevice d;
       void SetupReceiveSocket (Ptr<Socket> socket, uint16_t port);
       virtual void StartApplication ();
 

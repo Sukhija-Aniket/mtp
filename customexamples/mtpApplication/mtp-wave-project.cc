@@ -6,8 +6,12 @@
 #include "udp-client.h"
 #include "udp-server.h"
 #include "wave-setup.h"
+#include "ns3/custom-display.h"
+#include "ns3/trace-functions.h"
+#include "ns3/core-module.h"
 
 using namespace ns3;
+using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExample");
 
@@ -22,8 +26,25 @@ void SomeEvent ()
     std::cout << "******************" <<std::endl;
 }
 
+void
+CalculateThroughput ()
+{
+  Time now = Simulator::Now ();                                         /* Return the simulator's virtual time. */
+  // double cur = (sink->GetTotalRx () - lastTotalRx) * (double) 8 / 1e5;     /* Convert Application RX Packets to MBits. */
+  // std::cout << now.GetSeconds () << "s: \t" << cur << " Mbit/s" << std::endl;
+  // lastTotalRx = sink->GetTotalRx ();
+  Simulator::Schedule (MilliSeconds (100), &CalculateThroughput);
+}
+
 int main (int argc, char *argv[])
 {
+
+  int maxPackets = 20;
+  int packetInterval = 0.001;
+  int packetSize = 200;
+  vector<vector<DisplayObject>*> objContainer = CreateObjContainer();
+
+
   CommandLine cmd;
 
   //Number of nodes
@@ -81,26 +102,43 @@ int main (int argc, char *argv[])
     ObjectFactory fact;
     fact.SetTypeId ("ns3::CustomApplication");
     fact.Set ("Interval", TimeValue (Seconds(interval)));
-    Ptr<UdpClient> udpApp = fact.Create <UdpClient> ();
-    udpApp->SetStartTime(Seconds(0));
-    udpApp->SetStopTime(Seconds(simTime));
-    nodes.Get(i)->AddApplication(udpApp);
-    udpApp->GetSocket()->SetIpTos(255);
+    Ptr<UdpClient> udpClient = fact.Create <UdpClient> ();
+    udpClient->SetStartTime(Seconds(0));
+    udpClient->SetStopTime(Seconds(simTime));
+    udpClient->GetSocket()->SetIpTos(255);
+    udpClient->SetAttribute("MaxPackets", UintegerValue(maxPackets));
+    udpClient->SetAttribute("Interval", TimeValue(Seconds(packetInterval)));
+    udpClient->SetAttribute("PacketSize", UintegerValue(packetSize));
+    nodes.Get(i)->AddApplication(udpClient);
+
+    Ptr<UdpServer> udpServer = fact.Create<UdpServer> ();
+    udpServer->SetStartTime(Seconds(1));
+    udpServer->GetSocket()->SetIpTos(255);
+    udpServer->SetStopTime(Seconds(simTime));
+    nodes.Get(i)->AddApplication(udpServer);
   }
 
-  Simulator::Schedule (Seconds (30), &SomeEvent);
+  Simulator::Schedule (Seconds(1.1), &CalculateThroughput);
+  // Simulator::Schedule (Seconds (30), &SomeEvent);
 
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();
-  std::cout << "Post Simulation: " << std::endl;
-
-  for (uint32_t i=0 ; i<nodes.GetN(); i++)
-  {
-    Ptr<CustomApplication> appI = DynamicCast<CustomApplication> (nodes.Get(i)->GetApplication(0));
-    appI->PrintNeighbors ();
-  }
-
-
   Simulator::Destroy();
+
+  // std::cout << "Post Simulation: " << std::endl;
+
+  // for (uint32_t i=0 ; i<nodes.GetN(); i++)
+  // {
+  //   Ptr<CustomApplication> appI = DynamicCast<CustomApplication> (nodes.Get(i)->GetApplication(0));
+  //   appI->PrintNeighbors ();
+  // }
+
+  string fileName = getLogFileName (__FILE__);
+  FILE* fp = freopen(fileName.c_str (), "w", stdout);
+  getObjTrace(objContainer, UDPCLIENTTXNUM, fp);
+  fileName = getOutputFileName(__FILE__);
+  FILE* fp = freopen(fileName.c_str (), "w", stdout);
+  getOutput(objContainer, fp, UDPCLIENTTXNUM, UDPSERVERRXNUM);
+
 
 }
