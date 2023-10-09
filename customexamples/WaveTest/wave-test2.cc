@@ -180,7 +180,7 @@ GenerateTraffic (Ptr<Socket> socket, uint32_t pktSize, uint32_t pktCount, Time p
         // pkt->PrintPacketTags(os);
 
         // TODO: make this change tomorrow!
-        socket->SetIpTos(255);
+        // socket->SetIpTos(255);
         socket->Send (pkt);
         Simulator::Schedule (pktInterval, &GenerateTraffic, socket, pktSize, pktCount - 1,
                             pktInterval, tag, txInfo);

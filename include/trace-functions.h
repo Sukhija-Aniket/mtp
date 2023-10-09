@@ -13,6 +13,8 @@
 #include "ns3/custom-enums.h"
 #include "ns3/ipv4.h"
 
+#define CONT_SIZE 100
+
 const char* traceMap[] = {
   "PHYTXBEGINENUM",
   "PHYTXENDENUM",
@@ -72,6 +74,13 @@ std::string getFileName (const std::string& filePath) {
 std::string getOutputFileName (const std::string &filePath) {
   std::string fileName = getFileName(filePath);
   if (fileName.find_first_of('/') == 0) fileName = "output.txt";
+  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/output.txt";
+  return fileName;
+}
+
+std::string getLogFileName (const std::string &filePath) {
+  std::string fileName = getFileName(filePath);
+  if (fileName.find_first_of('/') == 0) fileName = "output.log";
   else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/output.log";
   return fileName;
 }
@@ -339,7 +348,7 @@ void getTimeTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FIL
     }
   }
 
-  // fclose(fp);
+  fclose(fp);
 }
 
 void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE* fp=NULL) {
@@ -371,6 +380,14 @@ void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE
   }
 
   fclose(fp);
+}
+
+std::vector<std::vector<DisplayObject>*> CreateObjContainer() {
+  vector<vector<DisplayObject>*> objContainer(CONT_SIZE);
+  for(int i=0;i<CONT_SIZE;i++) {
+    objContainer[i] = new vector<DisplayObject>();
+  }
+  return objContainer;
 }
 
 template<class T> void prettyPrint(std::vector<T>& v) { for (T x : v) {std::cout<<x<<std::endl;} }

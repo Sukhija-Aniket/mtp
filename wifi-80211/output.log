@@ -1,0 +1,36 @@
+Uid: 0
+[31m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Mac/MacTxUid: 0: Time=1000000000 PacketSize=1036[0m
+[93m/NodeList/1/$ns3::Ipv4L3Protocol/TxUid: 0: Time=1000000000 PacketSize=1028[0m
+[34m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBeginUid: 0: Time=1000005000 PacketSize=1066[0m
+[36m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBeginUid: 0: Time=1000009017 PacketSize=1066[0m
+[32m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEndUid: 0: Time=1001473000 PacketSize=1066[0m
+[96m/NodeList/0/$ns3::Ipv4L3Protocol/RxUid: 0: Time=1001473017 PacketSize=1028[0m
+[35m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Mac/MacRxUid: 0: Time=1001473017 PacketSize=1036[0m
+[33m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEndUid: 0: Time=1001473017 PacketSize=1066[0m
+Uid: 5
+[31m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Mac/MacTxUid: 5: Time=2000000000 PacketSize=1036[0m
+[93m/NodeList/1/$ns3::Ipv4L3Protocol/TxUid: 5: Time=2000000000 PacketSize=1028[0m
+[34m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBeginUid: 5: Time=2000009000 PacketSize=1066[0m
+[36m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBeginUid: 5: Time=2000013017 PacketSize=1066[0m
+[32m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEndUid: 5: Time=2001477000 PacketSize=1066[0m
+[96m/NodeList/0/$ns3::Ipv4L3Protocol/RxUid: 5: Time=2001477017 PacketSize=1028[0m
+[35m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Mac/MacRxUid: 5: Time=2001477017 PacketSize=1036[0m
+[33m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEndUid: 5: Time=2001477017 PacketSize=1066[0m
+Uid: 10
+[31m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Mac/MacTxUid: 10: Time=3000000000 PacketSize=1036[0m
+[93m/NodeList/1/$ns3::Ipv4L3Protocol/TxUid: 10: Time=3000000000 PacketSize=1028[0m
+[34m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBeginUid: 10: Time=3000013000 PacketSize=1066[0m
+[36m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBeginUid: 10: Time=3000017017 PacketSize=1066[0m
+[32m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEndUid: 10: Time=3001481000 PacketSize=1066[0m
+[96m/NodeList/0/$ns3::Ipv4L3Protocol/RxUid: 10: Time=3001481017 PacketSize=1028[0m
+[35m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Mac/MacRxUid: 10: Time=3001481017 PacketSize=1036[0m
+[33m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEndUid: 10: Time=3001481017 PacketSize=1066[0m
+Uid: 15
+[31m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Mac/MacTxUid: 15: Time=4000000000 PacketSize=1036[0m
+[93m/NodeList/1/$ns3::Ipv4L3Protocol/TxUid: 15: Time=4000000000 PacketSize=1028[0m
+[34m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBeginUid: 15: Time=4000004000 PacketSize=1066[0m
+[36m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBeginUid: 15: Time=4000008017 PacketSize=1066[0m
+[32m/NodeList/1/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEndUid: 15: Time=4001472000 PacketSize=1066[0m
+[96m/NodeList/0/$ns3::Ipv4L3Protocol/RxUid: 15: Time=4001472017 PacketSize=1028[0m
+[35m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Mac/MacRxUid: 15: Time=4001472017 PacketSize=1036[0m
+[33m/NodeList/0/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEndUid: 15: Time=4001472017 PacketSize=1066[0m
