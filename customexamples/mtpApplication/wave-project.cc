@@ -3,6 +3,8 @@
 #include "ns3/mobility-module.h"
 #include "ns3/core-module.h"
 #include "custom-application.h"
+#include "udp-client.h"
+#include "udp-server.h"
 #include "wave-setup.h"
 
 using namespace ns3;
@@ -54,7 +56,7 @@ int main (int argc, char *argv[])
     cvmm->SetPosition ( Vector (20+i*5, 20+(i%2)*5, 0));
     cvmm->SetVelocity ( Vector (10+((i+1)%2)*5,0,0) );
   }
- 
+
   WaveSetup wave;
   NetDeviceContainer devices = wave.ConfigureDevices(nodes);
 
@@ -71,17 +73,19 @@ int main (int argc, char *argv[])
     nodes.Get(i)->AddApplication (app_i);
   }
   */
-  
-  //Method 2 using ObjcetFactor. 
+
+
+  //Method 2 using ObjcetFactor.
   for (uint32_t i=0 ; i<nodes.GetN() ; i++)
   {
     ObjectFactory fact;
     fact.SetTypeId ("ns3::CustomApplication");
     fact.Set ("Interval", TimeValue (Seconds(interval)));
-    Ptr<CustomApplication> appI = fact.Create <CustomApplication> ();
-    appI->SetStartTime(Seconds(0));
-    appI->SetStopTime (Seconds (0));
-    nodes.Get(i)->AddApplication(appI);
+    Ptr<UdpClient> udpApp = fact.Create <UdpClient> ();
+    udpApp->SetStartTime(Seconds(0));
+    udpApp->SetStopTime(Seconds(simTime));
+    nodes.Get(i)->AddApplication(udpApp);
+    udpApp->GetSocket()->SetIpTos(255);
   }
 
   Simulator::Schedule (Seconds (30), &SomeEvent);
@@ -89,7 +93,7 @@ int main (int argc, char *argv[])
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();
   std::cout << "Post Simulation: " << std::endl;
-  
+
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> appI = DynamicCast<CustomApplication> (nodes.Get(i)->GetApplication(0));

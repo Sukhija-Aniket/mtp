@@ -7,7 +7,7 @@ using namespace ns3;
 
 namespace ns3
 {
-  class SimpleUdpApplication : public Application 
+  class SimpleUdpApplication : public Application
   {
     public:
       SimpleUdpApplication ();
@@ -29,15 +29,15 @@ namespace ns3
       void SendPacket (Ptr<Packet> packet, Ipv4Address destination, uint16_t port);
 
     private:
-      
-      
+
+      WaveNetDevice d;
       void SetupReceiveSocket (Ptr<Socket> socket, uint16_t port);
       virtual void StartApplication ();
 
 
       Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
       Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
-      uint16_t m_port1; 
+      uint16_t m_port1;
       uint16_t m_port2;
 
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
