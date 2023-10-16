@@ -54,7 +54,7 @@ int main (int argc, char *argv[])
     cvmm->SetPosition ( Vector (20+i*5, 20+(i%2)*5, 0));
     cvmm->SetVelocity ( Vector (10+((i+1)%2)*5,0,0) );
   }
- 
+
   WaveSetup wave;
   NetDeviceContainer devices = wave.ConfigureDevices(nodes);
 
@@ -71,8 +71,8 @@ int main (int argc, char *argv[])
     nodes.Get(i)->AddApplication (app_i);
   }
   */
-  
-  //Method 2 using ObjcetFactor. 
+
+  //Method 2 using ObjcetFactor.
   for (uint32_t i=0 ; i<nodes.GetN() ; i++)
   {
     ObjectFactory fact;
@@ -89,7 +89,7 @@ int main (int argc, char *argv[])
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();
   std::cout << "Post Simulation: " << std::endl;
-  
+
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> appI = DynamicCast<CustomApplication> (nodes.Get(i)->GetApplication(0));

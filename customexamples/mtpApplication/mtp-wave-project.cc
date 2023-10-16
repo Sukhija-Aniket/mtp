@@ -3,13 +3,15 @@
 #include "ns3/mobility-module.h"
 #include "ns3/core-module.h"
 #include "custom-application.h"
+#include "custom-mobility-model.h"
 #include "wave-setup.h"
-#include "udp-client.h"
-#include "udp-server.h"
+#include "ns3/udp-client.h"
+#include "ns3/udp-server.h"
+#include "ns3/ipv4-address-helper.h"
+#include "ns3/custom-enums.h"
 #include "ns3/custom-display.h"
 #include "ns3/trace-functions.h"
-#include "ns3/core-module.h"
-#include "ns3/ipv4-address-helper.h"
+#include "ns3/node-list.h"
 
 using namespace ns3;
 using namespace std;
@@ -125,7 +127,7 @@ int main (int argc, char *argv[])
   int maxPackets = 20;
   int packetInterval = 0.001;
   int packetSize = 200;
-  vector<vector<DisplayObject>*> objContainer = CreateObjContainer();
+  vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
 
   CommandLine cmd;
@@ -149,7 +151,7 @@ int main (int argc, char *argv[])
     You must setup Mobility. Any mobility will work. Use one suitable for your work
   */
   MobilityHelper mobility;
-  mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+  mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
   vector<Vector3D> positions = getPV(nodes.GetN(), "position.txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), "velocity.txt");
@@ -202,16 +204,16 @@ int main (int argc, char *argv[])
     nodes.Get(i)->AddApplication(udpServer);
   }
 
-  Config::Connect("NodeList/1/ApplicationList/*/$ns3::UdpClient/TxWithAddresses", MakeBoundCallback (&UdpEchoClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
-  Config::Connect("NodeList/1/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINENUM]));
-  Config::Connect("NodeList/1/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDENUM]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
-  Config::Connect("NodeList/0/ApplicationList/*/$ns3::UdpServer/RxWithAddresses", MakeBoundCallback(&UdpEchoServerRxWithAddressesTrace, objContainers[UDPECHOSERVERTXNUM]));
-  Config::Connect("NodeList/0/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINENUM]));
-  Config::Connect("NodeList/0/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpClient/TxWithAddresses", MakeBoundCallback (&UdpClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINENUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDENUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpServer/RxWithAddresses", MakeBoundCallback(&UdpServerRxWithAddressesTrace, objContainers[UDPECHOSERVERTXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINENUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
 
   Simulator::Schedule (Seconds(1.1), &CalculateThroughput);
   // Simulator::Schedule (Seconds (30), &SomeEvent);
@@ -230,10 +232,9 @@ int main (int argc, char *argv[])
 
   string fileName = getLogFileName (__FILE__);
   FILE* fp = freopen(fileName.c_str (), "w", stdout);
-  getObjTrace(objContainer, UDPCLIENTTXNUM, fp);
+  getObjTrace(objContainers, UDPCLIENTTXNUM, fp);
   fileName = getOutputFileName(__FILE__);
-  FILE* fp = freopen(fileName.c_str (), "w", stdout);
-  getOutput(objContainer, fp, UDPCLIENTTXNUM, UDPSERVERRXNUM);
-
+  fp = freopen(fileName.c_str (), "w", stdout);
+  getOutput(objContainers, fp, UDPCLIENTTXNUM, UDPSERVERRXNUM);
 
 }

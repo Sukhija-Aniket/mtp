@@ -42,7 +42,7 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
   						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
-  for(int iNode=0;iNode<devices.GetN();iNode++){
+  for(uint32_t iNode=0;iNode<devices.GetN();iNode++){
     Ptr<WifiNetDevice> node = DynamicCast<WifiNetDevice> (devices.Get(iNode));
     Ptr<WifiPhy> nodePhy = node->GetPhy();
     // Set Tx Power to 500m

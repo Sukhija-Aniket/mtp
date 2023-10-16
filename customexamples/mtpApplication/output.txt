@@ -1,0 +1,8 @@
+Total Transmitted packets: 4
+Total Received packets: 4
+Total Dropped packets: 0
+AppAvg: 1475767
+Ipv4Avg: 1475767
+EnqueDequeAvg: -nan
+MacAvg: 1475767
+phyAvg : 1468017
