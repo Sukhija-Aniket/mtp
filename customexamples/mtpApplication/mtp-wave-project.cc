@@ -3,9 +3,9 @@
 #include "ns3/mobility-module.h"
 #include "ns3/core-module.h"
 #include "custom-application.h"
+#include "wave-setup.h"
 #include "udp-client.h"
 #include "udp-server.h"
-#include "wave-setup.h"
 #include "ns3/custom-display.h"
 #include "ns3/trace-functions.h"
 #include "ns3/core-module.h"
@@ -14,7 +14,7 @@
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE ("CustomApplicationExample");
+NS_LOG_COMPONENT_DEFINE ("mtpApplication");
 
 void SomeEvent ()
 {
@@ -108,6 +108,17 @@ void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int
   cout<<"phyAvg : "<<phyavg<<endl;
 }
 
+vector<Vector3D> getPV(int n, string name)  {
+  string fileName = getCustomFileName(__FILE__, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<Vector3D> pv(n);
+  for(int i(0);i<n;i++) {
+    cin>>pv[i].x>>pv[i].y>>pv[i].z;
+  }
+  fclose(fp);
+  return pv;
+}
+
 int main (int argc, char *argv[])
 {
 
@@ -140,14 +151,16 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   mobility.Install(nodes);
+  vector<Vector3D> positions = getPV(nodes.GetN(), "position.txt");
+  vector<Vector3D> velocities = getPV(nodes.GetN(), "velocity.txt");
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     //set initial positions, and velocities
     NS_LOG_LOGIC ("Setting up mobility for node " << i);
     NS_LOG_ERROR ("An error happened :(");
     Ptr<ConstantVelocityMobilityModel> cvmm = DynamicCast<ConstantVelocityMobilityModel> (nodes.Get(i)->GetObject<MobilityModel>());
-    cvmm->SetPosition ( Vector (20+i*5, 20+(i%2)*5, 0));
-    cvmm->SetVelocity ( Vector (10+((i+1)%2)*5,0,0) );
+    cvmm->SetPosition (positions[i]);
+    cvmm->SetVelocity (velocities[i]);
   }
 
   // Wifi Phy and Mac Layer

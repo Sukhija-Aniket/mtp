@@ -85,6 +85,13 @@ std::string getLogFileName (const std::string &filePath) {
   return fileName;
 }
 
+std::string getCustomFileName(const std::string &filePath, const std::string &name) {
+  std::string fileName = getFileName(filePath);
+  if (fileName.find_first_of('/') == 0) fileName = name;
+  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/" + name;
+  return fileName;
+}
+
 DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string color) {
   Time now = Simulator::Now ();
   double t = now.GetNanoSeconds();

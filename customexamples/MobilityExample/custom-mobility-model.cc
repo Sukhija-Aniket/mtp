@@ -1,7 +1,10 @@
 #include "custom-mobility-model.h"
 #include "ns3/simulator.h"
 #include "ns3/log.h"
-#include "ns3/console-color.h"
+// #include "ns3/console-color.h"
+#include "ns3/custom-display.h"
+#include "ns3/custom-enums.h"
+#include "ns3/trace-functions.h"
 #include <iomanip>      // std::setprecision
 
 #include <cmath>
@@ -47,7 +50,7 @@ void CustomMobilityModel::SetAccelerationValue (double value)
 	{
 		newValue = value;
 	}
-	
+
 	Vector newAccerl (newValue, 0,0);
 	SetVelocityAndAcceleration (GetVelocity(), newAccerl);
 }
@@ -73,9 +76,9 @@ CustomMobilityModel::DoGetPosition (void) const
 
 	double half_t_square = t*t*0.5;
 
-    NS_LOG_DEBUG ( RED ("Vital Info\n\t") << BOLD("TimeNow: ") << Now()<< BOLD(" BasePosX: ") << m_basePosition.x  << BOLD (" Accel=") << m_acceleration 
-                << BOLD(" HalfTSq=") << half_t_square << BOLD(" t=") << t 
-                << BOLD ("\n\tDoGetPosition() ") << m_basePosition.x + m_baseVelocity.x*t + m_acceleration.x*half_t_square );
+    // NS_LOG_DEBUG ( RED ("Vital Info\n\t") << BOLD("TimeNow: ") << Now()<< BOLD(" BasePosX: ") << m_basePosition.x  << BOLD (" Accel=") << m_acceleration
+    //             << BOLD(" HalfTSq=") << half_t_square << BOLD(" t=") << t
+    //             << BOLD ("\n\tDoGetPosition() ") << m_basePosition.x + m_baseVelocity.x*t + m_acceleration.x*half_t_square );
 
 
 	return Vector (m_basePosition.x + m_baseVelocity.x*t + m_acceleration.x*half_t_square,
@@ -95,17 +98,17 @@ CustomMobilityModel::DoSetPosition (const Vector &position)
 
 void ns3::CustomMobilityModel::SetVelocityAndAcceleration(const Vector &velocity, const Vector &acceleration)
 {
-    NS_ASSERT_MSG ( velocity.y==0 && acceleration.y ==0 && velocity.z==0 && velocity.z==0 , 
+    NS_ASSERT_MSG ( velocity.y==0 && acceleration.y ==0 && velocity.z==0 && velocity.z==0 ,
                     "Error: attempting to set Y or Z component of longitudinal mobility");
 	NS_LOG_FUNCTION (this << velocity << acceleration);
-	NS_LOG_DEBUG ( BLUE ("Setting new values: ") << "Vel:"<<velocity << " Accl:" << acceleration );
+	// NS_LOG_DEBUG ( BLUE ("Setting new values: ") << "Vel:"<<velocity << " Accl:" << acceleration );
 	m_basePosition = DoGetPosition ();
 	m_baseTime = Simulator::Now ();
   //NS_LOG_DEBUG ("\t" << "\tnewBasePOS: " << m_basePosition << "\tBaseTime: " << m_baseTime);
 	m_baseVelocity = velocity;
   m_acceleration = acceleration;
 
-	//Max sure the acceleration input doesn't exceed the limits. 
+	//Max sure the acceleration input doesn't exceed the limits.
 	if (m_acceleration.x > m_max_acceleration)
 		m_acceleration.x = m_max_acceleration;
 	else if (m_acceleration.x < m_min_acceleration)
@@ -120,21 +123,21 @@ void ns3::CustomMobilityModel::SetVelocityAndAcceleration(const Vector &velocity
     {
 				//Set acceleration to zero
         m_acceleration = Vector (0,0,0);
-        NS_LOG_DEBUG ( BLUE ("\tSpeed limit hit!") );
+        // NS_LOG_DEBUG ( BLUE ("\tSpeed limit hit!") );
         // no further changes are needed. Change in acceleration has on effect on velocity
-        
-        return; 
+
+        return;
     }
     else if (acceleration.x < 0 && m_baseVelocity.x == 0) //Trying to slow down when velocity is zero
     {
         m_acceleration = Vector (0,0,0);
-        NS_LOG_DEBUG ( BLUE ("\tZERO speed limit hit!") );
+        // NS_LOG_DEBUG ( BLUE ("\tZERO speed limit hit!") );
         // no further changes are needed. Change in acceleration has on effect on velocity
         return;
     }
     if (acceleration.x == 0)
     {
-        NS_LOG_DEBUG(YELLOW ("COURSE CHANGED ACCELERATION IS ZERO!"));
+        // NS_LOG_DEBUG(YELLOW ("COURSE CHANGED ACCELERATION IS ZERO!"));
         //NotifyCourseChange();
         return;
     }
@@ -162,7 +165,7 @@ void ns3::CustomMobilityModel::SetVelocityAndAcceleration(const Vector &velocity
 		{
 			m_timeToSpeedlimit = Seconds(0); //for completion purposes
 		}
-		
+
 	NS_LOG_DEBUG ("\tCurrent Velocity= " << m_baseVelocity);
 	NS_LOG_DEBUG ("\tCurrent Acceleration= " << m_acceleration);
   NS_LOG_DEBUG ("\tLimit event in : " << m_timeToSpeedlimit);
@@ -182,9 +185,9 @@ void ns3::CustomMobilityModel::SetVelocityAndAcceleration(const Vector &velocity
 			{		//If we're slowing down...
 					m_limit_event = Simulator::Schedule(m_timeToSpeedlimit, &CustomMobilityModel::SetAccelerationToZeroZeroVelocity, this);
 			}
-			
+
     }
-	else	//If the calculated time to speed limit is zero, set acceleration to zero. 
+	else	//If the calculated time to speed limit is zero, set acceleration to zero.
 	{
 		//NS_LOG_LOGIC (Simulator::Now() << " Max Velocity reached. Setting Acceleration to ZERO");
 		m_acceleration = Vector (0,0,0);
@@ -236,11 +239,11 @@ void CustomMobilityModel::SanityCheck()
     //sanity check
 	if (m_baseVelocity.x < 0)
     {
-        std::cout << RED ("SPEED IS NEGATIVE! : ") << m_baseVelocity.x << std::endl;
+        // std::cout << RED ("SPEED IS NEGATIVE! : ") << m_baseVelocity.x << std::endl;
     }
     if (m_baseVelocity.x > m_max_velocity)
     {
-        std::cout << YELLOW ("SPEED LIMIT EXCEEDED : ") << m_baseVelocity.x << std::endl; 
+        // std::cout << YELLOW ("SPEED LIMIT EXCEEDED : ") << m_baseVelocity.x << std::endl;
     }
 }
 
