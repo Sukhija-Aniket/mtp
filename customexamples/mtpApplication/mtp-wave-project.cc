@@ -6,7 +6,9 @@
 #include "custom-mobility-model.h"
 #include "wave-setup.h"
 #include "ns3/udp-client.h"
+#include "ns3/udp-echo-client.h"
 #include "ns3/udp-server.h"
+#include "ns3/udp-echo-server.h"
 #include "ns3/ipv4-address-helper.h"
 #include "ns3/custom-enums.h"
 #include "ns3/custom-display.h"
@@ -112,6 +114,7 @@ void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int
 
 vector<Vector3D> getPV(int n, string name)  {
   string fileName = getCustomFileName(__FILE__, name);
+  cout<<fileName<<endl;
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<Vector3D> pv(n);
   for(int i(0);i<n;i++) {
@@ -129,11 +132,10 @@ int main (int argc, char *argv[])
   int packetSize = 200;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
-
   CommandLine cmd;
 
   //Number of nodes
-  uint32_t nNodes = 5;
+  uint32_t nNodes = 10;
   double simTime = 60; //4 seconds
   double interval = 0.5;
   bool enablePcap = false;
@@ -153,16 +155,16 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
-  vector<Vector3D> positions = getPV(nodes.GetN(), "position.txt");
-  vector<Vector3D> velocities = getPV(nodes.GetN(), "velocity.txt");
+  vector<Vector3D> positions = getPV(nodes.GetN(), "positions.txt");
+  vector<Vector3D> velocities = getPV(nodes.GetN(), "velocities.txt");
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     //set initial positions, and velocities
     NS_LOG_LOGIC ("Setting up mobility for node " << i);
     NS_LOG_ERROR ("An error happened :(");
-    Ptr<ConstantVelocityMobilityModel> cvmm = DynamicCast<ConstantVelocityMobilityModel> (nodes.Get(i)->GetObject<MobilityModel>());
-    cvmm->SetPosition (positions[i]);
-    cvmm->SetVelocity (velocities[i]);
+    Ptr<CustomMobilityModel> cmm = DynamicCast<CustomMobilityModel> (nodes.Get(i)->GetObject<MobilityModel>());
+    cmm->SetPosition (positions[i]);
+    cmm->SetVelocityAndAcceleration (velocities[i], Vector3D(0,0,0));
   }
 
   // Wifi Phy and Mac Layer
@@ -172,7 +174,6 @@ int main (int argc, char *argv[])
   // Network Layer
   InternetStackHelper internet;
   internet.Install(nodes);
-
   Ipv4AddressHelper address;
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign (devices);
@@ -182,42 +183,48 @@ int main (int argc, char *argv[])
   {
     ObjectFactory client;
     uint16_t serverPort = 12345;
-    client.SetTypeId("ns3::UdpClient");
-    Ptr<UdpClient> udpClient = client.Create <UdpClient> ();
-    udpClient->SetStartTime(Seconds(0));
-    udpClient->SetStopTime(Seconds(simTime));
-    udpClient->GetSocket()->SetIpTos(255);
-    udpClient->SetAttribute("MaxPackets", UintegerValue(maxPackets));
-    udpClient->SetAttribute("Interval", TimeValue(Seconds(packetInterval)));
-    udpClient->SetAttribute("PacketSize", UintegerValue(packetSize));
-    udpClient->SetAttribute("RemoteAddress", AddressValue(InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort)));
-    nodes.Get(i)->AddApplication(udpClient);
+    client.SetTypeId("ns3::UdpEchoClient");
+    Ptr<UdpEchoClient> udpEchoClient = client.Create <UdpEchoClient> ();
+    udpEchoClient->SetStartTime(Seconds(0));
+    udpEchoClient->SetStopTime(Seconds(simTime));
+    // Remove the below lines when Issue gets fixed.
+    // Ptr<Socket> sock = udpEchoClient->GetSocket();
+    // cout<<sock->SetAllowBroadcast(true)<<endl; // TODO: fix this issue
+    // udpEchoClient->GetSocket()->SetIpTos(255);
+    udpEchoClient->SetAttribute("MaxPackets", UintegerValue(maxPackets));
+    udpEchoClient->SetAttribute("Interval", TimeValue(Seconds(packetInterval)));
+    udpEchoClient->SetAttribute("PacketSize", UintegerValue(packetSize));
+    InetSocketAddress address = InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort);
+    address.SetTos(255);
+    udpEchoClient->SetAttribute("RemoteAddress", AddressValue(InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort)));
+    nodes.Get(i)->AddApplication(udpEchoClient);
 
 
     ObjectFactory server;
-    server.SetTypeId ("ns3::UdpServer");
-    Ptr<UdpServer> udpServer = server.Create<UdpServer> ();
-    udpServer->SetStartTime(Seconds(1));
-    udpServer->SetStopTime(Seconds(simTime));
-    udpServer->GetSocket()->SetIpTos(255);
-    udpServer->SetAttribute("Port", UintegerValue(serverPort));
-    nodes.Get(i)->AddApplication(udpServer);
+    server.SetTypeId ("ns3::UdpEchoServer");
+    Ptr<UdpEchoServer> udpEchoServer = server.Create<UdpEchoServer> ();
+    udpEchoServer->SetStartTime(Seconds(1));
+    udpEchoServer->SetStopTime(Seconds(simTime));
+    // Remove the below lines when Issue gets fixed.
+    // udpEchoServer->GetSocket()->SetIpTos(255);
+    udpEchoServer->SetAttribute("Port", UintegerValue(serverPort));
+    nodes.Get(i)->AddApplication(udpEchoServer);
   }
 
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpClient/TxWithAddresses", MakeBoundCallback (&UdpClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/TxWithAddresses", MakeBoundCallback (&UdpEchoClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/RxWithAddresses", MakeBoundCallback (&UdpEchoClientRxWithAddressesTrace, objContainers[UDPECHOCLIENTRXNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINENUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDENUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpServer/RxWithAddresses", MakeBoundCallback(&UdpServerRxWithAddressesTrace, objContainers[UDPECHOSERVERTXNUM]));
-  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINENUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/RxWithAddresses", MakeBoundCallback(&UdpEchoServerRxWithAddressesTrace, objContainers[UDPECHOSERVERRXNUM]));
 
-  Simulator::Schedule (Seconds(1.1), &CalculateThroughput);
+  // Simulator::Schedule (Seconds(1.1), &CalculateThroughput);
   // Simulator::Schedule (Seconds (30), &SomeEvent);
-
   Simulator::Stop(Seconds(simTime));
   Simulator::Run();
   Simulator::Destroy();
@@ -231,10 +238,12 @@ int main (int argc, char *argv[])
   // }
 
   string fileName = getLogFileName (__FILE__);
+  cout<<fileName<<endl;
   FILE* fp = freopen(fileName.c_str (), "w", stdout);
-  getObjTrace(objContainers, UDPCLIENTTXNUM, fp);
+  getObjTrace(objContainers, UDPECHOCLIENTTXNUM, fp);
   fileName = getOutputFileName(__FILE__);
+  cout<<fileName<<endl;
   fp = freopen(fileName.c_str (), "w", stdout);
-  getOutput(objContainers, fp, UDPCLIENTTXNUM, UDPSERVERRXNUM);
+  getOutput(objContainers, fp, UDPECHOCLIENTTXNUM, UDPECHOSERVERRXNUM);
 
 }

@@ -23,8 +23,9 @@ const char* traceMap[] = {
   "ONOFFTXNUM",
   "BULKSENDTXNUM",
   "PACKETSINKRXNUM",
-  "UDPECHOSERVERTXNUM",
+  "UDPECHOSERVERRXNUM",
   "UDPECHOCLIENTTXNUM",
+  "UDPECHOCLIENTRXNUM",
   "UDPSERVERTXNUM",
   "UDPSERVERRXNUM",
   "UDPCLIENTTXNUM",
@@ -98,6 +99,7 @@ DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string colo
   const uint64_t sz = pkt->GetSize();
   const uint64_t uid = pkt->GetUid();
   DisplayObject obj = DisplayObject(context, t, sz, color, uid);
+  std::cout<<obj<<std::endl;
   return obj;
 }
 
@@ -361,8 +363,12 @@ void getTimeTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FIL
 void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE* fp=NULL) {
   std::map<int, std::vector<std::pair<std::string, DisplayObject>>> mp;
   int n = objGrid.size();
-
+  std::cout<<n<<" "<<(*objGrid[UDPECHOSERVERRXNUM]).size()<<std::endl;
+  std::cout<<n<<" "<<(*objGrid[UDPECHOCLIENTTXNUM]).size()<<std::endl;
+  std::cout<<n<<" "<<(*objGrid[PHYTXBEGINENUM]).size()<<std::endl;
+  std::cout<<n<<" "<<(*objGrid[PHYRXBEGINENUM]).size()<<std::endl;
   for(auto &obj: *(objGrid[clr])) {
+    std::cout<<obj.getName()<<" nothing"<<std::endl;
     if (mp.find(obj.getUid()) == mp.end()) {
       mp[obj.getUid()] = std::vector<std::pair<std::string,DisplayObject>>(n);
     }

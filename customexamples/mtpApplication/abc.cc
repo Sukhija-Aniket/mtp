@@ -264,7 +264,7 @@
 //   TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
 //   Ptr<Socket> recvSink = Socket::CreateSocket (c.Get (0), tid);
 //   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 80);
-//   recvSink->Bind (local);
+  // recvSink->Bind (local);
 //   recvSink->SetRecvCallback (MakeCallback (&ReceivePacket));
 
 //   Ptr<Socket> source = Socket::CreateSocket (c.Get (1), tid);
