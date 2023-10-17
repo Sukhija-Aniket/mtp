@@ -73,8 +73,8 @@ void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int
   }
 
   for(auto x:mp) {
-    if (x.second[PHYTXBEGINENUM] > 0 && x.second[PHYRXENDNUM] > 0) {
-      phyavg += (x.second[PHYRXENDNUM] - x.second[PHYTXBEGINENUM]);
+    if (x.second[PHYTXBEGINNUM] > 0 && x.second[PHYRXENDNUM] > 0) {
+      phyavg += (x.second[PHYRXENDNUM] - x.second[PHYTXBEGINNUM]);
       phycnt++;
     }
     if (x.second[IPV4L3PROTOCOLTXNUM] > 0 && x.second[IPV4L3PROTOCOLRXNUM] > 0) {
@@ -128,10 +128,10 @@ int main (int argc, char *argv[])
 {
 
   int maxPackets = 20;
-  int packetInterval = 0.001;
+  double packetInterval = 0.001;
   int packetSize = 200;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
-
+  string fileName;
   CommandLine cmd;
 
   //Number of nodes
@@ -179,49 +179,46 @@ int main (int argc, char *argv[])
   Ipv4InterfaceContainer interfaces = address.Assign (devices);
 
   // Application Layer
+  ObjectFactory client;
+  client.SetTypeId("ns3::UdpEchoClient");
+  uint16_t serverPort = 12345;
+  ObjectFactory server;
+  server.SetTypeId ("ns3::UdpEchoServer");
+  InetSocketAddress sockAddress = InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort);
+  sockAddress.SetTos(255);
   for (uint32_t i=0 ; i<nodes.GetN() ; i++)
   {
-    ObjectFactory client;
-    uint16_t serverPort = 12345;
-    client.SetTypeId("ns3::UdpEchoClient");
+    Ptr<UdpEchoServer> udpEchoServer = server.Create<UdpEchoServer> ();
+    udpEchoServer->SetAttribute("Port", UintegerValue(sockAddress.GetPort()));
+    udpEchoServer->SetStartTime(Seconds(0));
+    udpEchoServer->SetStopTime(Seconds(simTime));
+    nodes.Get(i)->AddApplication(udpEchoServer);
+
     Ptr<UdpEchoClient> udpEchoClient = client.Create <UdpEchoClient> ();
-    udpEchoClient->SetStartTime(Seconds(0));
-    udpEchoClient->SetStopTime(Seconds(simTime));
-    // Remove the below lines when Issue gets fixed.
-    // Ptr<Socket> sock = udpEchoClient->GetSocket();
-    // cout<<sock->SetAllowBroadcast(true)<<endl; // TODO: fix this issue
-    // udpEchoClient->GetSocket()->SetIpTos(255);
     udpEchoClient->SetAttribute("MaxPackets", UintegerValue(maxPackets));
     udpEchoClient->SetAttribute("Interval", TimeValue(Seconds(packetInterval)));
     udpEchoClient->SetAttribute("PacketSize", UintegerValue(packetSize));
-    InetSocketAddress address = InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort);
-    address.SetTos(255);
-    udpEchoClient->SetAttribute("RemoteAddress", AddressValue(InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort)));
+    udpEchoClient->SetAttribute("RemoteAddress", AddressValue(sockAddress));
+    udpEchoClient->SetStartTime(Seconds(1));
+    udpEchoClient->SetStopTime(Seconds(simTime));
     nodes.Get(i)->AddApplication(udpEchoClient);
 
-
-    ObjectFactory server;
-    server.SetTypeId ("ns3::UdpEchoServer");
-    Ptr<UdpEchoServer> udpEchoServer = server.Create<UdpEchoServer> ();
-    udpEchoServer->SetStartTime(Seconds(1));
-    udpEchoServer->SetStopTime(Seconds(simTime));
-    // Remove the below lines when Issue gets fixed.
-    // udpEchoServer->GetSocket()->SetIpTos(255);
-    udpEchoServer->SetAttribute("Port", UintegerValue(serverPort));
-    nodes.Get(i)->AddApplication(udpEchoServer);
   }
 
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/TxWithAddresses", MakeBoundCallback (&UdpEchoClientTxWithAddressesTrace, objContainers[UDPECHOCLIENTTXNUM]));
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/RxWithAddresses", MakeBoundCallback (&UdpEchoClientRxWithAddressesTrace, objContainers[UDPECHOCLIENTRXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/Tx", MakeBoundCallback (&UdpEchoClientTxTrace, objContainers[UDPECHOCLIENTTXNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINENUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDENUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINENUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxDrop", MakeBoundCallback(&PhyTxDropTrace, objContainers[PHYTXDROPNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/RxWithAddresses", MakeBoundCallback(&UdpEchoServerRxWithAddressesTrace, objContainers[UDPECHOSERVERRXNUM]));
+  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/Rx", MakeBoundCallback(&UdpEchoServerRxTrace, objContainers[UDPECHOSERVERRXNUM]));
 
   // Simulator::Schedule (Seconds(1.1), &CalculateThroughput);
   // Simulator::Schedule (Seconds (30), &SomeEvent);
@@ -237,13 +234,11 @@ int main (int argc, char *argv[])
   //   appI->PrintNeighbors ();
   // }
 
-  string fileName = getLogFileName (__FILE__);
-  cout<<fileName<<endl;
+  fileName = getLogFileName (__FILE__);
   FILE* fp = freopen(fileName.c_str (), "w", stdout);
   getObjTrace(objContainers, UDPECHOCLIENTTXNUM, fp);
   fileName = getOutputFileName(__FILE__);
-  cout<<fileName<<endl;
-  fp = freopen(fileName.c_str (), "w", stdout);
-  getOutput(objContainers, fp, UDPECHOCLIENTTXNUM, UDPECHOSERVERRXNUM);
+  FILE* fp2 = freopen(fileName.c_str (), "w", stdout);
+  getOutput(objContainers, fp2, UDPECHOCLIENTTXNUM, UDPECHOSERVERRXNUM);
 
 }

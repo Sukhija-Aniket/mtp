@@ -16,34 +16,31 @@
 #define CONT_SIZE 100
 
 const char* traceMap[] = {
-  "PHYTXBEGINENUM",
-  "PHYTXENDENUM",
-  "PHYRXBEGINENUM",
-  "PHYRXENDNUM",
+  "UDPCLIENTTXNUM",         // Application
+  "UDPECHOCLIENTTXNUM",
   "ONOFFTXNUM",
   "BULKSENDTXNUM",
-  "PACKETSINKRXNUM",
-  "UDPECHOSERVERRXNUM",
-  "UDPECHOCLIENTTXNUM",
-  "UDPECHOCLIENTRXNUM",
-  "UDPSERVERTXNUM",
-  "UDPSERVERRXNUM",
-  "UDPCLIENTTXNUM",
-  "UDPCLIENTRXNUM",
-  "MACENQUEUENUM",
-  "MACDEQUEUENUM",
+  "TCPSOCKETBASETXNUM",     // Transport
+  "IPV4L3PROTOCOLTXNUM",    // Network
+  "MACTXNUM",               // MAC
   "ENQUEUENUM",
-  "DEQUEUENUM",
-  "TCPSOCKETBASETXNUM",
-  "TCPSOCKETBASERXNUM",
-  "IPV4L3PROTOCOLTXNUM",
-  "IPV4L3PROTOCOLRXNUM",
-  "PHYTXDROPNUM",
-  "PHYRXDROPNUM",
+  "MACENQUEUENUM",
   "MACTXDROPNUM",
+  "PHYTXBEGINNUM",          // PHY TX
+  "PHYTXENDNUM",
+  "PHYTXDROPNUM",
+  "PHYRXBEGINNUM",          // PHY RX
+  "PHYRXENDNUM",
+  "PHYRXDROPNUM",
+  "MACRXNUM",               // MAC
+  "DEQUEUENUM",
+  "MACDEQUEUENUM",
   "MACRXDROPNUM",
-  "MACTXNUM",
-  "MACRXNUM",
+  "IPV4L3PROTOCOLRXNUM",    // Network
+  "TCPSOCKETBASERXNUM",     // Transport
+  "UDPSERVERRXNUM",         // Application
+  "UDPECHOSERVERRXNUM",
+  "PACKETSINKRXNUM",
 };
 
 const char* featureMap[] = {
@@ -188,7 +185,17 @@ void UdpEchoClientTxWithAddressesTrace(std::vector<DisplayObject> *objs, std::st
   (*objs).push_back(obj);
 }
 
+void UdpEchoClientTxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
+  DisplayObject obj = Trace(context, pkt, UDPECHOCLIENTTX);
+  (*objs).push_back(obj);
+}
+
 void UdpEchoClientRxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, const Address& addr1, const Address& addr2) {
+  DisplayObject obj = Trace(context, pkt, UDPECHOCLIENTRX);
+  (*objs).push_back(obj);
+}
+
+void UdpEchoClientRxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
   DisplayObject obj = Trace(context, pkt, UDPECHOCLIENTRX);
   (*objs).push_back(obj);
 }
@@ -198,7 +205,17 @@ void UdpServerRxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string
   (*objs).push_back(obj);
 }
 
+void UdpServerRxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
+  DisplayObject obj = Trace(context, pkt, UDPSERVERRX);
+  (*objs).push_back(obj);
+}
+
 void UdpEchoServerRxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, const Address& addr1, const Address& addr2) {
+  DisplayObject obj = Trace(context, pkt, UDPECHOSERVERRX);
+  (*objs).push_back(obj);
+}
+
+void UdpEchoServerRxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
   DisplayObject obj = Trace(context, pkt, UDPECHOSERVERRX);
   (*objs).push_back(obj);
 }
@@ -361,32 +378,31 @@ void getTimeTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FIL
 }
 
 void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE* fp=NULL) {
-  std::map<int, std::vector<std::pair<std::string, DisplayObject>>> mp;
+  std::map<int, std::vector<std::vector<std::pair<std::string, DisplayObject>>>> mp;
   int n = objGrid.size();
-  std::cout<<n<<" "<<(*objGrid[UDPECHOSERVERRXNUM]).size()<<std::endl;
-  std::cout<<n<<" "<<(*objGrid[UDPECHOCLIENTTXNUM]).size()<<std::endl;
-  std::cout<<n<<" "<<(*objGrid[PHYTXBEGINENUM]).size()<<std::endl;
-  std::cout<<n<<" "<<(*objGrid[PHYRXBEGINENUM]).size()<<std::endl;
   for(auto &obj: *(objGrid[clr])) {
-    std::cout<<obj.getName()<<" nothing"<<std::endl;
     if (mp.find(obj.getUid()) == mp.end()) {
-      mp[obj.getUid()] = std::vector<std::pair<std::string,DisplayObject>>(n);
+      mp[obj.getUid()] = std::vector<std::vector<std::pair<std::string,DisplayObject>>>(n, std::vector<std::pair<std::string, DisplayObject>>());
     }
   }
 
   for(int i=0;i<n;i++) {
     for(auto &obj: *(objGrid[i])) {
       if (mp.find(obj.getUid()) == mp.end()) continue;
-      mp[obj.getUid()][i] = std::make_pair(obj.getName(), obj);
+      mp[obj.getUid()][i].push_back(std::make_pair(obj.getName(), obj));
     }
   }
 
   for(auto x:mp) {
     std::cout<<std::setprecision(15)<<"Uid: "<<x.first<<std::endl;
-    std::vector<std::pair<DisplayObject, int>> temp(n);
-    for(int i=0;i<n;i++) temp[i] = std::make_pair(x.second[i].second, i);
-    sort(temp.begin(),temp.end(),objcmp);
+    std::vector<std::pair<DisplayObject, int>> temp;
     for(int i=0;i<n;i++) {
+      for(auto y: x.second[i]) {
+        temp.push_back(std::make_pair(y.second, i));
+      }
+    }
+    sort(temp.begin(),temp.end(),objcmp);
+    for(uint32_t i=0;i<temp.size();i++) {
       if (temp[i].first.getTime() == -1) continue;
       std::cout<<temp[i].first;
     }
