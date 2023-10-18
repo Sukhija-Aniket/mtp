@@ -1,9 +1,4 @@
 #include "custom-mobility-model.h"
-#include "ns3/simulator.h"
-#include "ns3/log.h"
-#include <iomanip>      // std::setprecision
-
-#include <cmath>
 namespace ns3
 {
 NS_LOG_COMPONENT_DEFINE ("CustomMobilityModel");

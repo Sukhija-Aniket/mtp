@@ -8,6 +8,8 @@
 #include "ns3/tag.h"
 #include "ns3/vector.h"
 #include "ns3/nstime.h"
+#include "ns3/log.h"
+#include "ns3/simulator.h"
 
 namespace ns3
 {
@@ -16,7 +18,7 @@ namespace ns3
 class CustomDataTag : public Tag {
 public:
 
-	//Functions inherited from ns3::Tag that you have to implement. 
+	//Functions inherited from ns3::Tag that you have to implement.
 	static TypeId GetTypeId(void);
 	virtual TypeId GetInstanceTypeId(void) const;
 	virtual uint32_t GetSerializedSize(void) const;
@@ -49,4 +51,4 @@ private:
 };
 }
 
-#endif 
+#endif

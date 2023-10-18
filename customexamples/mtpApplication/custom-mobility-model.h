@@ -10,19 +10,24 @@
 #include "ns3/mobility-model.h"
 #include "ns3/nstime.h"
 #include "ns3/event-id.h"
+#include "ns3/simulator.h"
+#include "ns3/log.h"
+#include <iomanip>      // std::setprecision
+
+#include <cmath>
 namespace ns3
 {
 /** \brief An implementation of longitudinal vehicular mobility on an x-axis only. This implementation is based on ns3::ConstantAccelerationMobilityModel, but it adds limits on velocity and acceleration.
- * 
+ *
  * You can set an upper and lower limits for acceleration. The default values are 3.6576 & -3.6576 in m/s^2
  * You can also set the max velocity. Default value is 30 m/s.
- * 
+ *
  * If you set the acceleration to a positive value, it calculates the time to reach the maximum velocity, and schedules an event to set the acceleration to zero at that time.
  * If acceleration is set to a negative value, it would calculate the time to reach zero velocity and schedule and event to set the acceleration to zero at that time.
- * 
+ *
  * The event scheduled to set acceleration to zero is cancelled and replaced by another event everytime the accelration value is set again.
- * 
- * 
+ *
+ *
  */
 class CustomMobilityModel : public MobilityModel
 {
@@ -36,7 +41,7 @@ public:
 
   virtual TypeId GetInstanceTypeId() const;
   /**
-   * Create position located at coordinates, velocity & acceleration set to (0,0,0) 
+   * Create position located at coordinates, velocity & acceleration set to (0,0,0)
    */
   CustomMobilityModel ();
   virtual ~CustomMobilityModel ();
@@ -51,7 +56,7 @@ public:
   void SetAccelerationValue (double value);
 
   /** \brief Returns the acceleration as a ns3::Vector form
-   */ 
+   */
   Vector GetAcceleration();
 
   /** \brief Returns the acceleration as a double
@@ -76,7 +81,7 @@ private:
   /* \brief A function that is scheduled to set acceleration to zero when max velocity is reached.
   */
   void SetAccelerationToZeroMaxVelocity ();
-  /* \brief A function that is scheduled to set acceleration to zero when zero velocity is reached. 
+  /* \brief A function that is scheduled to set acceleration to zero when zero velocity is reached.
   */
   void SetAccelerationToZeroZeroVelocity ();
 
@@ -99,7 +104,7 @@ private:
   double m_min_velocity;
   double m_min_acceleration;
   double m_max_acceleration;
-  
+
 };
 
 }
