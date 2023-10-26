@@ -120,7 +120,7 @@ vector<Vector3D> getPV(int n, string name)  {
   for(int i(0);i<n;i++) {
     cin>>pv[i].x>>pv[i].y>>pv[i].z;
   }
-  // fclose(fp);
+  fclose(fp);
   return pv;
 }
 
@@ -234,10 +234,10 @@ int main (int argc, char *argv[])
   //   appI->PrintNeighbors ();
   // }
 
-  fileName = getLogFileName (__FILE__);
+  fileName = getCustomFileName (__FILE__, "output.log");
   FILE* fp = freopen(fileName.c_str (), "w", stdout);
   getObjTrace(objContainers, UDPECHOCLIENTTXNUM, fp);
-  fileName = getOutputFileName(__FILE__);
+  fileName = getCustomFileName(__FILE__, "output.txt");
   FILE* fp2 = freopen(fileName.c_str (), "w", stdout);
   getOutput(objContainers, fp2, UDPECHOCLIENTTXNUM, UDPECHOSERVERRXNUM);
 
