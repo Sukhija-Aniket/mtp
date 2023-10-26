@@ -120,7 +120,7 @@ vector<Vector3D> getPV(int n, string name)  {
   for(int i(0);i<n;i++) {
     cin>>pv[i].x>>pv[i].y>>pv[i].z;
   }
-  fclose(fp);
+  // fclose(fp);
   return pv;
 }
 

@@ -12,8 +12,6 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
     Setting up WAVE devices. With PHY & MAC using default settings.
   */
 
-
-
  // The below set of helpers will help us to put together the wifi NICs we want
   YansWifiChannelHelper wifiChannel = YansWifiChannelHelper();
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -38,7 +36,7 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
 
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
-  						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"), // Change to 1 Mbps
+  						"ControlMode",StringValue ("OfdmRate3MbpsBW10MHz"), // Change to 1 Mbps
   						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 

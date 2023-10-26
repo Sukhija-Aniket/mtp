@@ -90,7 +90,8 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& os, const DisplayObject& obj) {
-  os <<std::setprecision(60)<<obj.getColor()<<obj.getName()<<" Uid: "<<obj.getUid()<<" Time="<<obj.getTime()<<" PacketSize="<<obj.getPacketSize()<<RESET;
+  // os <<std::setprecision(60)<<obj.getColor()<<obj.getName()<<" "<<obj.getUid()<<" "<<obj.getTime()<<" "<<obj.getPacketSize()<<RESET;
+  os <<std::setprecision(60)<<obj.getUid()<<" "<<obj.getName()<<" "<<obj.getTime()<<" "<<obj.getPacketSize();
   for(std::string statement : obj.getStatements()) {
     std::cout<<"\nStatement: "<<statement<<"\n";
   }

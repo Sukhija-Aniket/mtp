@@ -69,17 +69,19 @@ std::string getFileName (const std::string& filePath) {
   return fileName;
 }
 
-std::string getOutputFileName (const std::string &filePath) {
+std::string getOutputFileName (const std::string &filePath, const std::string fN) {
   std::string fileName = getFileName(filePath);
-  if (fileName.find_first_of('/') == 0) fileName = "output.txt";
-  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/output.txt";
+  if (fileName.find_first_of('/') == 0) fileName = fN + ".txt";
+  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/outputs/" + fN + ".txt";
+  fileName = "/" + fileName;
   return fileName;
 }
 
-std::string getLogFileName (const std::string &filePath) {
+std::string getLogFileName (const std::string &filePath, const std::string fN) {
   std::string fileName = getFileName(filePath);
-  if (fileName.find_first_of('/') == 0) fileName = "output.log";
-  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/output.log";
+  if (fileName.find_first_of('/') == 0) fileName = fN + ".log";
+  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/outputs/" + fN + ".log";
+  fileName = "/" + fileName;
   return fileName;
 }
 
@@ -87,6 +89,8 @@ std::string getCustomFileName(const std::string &filePath, const std::string &na
   std::string fileName = getFileName(filePath);
   if (fileName.find_first_of('/') == 0) fileName = name;
   else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/" + name;
+
+  fileName = "/" + fileName;
   return fileName;
 }
 
@@ -95,8 +99,7 @@ DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string colo
   double t = now.GetNanoSeconds();
   const uint64_t sz = pkt->GetSize();
   const uint64_t uid = pkt->GetUid();
-  DisplayObject obj = DisplayObject(context, t, sz, color, uid);
-  std::cout<<obj<<std::endl;
+  DisplayObject obj = DisplayObject(context, t, sz, RESET, uid);
   return obj;
 }
 
@@ -247,7 +250,6 @@ void MacEnqueueTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<
   Ptr<const Packet> pkt = item->GetPacket();
   DisplayObject obj = Trace(context, pkt, MACENQUEUE);
   (*objs).push_back(obj);
-  std::cout<<"why"<<std::endl;
 }
 
 
@@ -394,7 +396,7 @@ void getObjTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE
   }
 
   for(auto x:mp) {
-    std::cout<<std::setprecision(15)<<"Uid: "<<x.first<<std::endl;
+    // std::cout<<std::setprecision(15)<<"Uid: "<<x.first<<std::endl;
     std::vector<std::pair<DisplayObject, int>> temp;
     for(int i=0;i<n;i++) {
       for(auto y: x.second[i]) {
