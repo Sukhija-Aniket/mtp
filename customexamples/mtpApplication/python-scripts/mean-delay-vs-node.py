@@ -2,6 +2,7 @@ import random
 import os
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -19,23 +20,30 @@ import numpy as np
 '''
 
 cwd = os.getcwd()
+parentDir = os.path.dirname(cwd)
 
 input_path = os.path.join(os.path.dirname(cwd), "outputs")
-output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
+# output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
+input_file_template = os.path.join(parentDir, "outputs/static-node-delay-calc-n")
 
 context_map = {
     "enqueue": "/$ns3::WifiNetDevice/Mac/Txop/Queue/Enqueue",
     "dequeue": "/$ns3::WifiNetDevice/Mac/Txop/Queue/Dequeue"
 }
 
-def get_mean_mac_delay(fileName):
+def get_mean_mac_delay(fileName, nodes=None):
+    mean_delay = 0
+    counter = 0
+    uid_enqueue = {}
+
     input_file = os.path.join(input_path, fileName)
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"{fileName} doesn't exist in the {cwd} directory!!")
     
-    mean_delay = 0
-    counter = 0
-    uid_enqueue = {}
+    output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
+
+    if not (nodes==None):
+        output_file_path = os.path.join(input_path, f"enqueue_dequeue_trace_n{nodes}")
 
     file_descriptor = os.open(output_file_path, os.O_WRONLY | os.O_CREAT, 0o644)
 
@@ -68,13 +76,32 @@ def main():
     if(len(sys.argv) < 2):
         raise TypeError("Insufficient arguments. At least one additional argument is required.")
     
-    mean_delay = get_mean_mac_delay(sys.argv[1])
-    return mean_delay
+    if(sys.argv[1].isdigit()):
+        step = 10
+        num_nodes = np.arange(step, int(sys.argv[1])+step, step)
+        mean_delay = []
+        for i in range(len(num_nodes)):
+            input_file = input_file_template + str(num_nodes[i]) + ".log"
+            mean_delay.append(round(get_mean_mac_delay(input_file, num_nodes[i])/1000000, 3))
+        print(mean_delay)
+
+        if(len(sys.argv)>=3 and sys.argv[2]=='--plot'):
+            plt.plot(num_nodes, mean_delay)
+            plt.scatter(num_nodes, mean_delay)
+            plt.xlabel("Number of Nodes")
+            plt.ylabel("Mean AMC delay (in ms)")
+            plt.show()
+
+    else:
+        if(len(sys.argv)>=3 and sys.argv[2]=='--plot'):
+            raise Exception("Invalid flag")
+        
+        mean_delay = get_mean_mac_delay(sys.argv[1])
+        print(mean_delay)
 
 
 if __name__ == "__main__":
     try:
-        x = main()
-        print(x/1000000)
+        main()
     except (TypeError, FileNotFoundError) as e:
         print(f"Error: {e}")

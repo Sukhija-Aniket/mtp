@@ -26,7 +26,7 @@ def getPositions(num_nodes=10):
     print(f"Node positions have been saved to {output_file}")
 
 
-def getVelocities(mean_velocity=60, std_deviation=10, num_nodes=10):
+def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
 
     velocities = [random.gauss(mean_velocity, std_deviation) for _ in range(num_nodes)]
 
@@ -45,7 +45,7 @@ def getVelocities(mean_velocity=60, std_deviation=10, num_nodes=10):
 
 
 
-def getStartTime(mean_velocity=0, std_deviation=0.3, num_nodes=10):
+def getStartTime(num_nodes=10, mean_velocity=0, std_deviation=0.3):
 
     startTimes = [(1+random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
 
@@ -59,7 +59,7 @@ def getStartTime(mean_velocity=0, std_deviation=0.3, num_nodes=10):
         print(f"Client Start Time have been saved to {output_file}")
 
 
-def getPacketGenerationRate(mean_packet_gen_rate=500, num_nodes=10):
+def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=500):
 
     packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
 
@@ -72,3 +72,9 @@ def getPacketGenerationRate(mean_packet_gen_rate=500, num_nodes=10):
             file.write(f"{x}\n")
 
     print(f"Application Packet Generation Rate have been saved to {output_file}")
+
+
+getPositions(num_nodes=100)
+getStartTime(num_nodes=100)
+getVelocities(num_nodes=100)
+getPacketGenerationRate(num_nodes=100)

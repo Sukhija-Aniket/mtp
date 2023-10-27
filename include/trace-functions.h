@@ -87,10 +87,10 @@ std::string getLogFileName (const std::string &filePath, const std::string fN) {
 }
 
 std::string getCustomFileName(const std::string &filePath, const std::string &name) {
-  std::string fileName = getFileName(filePath);
-  // if (fileName.find_first_of('/') == 0) fileName = name;
-  fileName = fileName.substr(0, fileName.find_last_of('/')) + "/" + name;
-
+  // std::string fileName = getFileName(filePath);
+  // // if (fileName.find_first_of('/') == 0) fileName = name;
+  std::string fileName = filePath.substr(0, filePath.find_last_of('/'));
+  fileName = fileName + "/" + name;
   // fileName = "/" + fileName;
   return fileName;
 }
