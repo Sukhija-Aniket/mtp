@@ -19,7 +19,6 @@ length=2000
 width=2
 area=$(expr $length \* $width)
 
-pwd="$(pwd)"
 script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 simulation_file="${script_directory}/${fileName}"
 python_script_path = "${script_directory}/python-scripts"
@@ -39,8 +38,7 @@ plot_file="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $length | head -n 1
 
 # Get to the ns3 directory
 cd ../../../../
-
-echo $(pwd)
+pwd="$(pwd)"
 # for nNode in "${my_array[@]}"; do
 #     # Run static simulation file
 #     echo "Starting the simulation for mean-delay calculation for $nNode nodes"
@@ -56,7 +54,11 @@ echo $(pwd)
 #     # echo "Mean Delay for $nNode nodes is $result ms"
 # done
 
-./ns3 run $simulation_file
+# Breaking path to execute only from scratch directory
+
+relative_path=$(realpath --relative-to="${pwd}" "${simulation_file}")
+echo "${relative_path}"
+./ns3 run $relative_path
 # Delete the randomly generated new file in outputs directory
 # cd ./outputs
 # rm $plot_file
