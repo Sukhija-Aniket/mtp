@@ -1,6 +1,7 @@
 import random
 import os
 import numpy as np
+import sys
 
 # cwd = os.getcwd()
 par_dir = os.path.dirname((os.path.dirname(__file__)))
@@ -47,7 +48,7 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
 
 def getStartTime(num_nodes=10, mean_velocity=0, std_deviation=0.3):
 
-    startTimes = [(1+random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
+    startTimes = [abs(1+random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
     output_file = app_dir + "/startTimes.txt"
@@ -74,7 +75,11 @@ def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=500):
     print(f"Application Packet Generation Rate have been saved to {output_file}")
 
 
-getPositions(num_nodes=100)
-getStartTime(num_nodes=100)
-getVelocities(num_nodes=100)
-getPacketGenerationRate(num_nodes=100)
+if __name__ == "__main__":
+    if(len(sys.argv) < 2):
+        raise Exception("Insufficient arguments!!")
+    num_nodes = int(sys.argv[1])
+    getPositions(num_nodes=num_nodes)
+    getStartTime(num_nodes=num_nodes)
+    getVelocities(num_nodes=num_nodes)
+    getPacketGenerationRate(num_nodes=num_nodes)

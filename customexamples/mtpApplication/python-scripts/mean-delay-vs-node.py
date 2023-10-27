@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 
     # Param
         - Takes a file name (should be in "{relative path to ns3 folder}/ns-allinone-3.36.1/ns-3.36.1/scratch/mtp/customexamples/mtpApplication/outputs" directory) or a list of file names
-    
+        - Flags
+            - '--plot' to plot the mean delays calculated by processing all the log files and their corresponding node density
     # Return
         - Returns the mean delay calculated
     
@@ -22,9 +23,10 @@ import matplotlib.pyplot as plt
 cwd = os.getcwd()
 parentDir = os.path.dirname(cwd)
 
+area = int(sys.argv[2])
+
 input_path = os.path.join(os.path.dirname(cwd), "outputs")
-# output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
-input_file_template = os.path.join(parentDir, "outputs/static-node-delay-calc-n")
+input_file_template = "static-node-delay-calc-n"
 
 context_map = {
     "enqueue": "/$ns3::WifiNetDevice/Mac/Txop/Queue/Enqueue",
@@ -38,7 +40,7 @@ def get_mean_mac_delay(fileName, nodes=None):
 
     input_file = os.path.join(input_path, fileName)
     if not os.path.isfile(input_file):
-        raise FileNotFoundError(f"{fileName} doesn't exist in the {cwd} directory!!")
+        raise FileNotFoundError(f"{fileName} doesn't exist in the {input_path} directory!!")
     
     output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
 
@@ -73,7 +75,7 @@ def get_mean_mac_delay(fileName, nodes=None):
     return mean_delay/counter
 
 def main():
-    if(len(sys.argv) < 2):
+    if(len(sys.argv) < 3):
         raise TypeError("Insufficient arguments. At least one additional argument is required.")
     
     if(sys.argv[1].isdigit()):
@@ -85,15 +87,16 @@ def main():
             mean_delay.append(round(get_mean_mac_delay(input_file, num_nodes[i])/1000000, 3))
         print(mean_delay)
 
-        if(len(sys.argv)>=3 and sys.argv[2]=='--plot'):
+        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
             plt.plot(num_nodes, mean_delay)
             plt.scatter(num_nodes, mean_delay)
             plt.xlabel("Number of Nodes")
             plt.ylabel("Mean AMC delay (in ms)")
+            plt.savefig(os.path.join(input_path, "mean-delay-vs-nodes.png"))
             plt.show()
 
     else:
-        if(len(sys.argv)>=3 and sys.argv[2]=='--plot'):
+        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
             raise Exception("Invalid flag")
         
         mean_delay = get_mean_mac_delay(sys.argv[1])
