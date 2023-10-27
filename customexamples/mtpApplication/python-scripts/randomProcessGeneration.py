@@ -2,7 +2,10 @@ import random
 import os
 import numpy as np
 
-cwd = os.getcwd()
+# cwd = os.getcwd()
+par_dir = os.path.dirname((os.path.dirname(__file__)))
+app_dir = os.path.join(par_dir, 'inputs')
+print(app_dir)
 
 def getPositions(num_nodes=10):
 
@@ -13,8 +16,8 @@ def getPositions(num_nodes=10):
     positions.sort(key=lambda x: x[0])
 
     # Define the output file name
-    output_file = cwd + "/positions.txt"
-    
+    output_file = app_dir + "/positions.txt"
+
     # Write the positions to the output file
     with open(output_file, "w") as file:
         for i, (x, y) in enumerate(positions):
@@ -31,7 +34,7 @@ def getVelocities(mean_velocity=60, std_deviation=10, num_nodes=10):
     velocities_mps = [v * (1000 / 3600) for v in velocities]
 
     # Define the output file name
-    output_file = cwd + "/velocities.txt"
+    output_file = app_dir +  "/velocities.txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -47,7 +50,7 @@ def getStartTime(mean_velocity=0, std_deviation=0.3, num_nodes=10):
     startTimes = [(1+random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
-    output_file = cwd + "/startTimes.txt"
+    output_file = app_dir + "/startTimes.txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -61,7 +64,7 @@ def getPacketGenerationRate(mean_packet_gen_rate=500, num_nodes=10):
     packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
 
     # Define the output file name
-    output_file = cwd + "/packetGenRate.txt"
+    output_file = app_dir + "/packetGenRate.txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:

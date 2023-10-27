@@ -62,10 +62,11 @@ using namespace std;
 namespace ns3 {
 
 std::string getFileName (const std::string& filePath) {
-  std::filesystem::path p(filePath);
+  std::string path = filePath.substr(filePath.find_first_of("/")+1);
+  std::filesystem::path p(std::filesystem::absolute(path));
+  p = p.lexically_normal();
   std::string fileName = p.string();
-  fileName = fileName.substr(fileName.find_first_of("/") + 1);
-  fileName = fileName.substr(0, fileName.find_last_of('.'));
+  fileName = fileName.substr(0,fileName.find_last_of('.'));
   return fileName;
 }
 
@@ -87,10 +88,10 @@ std::string getLogFileName (const std::string &filePath, const std::string fN) {
 
 std::string getCustomFileName(const std::string &filePath, const std::string &name) {
   std::string fileName = getFileName(filePath);
-  if (fileName.find_first_of('/') == 0) fileName = name;
-  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/" + name;
+  // if (fileName.find_first_of('/') == 0) fileName = name;
+  fileName = fileName.substr(0, fileName.find_last_of('/')) + "/" + name;
 
-  fileName = "/" + fileName;
+  // fileName = "/" + fileName;
   return fileName;
 }
 

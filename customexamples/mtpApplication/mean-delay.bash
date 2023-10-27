@@ -8,11 +8,12 @@ width=2
 area=$(expr $length \* $width)
 
 pwd="$(pwd)"
-
-simulation_file="/home/ashu3103/ns-allinone-3.36.1/ns-3.36.1/scratch/mtp/customexamples/mtpApplication/abc.cc"
-python_script_path="$pwd/python-scripts"
-python_script_file="$python_script_path/mean-delay-vs-node.py"
-output_path="$pwd/outputs"
+script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+simulation_file="${script_directory}/mtp-wave-project.cc"
+python_script_path = "${script_directory}/python-scripts"
+python_script_file="${python_script_path}/mean-delay-vs-node.py"
+output_path="${script_directory}/outputs"
+cd "${script_directory}" # changing current working directory to script directory
 
 # Set the length of the random string you want
 length=10
@@ -26,7 +27,6 @@ plot_file="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $length | head -n 1
 
 # Get to the ns3 directory
 cd ../../../../
-cd ./
 
 echo $(pwd)
 # for nNode in "${my_array[@]}"; do
