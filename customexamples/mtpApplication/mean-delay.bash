@@ -1,7 +1,19 @@
 #!/bin/bash
 
-# Create an array of integers
-my_array=(10)
+nNodes="${1:-10}" # default value is 10
+if ! [[ $nNodes =~ ^[0-9]+$ ]]; then
+  echo "Usage: $0 [number_of_nodes] [file_name]"
+  exit 1
+fi
+my_array=("$nNodes")
+
+fileName="${2:-mtp-wave-project.cc}" # default file is mtp-wave-project.cc
+if [[ ! "$fileName" =~ \.cc$ ]]; then
+  echo "File name must have a .cc extension."
+  exit 1
+fi
+
+echo "Running ${fileName} for ${nNodes}"
 
 length=2000
 width=2
@@ -9,7 +21,7 @@ area=$(expr $length \* $width)
 
 pwd="$(pwd)"
 script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-simulation_file="${script_directory}/mtp-wave-project.cc"
+simulation_file="${script_directory}/${fileName}"
 python_script_path = "${script_directory}/python-scripts"
 python_script_file="${python_script_path}/mean-delay-vs-node.py"
 output_path="${script_directory}/outputs"
