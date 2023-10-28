@@ -105,7 +105,6 @@ void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int
 
 vector<Vector3D> getPV(int n, string name)  {
   string fileName = getCustomFileName(__FILE__, name);
-  // cout<<fileName<<endl;
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<Vector3D> pv(n);
   for(int i(0);i<n;i++) {

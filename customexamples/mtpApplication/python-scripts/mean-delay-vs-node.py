@@ -15,17 +15,18 @@ import matplotlib.pyplot as plt
             - '--plot' to plot the mean delays calculated by processing all the log files and their corresponding node density
     # Return
         - Returns the mean delay calculated
-    
+
     The results (traces of packet for enqueue and dequeue with timestamps) will be written to a file in outputs folder
 
 '''
 
+app_dir = os.path.dirname(os.path.dirname(__file__))
 cwd = os.getcwd()
 parentDir = os.path.dirname(cwd)
 
 area = int(sys.argv[2])
 
-input_path = os.path.join(os.path.dirname(cwd), "outputs")
+input_path = os.path.join(app_dir, "outputs")
 input_file_template = "static-node-delay-calc-n"
 
 context_map = {
@@ -41,7 +42,7 @@ def get_mean_mac_delay(fileName, nodes=None):
     input_file = os.path.join(input_path, fileName)
     if not os.path.isfile(input_file):
         raise FileNotFoundError(f"{fileName} doesn't exist in the {input_path} directory!!")
-    
+
     output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
 
     if not (nodes==None):
@@ -61,11 +62,11 @@ def get_mean_mac_delay(fileName, nodes=None):
             if (context.endswith(context_map["dequeue"]) and uid_enqueue[uid]):
                 os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                 mean_delay = mean_delay + (time - uid_enqueue[uid])
-                counter = counter + 1   
+                counter = counter + 1
             elif(context.endswith(context_map["enqueue"])):
                 os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
                 uid_enqueue[uid] = time
-    
+
 
     if counter==0:
         return -1
@@ -77,7 +78,7 @@ def get_mean_mac_delay(fileName, nodes=None):
 def main():
     if(len(sys.argv) < 3):
         raise TypeError("Insufficient arguments. At least one additional argument is required.")
-    
+
     if(sys.argv[1].isdigit()):
         step = 10
         num_nodes = np.arange(step, int(sys.argv[1])+step, step)
@@ -98,7 +99,7 @@ def main():
     else:
         if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
             raise Exception("Invalid flag")
-        
+
         mean_delay = get_mean_mac_delay(sys.argv[1])
         print(mean_delay)
 

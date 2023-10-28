@@ -1,7 +1,7 @@
 #!/bin/bash
 my_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 
-fileName="${1:-static-node-delay-calculation.cc}" # default file is mtp-wave-project.cc
+fileName="${1:-static-node-delay-calculation.cc}" # default file is static-node-delay-calculaton.cc
 if [[ ! "$fileName" =~ \.cc$ ]]; then
   echo "File name must have a .cc extension."
   exit 1
@@ -17,6 +17,8 @@ script_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 python_script_path="${script_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
+
+cd ${script_directory}
 
 # Running the simulation for different nodes
 for node in "${my_array[@]}"
@@ -39,7 +41,6 @@ last_element="${my_array[${#my_array[@]}-1]}"
 flags="--plot"
 
 echo "-------------------------Running the plot script ----------------------------------"
-cd $python_script_path
 python3 $python_script_mean_delay $last_element $area $flags
 
 echo "------------------------- Job Completed!! -----------------------------------------"
