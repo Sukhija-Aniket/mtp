@@ -9,7 +9,7 @@ WaveSetup::~WaveSetup () {}
 NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
 {
   /*
-    Setting up WAVE devices. With PHY & MAC using default settings. 
+    Setting up WAVE devices. With PHY & MAC using default settings.
   */
   YansWifiChannelHelper waveChannel = YansWifiChannelHelper::Default ();
   YansWavePhyHelper wavePhy =  YansWavePhyHelper::Default ();

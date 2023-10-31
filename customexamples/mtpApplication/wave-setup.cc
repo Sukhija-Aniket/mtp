@@ -6,7 +6,7 @@ namespace ns3
 WaveSetup::WaveSetup(){}
 WaveSetup::~WaveSetup () {}
 
-NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
+NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enablePcap)
 {
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
@@ -51,6 +51,11 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
     nodePhy->SetCcaEdThreshold(-84.87);
     // Set RX Sensitivity
     nodePhy->SetRxSensitivity(-84.87);
+  }
+
+  if(enablePcap) {
+    int numNodes = devices.GetN();
+    wavePhy.EnablePcap("pcaps/static-node-delay-calc-n" + std::to_string(numNodes), devices);
   }
 
   return devices;

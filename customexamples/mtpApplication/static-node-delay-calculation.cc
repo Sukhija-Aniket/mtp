@@ -159,26 +159,31 @@ int main (int argc, char *argv[])
 {
 
   uint32_t nNodes = 10;
-  uint32_t tos = NS3_TOS_VAL::TOS_VO;
   uint32_t packetsPerSecond = 500;
   uint32_t packetSize = 200;
-  double packetInterval = 1.0/packetsPerSecond;
   double interval = 5;
-  double maxPackets = interval * packetsPerSecond;
-  vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
-  string fileName;
-  CommandLine cmd;
-
-  //Number of nodes
   double simTime = 10;
   bool enablePcap = false;
+
+  vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
+  string fileName;
   string fileN;
+  CommandLine cmd;
+
   cmd.AddValue ("n", "Number of nodes", nNodes);
-  cmd.AddValue ("i", "Broadcast interval in seconds", interval);
+  cmd.AddValue("pps", "packets per second", packetsPerSecond);
+  cmd.AddValue("ps", "packet size", packetSize);
+
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("pcap", "Enable PCAP", enablePcap);
   cmd.AddValue ("outputFile", "The name of output file for logs and traces", fileN);
   cmd.Parse (argc, argv);
+
+   uint32_t tos = NS3_TOS_VAL::TOS_VO;
+  double packetInterval = 1.0/packetsPerSecond;
+  double maxPackets = interval * packetsPerSecond;
+
+
   NodeContainer nodes;
   nodes.Create(nNodes);
 
@@ -206,7 +211,7 @@ int main (int argc, char *argv[])
 
   // Wifi Phy and Mac Layer
   WaveSetup wave;
-  NetDeviceContainer devices = wave.ConfigureDevices(nodes);
+  NetDeviceContainer devices = wave.ConfigureDevices(nodes, enablePcap);
 
   // Network Layer
   InternetStackHelper internet;

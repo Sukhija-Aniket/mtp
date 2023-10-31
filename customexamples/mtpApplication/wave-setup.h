@@ -18,7 +18,7 @@
 
 namespace ns3
 {
-/** \brief This is a "utility class". It does not an extension to ns3. 
+/** \brief This is a "utility class". It does not an extension to ns3.
  */
   class WaveSetup
   {
@@ -32,8 +32,8 @@ namespace ns3
       WaveSetup ();
       virtual ~WaveSetup ();
 
-      NetDeviceContainer ConfigureDevices (NodeContainer &n);
+      NetDeviceContainer ConfigureDevices (NodeContainer &n, bool enablePcap);
   };
 }
 
-#endif 
+#endif
