@@ -116,7 +116,6 @@ vector<Vector3D> getPV(int n, string name)  {
 
 vector<double> getStartTimes(int n, string name){
   string fileName = getCustomFileName(__FILE__, name);
-  // cout<<fileName<<endl;
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<double> pv(n);
   for(int i(0);i<n;i++) {
@@ -181,9 +180,9 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
-  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions.txt");
+  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + ".txt");
   // vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities.txt");
-  vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes.txt");
+  vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + ".txt");
 
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {

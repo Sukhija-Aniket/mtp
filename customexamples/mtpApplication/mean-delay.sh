@@ -18,6 +18,13 @@ python_script_path="${script_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
 
+# delete the previously created trace files
+cd outputs/
+rm enqueue_dequeue_trace*
+rm static-node-delay-calc*
+cd ..
+# Back to directory where script is present
+
 cd ${script_directory}
 
 # Running the simulation for different nodes
@@ -39,6 +46,8 @@ output_path="${script_directory}/outputs"
 # Preparing arguments for plot script
 last_element="${my_array[${#my_array[@]}-1]}"
 flags="--plot"
+
+cd ${script_directory}
 
 echo "-------------------------Running the plot script ----------------------------------"
 python3 $python_script_mean_delay $last_element $area $flags

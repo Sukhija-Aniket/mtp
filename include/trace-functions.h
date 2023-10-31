@@ -62,7 +62,7 @@ using namespace std;
 namespace ns3 {
 
 std::string getFileName (const std::string& filePath) {
-  std::string path = filePath.substr(filePath.find_first_of("scratch"));
+  std::string path = filePath.substr(filePath.find("scratch"));
   std::filesystem::path p(std::filesystem::absolute(path));
   p = p.lexically_normal();
   std::string fileName = p.string();

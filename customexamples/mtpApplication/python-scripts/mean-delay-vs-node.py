@@ -93,8 +93,8 @@ def main():
             plt.scatter(num_nodes, mean_delay)
             plt.xlabel("Number of Nodes")
             plt.ylabel("Mean AMC delay (in ms)")
-            plt.savefig(os.path.join(input_path, "mean-delay-vs-nodes.png"))
             plt.show()
+            plt.savefig(os.path.join(input_path, "mean-delay-vs-nodes.png"))
 
     else:
         if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
