@@ -25,7 +25,9 @@ const char* traceMap[] = {
   "MACTXNUM",               // MAC
   "ENQUEUENUM",
   "MACENQUEUENUM",
-  "MACTXDROPNUM",
+  "MACDROPNUM",
+  "MAXTXDROPNUM",
+  "MACEXPIREDNUM",
   "PHYTXBEGINNUM",          // PHY TX
   "PHYTXENDNUM",
   "PHYTXDROPNUM",
@@ -142,8 +144,20 @@ void PhyRxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<c
   (*objs).push_back(obj);
 }
 
+void MacExpiredTrace(std::vector<DisplayObject> *objs, std::string context,  Ptr<const WifiMacQueueItem> item) {
+  Ptr<const Packet> pkt = item->GetPacket();
+  DisplayObject obj = Trace(context, pkt, MACEXPIRED);
+  (*objs).push_back(obj);
+}
+
+void MacDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const WifiMacQueueItem> item) {
+  Ptr<const Packet> pkt = item->GetPacket();
+  DisplayObject obj = Trace(context, pkt, MACDROP);
+  (*objs).push_back(obj);
+}
+
 void MacTxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
-  DisplayObject obj = Trace(context, pkt, MACTXDROP);
+  DisplayObject obj = Trace(context, pkt, MACRXDROP);
   (*objs).push_back(obj);
 }
 

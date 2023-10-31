@@ -36,7 +36,7 @@ do
     python3 $python_script_process_generation $node
     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
     # Run the simulations
-    ../../../../ns3 run "$fileName --n=$node"
+    # ../../../../ns3 run "$fileName --n=$node"
     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
 done
 

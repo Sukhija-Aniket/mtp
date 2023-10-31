@@ -21,12 +21,11 @@ import matplotlib.pyplot as plt
 '''
 
 app_dir = os.path.dirname(os.path.dirname(__file__))
-cwd = os.getcwd()
-parentDir = os.path.dirname(cwd)
 
 area = int(sys.argv[2])
 
 input_path = os.path.join(app_dir, "outputs")
+plot_path = os.path.join(app_dir, "plots")
 input_file_template = "static-node-delay-calc-n"
 
 context_map = {
@@ -94,7 +93,7 @@ def main():
             plt.xlabel("Number of Nodes")
             plt.ylabel("Mean AMC delay (in ms)")
             plt.show()
-            plt.savefig(os.path.join(input_path, "mean-delay-vs-nodes.png"))
+            plt.savefig(os.path.join(plot_path, "mean-delay-vs-nodes.png"))
 
     else:
         if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):

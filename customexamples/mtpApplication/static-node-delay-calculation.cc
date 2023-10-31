@@ -133,15 +133,23 @@ void ConnectTraceMACQueues(NodeContainer &nodes, uint8_t tos, vector<vector<Disp
     Ptr<WifiMac> wifiMAC = wifiNetDevice->GetMac();
 
     string context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/Queue";
-
     if(tos == NS3_TOS_VAL::TOS_VO){
       Ptr<WifiMacQueue> vo = wifiMAC->GetTxopQueue(AcIndex::AC_VO);
+      vo->SetMaxSize(QueueSize("1000000000p"));
+      vo->SetMaxDelay(Time(MilliSeconds(500000)));
       vo->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
       vo->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
-    }else{
+      vo->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
+      vo->TraceConnect("Drop", (context + "/Drop"), MakeBoundCallback(&MacDropTrace, objCont[MACDROPNUM]));
+    } else {
       Ptr<WifiMacQueue> be = wifiMAC->GetTxopQueue(AcIndex::AC_BE);
+      be->SetMaxSize(QueueSize("1000000000p"));
+      be->SetMaxDelay(Time(MilliSeconds(500000)));
       be->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
       be->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
+      be->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
+      be->TraceConnect("Drop", (context + "/Drop"), MakeBoundCallback(&MacDropTrace, objCont[MACDROPNUM]));
+
     }
 
   }
@@ -150,23 +158,24 @@ void ConnectTraceMACQueues(NodeContainer &nodes, uint8_t tos, vector<vector<Disp
 int main (int argc, char *argv[])
 {
 
-  int maxPackets = 500;
-  int tos = NS3_TOS_VAL::TOS_VO;
-  double packetInterval = 0.001;
-  int packetSize = 200;
+  uint32_t nNodes = 10;
+  uint32_t tos = NS3_TOS_VAL::TOS_VO;
+  uint32_t packetsPerSecond = 500;
+  uint32_t packetSize = 200;
+  double packetInterval = 1.0/packetsPerSecond;
+  double interval = 5;
+  double maxPackets = interval * packetsPerSecond;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   string fileName;
   CommandLine cmd;
 
   //Number of nodes
-  uint32_t nNodes = 10;
-  double simTime = 3;
-  double interval = 0.5;
+  double simTime = 10;
   bool enablePcap = false;
   string fileN;
-  cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("i", "Broadcast interval in seconds", interval);
   cmd.AddValue ("n", "Number of nodes", nNodes);
+  cmd.AddValue ("i", "Broadcast interval in seconds", interval);
+  cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("pcap", "Enable PCAP", enablePcap);
   cmd.AddValue ("outputFile", "The name of output file for logs and traces", fileN);
   cmd.Parse (argc, argv);
@@ -238,7 +247,7 @@ int main (int argc, char *argv[])
   ConnectTraceMACQueues(nodes, tos, objContainers);
 
   Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/Tx", MakeBoundCallback (&UdpEchoClientTxTrace, objContainers[UDPECHOCLIENTTXNUM]));
-  // Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
@@ -249,7 +258,7 @@ int main (int argc, char *argv[])
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
-  // Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
   Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/Rx", MakeBoundCallback(&UdpEchoServerRxTrace, objContainers[UDPECHOSERVERRXNUM]));
 
   Simulator::Stop(Seconds(simTime));

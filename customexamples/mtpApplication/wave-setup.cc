@@ -42,6 +42,7 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes)
 
   for(uint32_t iNode=0;iNode<devices.GetN();iNode++){
     Ptr<WifiNetDevice> node = DynamicCast<WifiNetDevice> (devices.Get(iNode));
+    Ptr<WifiMac> nodeMac = node->GetMac();
     Ptr<WifiPhy> nodePhy = node->GetPhy();
     // Set Tx Power to 500m
     nodePhy->SetTxPowerStart(19.9);
