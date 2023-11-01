@@ -37,7 +37,7 @@ TypeId CustomApplication::GetInstanceTypeId() const
 CustomApplication::CustomApplication()
 {
     m_broadcast_time = MilliSeconds (100); //every 100ms
-    m_packetSize = 1000; //1000 bytes
+    m_packetSize = 200; //1000 bytes
     m_time_limit = Seconds (5);
     m_mode = WifiMode("OfdmRate6MbpsBW10MHz");
 }

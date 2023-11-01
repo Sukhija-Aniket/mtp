@@ -14,7 +14,7 @@ namespace ns3
       WaveSetup ();
       virtual ~WaveSetup ();
 
-      NetDeviceContainer ConfigureDevices (NodeContainer &n);
+      NetDeviceContainer ConfigureDevices (NodeContainer &n, bool enablePcap);
   };
 }
 

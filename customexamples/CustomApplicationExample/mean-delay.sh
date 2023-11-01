@@ -1,7 +1,7 @@
 #!/bin/bash
 my_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 
-fileName="${1:-static-node-delay-calculation.cc}" # default file is static-node-delay-calculaton.cc
+fileName="${1:-wave-project.cc}" # default file is static-node-delay-calculaton.cc
 if [[ ! "$fileName" =~ \.cc$ ]]; then
   echo "File name must have a .cc extension."
   exit 1
