@@ -3,7 +3,6 @@ import os
 import numpy as np
 import sys
 
-# cwd = os.getcwd()
 par_dir = os.path.dirname((os.path.dirname(__file__)))
 app_dir = os.path.join(par_dir, 'inputs')
 print(app_dir)
@@ -48,7 +47,7 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
 
 def getStartTime(num_nodes=10, mean_velocity=0, std_deviation=0.3):
 
-    startTimes = [abs(1+random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
+    startTimes = [abs(random.gauss(mean_velocity, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
     output_file = app_dir + "/startTimes-" + str(num_nodes) + ".txt"
@@ -65,7 +64,7 @@ def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=500):
     packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
 
     # Define the output file name
-    output_file = app_dir + "/packetGenRate-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -74,6 +73,19 @@ def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=500):
 
     print(f"Application Packet Generation Rate have been saved to {output_file}")
 
+def getPrioPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=100):
+
+    packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
+
+    # Define the output file name
+    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + ".txt"
+
+    # Write the positions to the output file
+    with open(output_file, "w") as file:
+        for x in packetGenRate:
+            file.write(f"{x}\n")
+
+    print(f"Application Priority Packet Generation Rate have been saved to {output_file}")
 
 if __name__ == "__main__":
     if(len(sys.argv) < 2):
@@ -83,3 +95,4 @@ if __name__ == "__main__":
     getStartTime(num_nodes=num_nodes)
     getVelocities(num_nodes=num_nodes)
     getPacketGenerationRate(num_nodes=num_nodes)
+    getPrioPacketGenerationRate(num_nodes=num_nodes)

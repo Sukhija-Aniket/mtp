@@ -9,22 +9,12 @@
 #include "ns3/trace-functions.h"
 #include "custom-mobility-model.h"
 #include "iomanip"
+#include <random>
 
 using namespace ns3;
 using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExample");
-
-// void SomeEvent ()
-// {
-//   for (uint32_t i=0 ; i<NodeList::GetNNodes(); i++)
-//   {
-//     Ptr<Node> n = NodeList::GetNode(i);
-//     Ptr<CustomApplication> c_app = DynamicCast <CustomApplication> (n->GetApplication(0));
-//     c_app->SetWifiMode (WifiMode("OfdmRate3MbpsBW10MHz"));
-//   }
-//     std::cout << "******************" <<std::endl;
-// }
 
 void MacEnqueueTrace1(std::string context, Ptr<const WifiMacQueueItem> item) {
   Ptr<const Packet> pkt = item->GetPacket();
@@ -187,12 +177,23 @@ vector<Vector3D> getPV(int n, string name)  {
 vector<double> getStartTimes(int n, string name){
   string fileName = getCustomFileName(__FILE__, name);
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<double> pv(n);
+  vector<double> startTimes(n);
   for(int i(0);i<n;i++) {
-    cin>>pv[i];
+    cin>>startTimes[i];
   }
   fclose(fp);
-  return pv;
+  return startTimes;
+}
+
+vector<uint32_t> getGenRates(int n, string name) {
+  string fileName = getCustomFileName(__FILE__, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<uint32_t> genRates(n);
+  for(int i(0);i<n;i++) {
+    cin>>genRates[i];
+  }
+  fclose(fp);
+  return genRates;
 }
 
 void ConnectTraceMACQueues(NodeContainer &nodes) {
@@ -209,6 +210,60 @@ void ConnectTraceMACQueues(NodeContainer &nodes) {
     vo->TraceConnect("Expired", (context + "/Expired"), MakeCallback(&MacExpiredTrace1));
     vo->TraceConnect("Drop", (context + "/Drop"), MakeCallback(&MacDropTrace1));
   }
+}
+
+/* Method 1*/
+vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
+{
+  vector<uint32_t> data(genRate, 3);
+  vector<bool> marked(genRate, false);
+  default_random_engine generator;
+  uniform_int_distribution<int> distribution(0, genRate-1);
+  int cnt = 0;
+  while(cnt < prioRate) {
+    int num = distribution(generator);
+    if (marked[num]) continue;
+    data[num] = 7;
+    marked[num] = true;
+    cnt++;
+  }
+  return data;
+}
+
+/* Method 2 */
+vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
+{
+  vector<bool> marked(genRate, false);
+  vector<uint32_t> prioNums;
+  default_random_engine generator;
+  uniform_int_distribution<uint32_t> distribution(0, genRate-1);
+  uint32_t cnt = 0;
+  while(cnt < prioRate)
+  {
+    uint32_t num = distribution(generator);
+    if (marked[num]) continue;
+    prioNums.push_back(num);
+    cnt++;
+  }
+  sort(prioNums.begin(), prioNums.end());
+  vector<uint32_t> data(genRate + prioRate);
+  uint32_t idx = 0;
+  while(cnt < genRate)
+  {
+    if ((idx < prioRate) && (prioNums[idx] <= cnt))
+    {
+      data[idx+cnt] = 7;
+      idx++;
+      data[idx+cnt] = 3;
+      cnt++;
+    }
+    else
+    {
+      data[idx+cnt] = 3;
+      cnt++;
+    }
+  }
+  return data;
 }
 
 int main (int argc, char *argv[])
@@ -238,8 +293,10 @@ int main (int argc, char *argv[])
   mobility.Install(nodes);
 
   vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + ".txt");
-  // vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities.txt");
+  vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities-" + to_string(nNodes) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + ".txt");
+  vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), "inputs/packetGenRates-" + to_string(nNodes) + ".txt");
+  vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), "inputs/prioPacketGenRates-" + to_string(nNodes) + ".txt");
 
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
@@ -252,6 +309,7 @@ int main (int argc, char *argv[])
     cmm->SetVelocityAndAcceleration (Vector3D(0, 0, 0), Vector3D(0, 0, 0));
   }
 
+  // Wifi Phy and Mac Layer
   WaveSetup wave;
   NetDeviceContainer devices = wave.ConfigureDevices(nodes, false);
 
@@ -266,6 +324,8 @@ int main (int argc, char *argv[])
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
+    vector<uint32_t> data = generateData(prioPacketGenRates[i], packetGenRates[i]);
+    app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
 

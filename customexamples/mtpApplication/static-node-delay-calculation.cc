@@ -13,6 +13,7 @@
 #include "ns3/custom-enums.h"
 #include "ns3/custom-display.h"
 #include "ns3/trace-functions.h"
+#include "ns3/ipv4-interface.h"
 #include "ns3/node-list.h"
 
 using namespace ns3;
@@ -159,10 +160,10 @@ int main (int argc, char *argv[])
 {
 
   uint32_t nNodes = 10;
-  uint32_t packetsPerSecond = 500;
+  uint32_t packetsPerSecond = 5;
   uint32_t packetSize = 200;
-  double interval = 5;
-  double simTime = 10;
+  double interval = 2;
+  double simTime = 5;
   bool enablePcap = false;
 
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
@@ -220,6 +221,13 @@ int main (int argc, char *argv[])
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign (devices);
 
+  for(uint32_t i = 0; i < interfaces.GetN(); i++) {
+    pair<Ptr<Ipv4>, uint32_t> p = interfaces.Get(i);
+    Ptr<Ipv4Interface> ipv4Interface = p.first->GetObject<Ipv4L3Protocol>()->GetInterface(p.second);
+    ipv4Interface->SetForwarding(false);
+    // p.first->SetDown(p.second);
+  }
+
   // Application Layer
   ObjectFactory client;
   client.SetTypeId("ns3::UdpEchoClient");
@@ -251,8 +259,12 @@ int main (int argc, char *argv[])
 
   ConnectTraceMACQueues(nodes, tos, objContainers);
 
+  // Ipv4L3Protocol
+  UdpEchoClient;
   Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/Tx", MakeBoundCallback (&UdpEchoClientTxTrace, objContainers[UDPECHOCLIENTTXNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/SendOutgoing", MakeBoundCallback(&Ipv4L3ProtocolUnicastTrace, objContainers[IPV4L3PROTOCOLUNICASTNUM]));
+  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/LocalDeliver", MakeBoundCallback(&Ipv4L3ProtocolMulticastTrace, objContainers[IPV4L3PROTOCOLMULTICASTNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));

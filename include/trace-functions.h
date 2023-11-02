@@ -22,6 +22,8 @@ const char* traceMap[] = {
   "BULKSENDTXNUM",
   "TCPSOCKETBASETXNUM",     // Transport
   "IPV4L3PROTOCOLTXNUM",    // Network
+  "IPV4L3PROTOCOLUNICASTNUM",
+  "IPV4L3PROTOCOLMULTICASTNUM",
   "MACTXNUM",               // MAC
   "ENQUEUENUM",
   "MACENQUEUENUM",
@@ -168,6 +170,18 @@ void MacRxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<c
 
 void Ipv4L3ProtocolTxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, Ptr<Ipv4> ipv4, uint32_t n) {
   DisplayObject obj = Trace(context, pkt, IPV4L3PROTOCOLTX);
+  (*objs).push_back(obj);
+}
+
+void Ipv4L3ProtocolUnicastTrace(std::vector<DisplayObject> *objs, std::string context, const Ipv4Header& header, Ptr<const Packet> pkt, uint32_t n) {
+  std::cout<<"this was not called"<<std::endl;
+  DisplayObject obj = Trace(context, pkt, IPV4L3PROTOCOLUNICAST);
+  (*objs).push_back(obj);
+}
+
+void Ipv4L3ProtocolMulticastTrace(std::vector<DisplayObject> *objs, std::string context, const Ipv4Header& header, Ptr<const Packet> pkt, uint32_t n) {
+  std::cout<<"this was called"<<std::endl;
+  DisplayObject obj = Trace(context, pkt, IPV4L3PROTOCOLMULTICAST);
   (*objs).push_back(obj);
 }
 

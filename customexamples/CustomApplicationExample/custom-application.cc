@@ -36,21 +36,20 @@ TypeId CustomApplication::GetInstanceTypeId() const
 
 CustomApplication::CustomApplication()
 {
+    m_enabled = false;
     m_broadcast_time = MilliSeconds (100); //every 100ms
-    m_packetSize = 200; //1000 bytes
+    m_packetSize = 200; //200 bytes
     m_time_limit = Seconds (5);
-    m_mode = WifiMode("OfdmRate6MbpsBW10MHz");
+    m_mode = WifiMode("OfdmRate3MbpsBW10MHz");
 }
-CustomApplication::~CustomApplication()
-{
+CustomApplication::~CustomApplication() {}
 
-}
 void
-CustomApplication::StartApplication()
-{
-    NS_LOG_FUNCTION (this);
-    //Set A Receive callback
-    Ptr<Node> n = GetNode ();
+CustomApplication::Configure() {
+
+  NS_LOG_FUNCTION (this);
+  //Set A Receive callback
+  Ptr<Node> n = GetNode ();
     for (uint32_t i = 0; i < n->GetNDevices (); i++)
     {
         Ptr<NetDevice> dev = n->GetDevice (i);
@@ -61,14 +60,45 @@ CustomApplication::StartApplication()
             dev->SetReceiveCallback (MakeCallback (&CustomApplication::ReceivePacket, this));
 
             /*
-            If you want promiscous receive callback, connect to this trace. 
+            If you want promiscous receive callback, connect to this trace.
             For every packet received, both functions ReceivePacket & PromiscRx will be called. with PromicRx being called first!
             */
             Ptr<WifiPhy> phy = m_waveDevice->GetPhys()[0]; //default, there's only one PHY in a WaveNetDevice
             phy->TraceConnectWithoutContext ("MonitorSnifferRx", MakeCallback(&CustomApplication::PromiscRx, this));
             break;
-        } 
+        }
     }
+    return;
+}
+
+void
+CustomApplication::StartApplicationWithData()
+{
+  Configure();
+  if (m_waveDevice)
+  {
+      //Let's create a bit of randomness with the first broadcast packet time to avoid collision
+        Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable> ();
+        Time random_offset = MicroSeconds (rand->GetValue(50,200));
+
+        Simulator::Schedule (m_broadcast_time+random_offset, &CustomApplication::BroadcastInformationWithParameters, m_data, 0, this);
+  }
+  else
+  {
+      NS_FATAL_ERROR ("There's no WaveNetDevice in your node");
+  }
+      //We will periodically (every 1 second) check the list of neighbors, and remove old ones (older than 5 seconds)
+  Simulator::Schedule (Seconds (1), &CustomApplication::RemoveOldNeighbors, this);
+}
+
+void
+CustomApplication::StartApplication()
+{
+  if (m_enabled) {
+    StartApplicationWithData();
+    return;
+  }
+    Configure();
     if (m_waveDevice)
     {
         //Let's create a bit of randomness with the first broadcast packet time to avoid collision
@@ -83,9 +113,9 @@ CustomApplication::StartApplication()
     }
     //We will periodically (every 1 second) check the list of neighbors, and remove old ones (older than 5 seconds)
     Simulator::Schedule (Seconds (1), &CustomApplication::RemoveOldNeighbors, this);
-      
+
 }
-void 
+void
 CustomApplication::SetBroadcastInterval (Time interval)
 {
     NS_LOG_FUNCTION (this << interval);
@@ -97,20 +127,23 @@ CustomApplication::SetWifiMode (WifiMode mode)
     m_mode = mode;
 }
 
-void
-CustomApplication::BroadcastInformation()
-{
+void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t> &data, uint32_t index) {
+    if (index >= data.size())
+    {
+        return;
+    }
+
     NS_LOG_FUNCTION (this);
     //Setup transmission parameters
     TxInfo tx;
-    tx.channelNumber = CCH; 
+    tx.channelNumber = CCH;
     tx.preamble = WIFI_PREAMBLE_LONG;
-    tx.priority = 7; //highest priority.
-    tx.txPowerLevel = 7;
+    tx.priority = data[index]; // priority using data
+    tx.txPowerLevel = 1;
     tx.dataRate = m_mode;
-    
+
     Ptr<Packet> packet = Create <Packet> (m_packetSize);
-    
+
     //let's attach our custom data tag to it
     CustomDataTag tag;
     tag.SetNodeId ( GetNode()->GetId() );
@@ -123,7 +156,37 @@ CustomApplication::BroadcastInformation()
     //Broadcast the packet as WSMP (0x88dc)
     m_waveDevice->SendX (packet, Mac48Address::GetBroadcast(), 0x88dc, tx);
 
-    //Schedule next broadcast 
+    //Schedule next broadcast
+    Simulator::Schedule (m_broadcast_time, &CustomApplication::BroadcastInformationWithParameters, data, index+1, this);
+}
+
+void
+CustomApplication::BroadcastInformation()
+{
+    NS_LOG_FUNCTION (this);
+    //Setup transmission parameters
+    TxInfo tx;
+    tx.channelNumber = CCH;
+    tx.preamble = WIFI_PREAMBLE_LONG;
+    tx.priority = 3; //highest priority.
+    tx.txPowerLevel = 1;
+    tx.dataRate = m_mode;
+
+    Ptr<Packet> packet = Create <Packet> (m_packetSize);
+
+    //let's attach our custom data tag to it
+    CustomDataTag tag;
+    tag.SetNodeId ( GetNode()->GetId() );
+    tag.SetPosition ( GetNode()->GetObject<MobilityModel>()->GetPosition());
+    //timestamp is set in the default constructor of the CustomDataTag class as Simulator::Now()
+
+    //attach the tag to the packet
+    packet->AddPacketTag (tag);
+
+    //Broadcast the packet as WSMP (0x88dc)
+    m_waveDevice->SendX (packet, Mac48Address::GetBroadcast(), 0x88dc, tx);
+
+    //Schedule next broadcast
     Simulator::Schedule (m_broadcast_time, &CustomApplication::BroadcastInformation, this);
 }
 
@@ -132,33 +195,33 @@ CustomApplication::ReceivePacket (Ptr<NetDevice> device, Ptr<const Packet> packe
 {
     NS_LOG_FUNCTION (device << packet << protocol << sender);
     /*
-        Packets received here only have Application data, no WifiMacHeader. 
+        Packets received here only have Application data, no WifiMacHeader.
         We created packets with 1000 bytes payload, so we'll get 1000 bytes of payload.
     */
     NS_LOG_INFO ("ReceivePacket() : Node " << GetNode()->GetId() << " : Received a packet from " << sender << " Size:" << packet->GetSize());
-    
+
     //Let's check if packet has a tag attached!
     CustomDataTag tag;
     if (packet->PeekPacketTag (tag))
     {
-        NS_LOG_INFO ("\tFrom Node Id: " << tag.GetNodeId() << " at " << tag.GetPosition() 
+        NS_LOG_INFO ("\tFrom Node Id: " << tag.GetNodeId() << " at " << tag.GetPosition()
                         << "\tPacket Timestamp: " << tag.GetTimestamp() << " delay="<< Now()-tag.GetTimestamp());
     }
 
     return true;
 }
-void 
+void
 CustomApplication::PromiscRx (Ptr<const Packet> packet, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn, uint16_t sta_id)
 {
     //This is a promiscous trace. It will pick broadcast packets, and packets not directed to this node's MAC address.
     /*
         Packets received here have MAC headers and payload.
-        If packets are created with 1000 bytes payload, the size here is about 38 bytes larger. 
+        If packets are created with 1000 bytes payload, the size here is about 38 bytes larger.
     */
     NS_LOG_DEBUG (Now () << " PromiscRx() : Node " << GetNode()->GetId() << " : ChannelFreq: " << channelFreq << " Mode: " << tx.GetMode()
                  << " Signal: " << sn.signal << " Noise: " << sn.noise << " Size: " << packet->GetSize()
                  << " Mode " << tx.GetMode ()
-                 );    
+                 );
     WifiMacHeader hdr;
     if (packet->PeekHeader (hdr))
     {
@@ -178,7 +241,7 @@ CustomApplication::PromiscRx (Ptr<const Packet> packet, uint16_t channelFreq, Wi
         else //Well, this packet is not intended for me
         {
             //Maybe record some information about neighbors
-        }    
+        }
     }
 }
 
@@ -228,11 +291,17 @@ void CustomApplication::RemoveOldNeighbors ()
             //Remove an old entry from the table
             m_neighbors.erase (it);
             break;
-        }    
+        }
     }
     //Check the list again after 1 second.
     Simulator::Schedule (Seconds (1), &CustomApplication::RemoveOldNeighbors, this);
 
+}
+
+void CustomApplication::SetData(std::vector<uint32_t> &data)
+{
+    m_enabled = true;
+    m_data = data;
 }
 
 }//end of ns3

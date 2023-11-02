@@ -14,3 +14,5 @@ quit or q	                                Exits out of GDB.
 clear	                                    Clears all breakpoints.
 continue	                                Continues normal execution
 info display                                shows all the available tags which we can look upon
+
+set breakpoing pending on
