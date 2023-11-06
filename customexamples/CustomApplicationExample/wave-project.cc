@@ -219,7 +219,7 @@ vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
   vector<bool> marked(genRate, false);
   default_random_engine generator;
   uniform_int_distribution<int> distribution(0, genRate-1);
-  int cnt = 0;
+  uint32_t cnt = 0;
   while(cnt < prioRate) {
     int num = distribution(generator);
     if (marked[num]) continue;
@@ -271,7 +271,7 @@ int main (int argc, char *argv[])
   CommandLine cmd;
 
   //Number of nodes
-  uint32_t nNodes = 1;
+  uint32_t nNodes = 10;
   double simTime = 5; //4 seconds
   double interval = 0.002;
   bool enablePcap = false;

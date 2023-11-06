@@ -81,7 +81,7 @@ CustomApplication::StartApplicationWithData()
         Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable> ();
         Time random_offset = MicroSeconds (rand->GetValue(50,200));
 
-        Simulator::Schedule (m_broadcast_time+random_offset, &CustomApplication::BroadcastInformationWithParameters, m_data, 0, this);
+        Simulator::Schedule (m_broadcast_time+random_offset, &CustomApplication::BroadcastInformationWithParameters, this, m_data, 0);
   }
   else
   {
@@ -157,7 +157,7 @@ void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t>
     m_waveDevice->SendX (packet, Mac48Address::GetBroadcast(), 0x88dc, tx);
 
     //Schedule next broadcast
-    Simulator::Schedule (m_broadcast_time, &CustomApplication::BroadcastInformationWithParameters, data, index+1, this);
+    Simulator::Schedule (m_broadcast_time, &CustomApplication::BroadcastInformationWithParameters, this, data, index+1);
 }
 
 void
