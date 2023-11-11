@@ -1,4 +1,5 @@
-customexamples/mtpApplication/outputs/
-customexamples/mtpApplication/inputs/
-customexamples/CustomApplicationExample/outputs/
-customexamples/CustomApplicationExample/inputs/
+inputs/
+outputs/
+plots/
+extras/
+traces/

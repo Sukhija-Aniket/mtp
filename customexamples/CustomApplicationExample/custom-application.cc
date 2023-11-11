@@ -130,7 +130,7 @@ CustomApplication::SetWifiMode (WifiMode mode)
 void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t> &data, uint32_t index) {
     if (index >= data.size())
     {
-        return;
+        index = 0;
     }
 
     NS_LOG_FUNCTION (this);

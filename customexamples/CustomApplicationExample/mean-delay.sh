@@ -1,7 +1,9 @@
 #!/bin/bash
 my_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 
-fileName="${1:-wave-project.cc}" # default file is static-node-delay-calculaton.cc
+processFlags="${1:-[]}"
+
+fileName="${2:-wave-project.cc}" # default file is static-node-delay-calculaton.cc
 if [[ ! "$fileName" =~ \.cc$ ]]; then
   echo "File name must have a .cc extension."
   exit 1
@@ -30,16 +32,21 @@ cd ${script_directory}
 # Running the simulation for different nodes
 for node in "${my_array[@]}"
 do
-    echo "-------------------------Number of Nodes: $node -----------------------------"
-    echo "-------------------------Generating Random Processes-------------------------"
+    # echo "-------------------------Number of Nodes: $node -----------------------------"
+    # echo "-------------------------Generating Random Processes-------------------------"
     # Script to generate the parameters of simulation using some distributions
-    python3 $python_script_process_generation $node
+    if [[ ${#processFlags} -eq 2 ]]; then
+      flags=$node
+      python3 $python_script_process_generation $flags
+    else
+      flags="$node $processFlags"
+      python3 $python_script_process_generation $flags
+    fi 
     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
     # Run the simulations
     ../../../../ns3 run "$fileName --n=$node"
     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
 done
-
 
 output_path="${script_directory}/outputs"
 

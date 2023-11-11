@@ -174,13 +174,11 @@ void Ipv4L3ProtocolTxTrace(std::vector<DisplayObject> *objs, std::string context
 }
 
 void Ipv4L3ProtocolUnicastTrace(std::vector<DisplayObject> *objs, std::string context, const Ipv4Header& header, Ptr<const Packet> pkt, uint32_t n) {
-  std::cout<<"this was not called"<<std::endl;
   DisplayObject obj = Trace(context, pkt, IPV4L3PROTOCOLUNICAST);
   (*objs).push_back(obj);
 }
 
 void Ipv4L3ProtocolMulticastTrace(std::vector<DisplayObject> *objs, std::string context, const Ipv4Header& header, Ptr<const Packet> pkt, uint32_t n) {
-  std::cout<<"this was called"<<std::endl;
   DisplayObject obj = Trace(context, pkt, IPV4L3PROTOCOLMULTICAST);
   (*objs).push_back(obj);
 }

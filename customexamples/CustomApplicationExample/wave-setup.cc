@@ -18,7 +18,7 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enabl
   Ptr<YansWifiChannel> channel = waveChannel.Create();
   wavePhy.SetChannel (channel);
   uint32_t channelID = channel->GetId();
-    wavePhy.Set("Frequency", UintegerValue(5900));
+  wavePhy.Set("Frequency", UintegerValue(5900));
   std::string channelTuple = "{" + std::to_string(channelID) + ", " + std::to_string(10) + ", BAND_5GHZ, 0}";
   wavePhy.Set("ChannelSettings", StringValue(channelTuple));
 

@@ -259,8 +259,6 @@ int main (int argc, char *argv[])
 
   ConnectTraceMACQueues(nodes, tos, objContainers);
 
-  // Ipv4L3Protocol
-  UdpEchoClient;
   Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/Tx", MakeBoundCallback (&UdpEchoClientTxTrace, objContainers[UDPECHOCLIENTTXNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
   Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/SendOutgoing", MakeBoundCallback(&Ipv4L3ProtocolUnicastTrace, objContainers[IPV4L3PROTOCOLUNICASTNUM]));
