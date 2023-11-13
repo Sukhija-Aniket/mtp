@@ -17,7 +17,7 @@ def getPositions(num_nodes=10, position_model='uniform'):
         positions = [(random.uniform(0, 2000), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
         
     elif(position_model.startswith('platoon')):
-        headway = convert_nodes_to_headway(num_nodes, json_data.get('total_distance', 2000))
+        headway = convert_nodes_to_headway(num_nodes, int(json_data.get('total_distance', 2000)))
         positions = [((i*headway), 0) for i in range(num_nodes+1)]
     
     # Sort the positions by X coordinate in ascending order
@@ -113,12 +113,13 @@ if __name__ == "__main__":
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
-    critical_rate = getCriticalRate(json_data)
 
     for num_nodes in data:
+        critical_rate = getCriticalRate(num_nodes, json_data)
         getPositions(num_nodes=num_nodes, position_model=position_model)
         getStartTime(num_nodes=num_nodes)
         getVelocities(num_nodes=num_nodes)
         getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type)
         getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type)
+        print("\n\n")
 

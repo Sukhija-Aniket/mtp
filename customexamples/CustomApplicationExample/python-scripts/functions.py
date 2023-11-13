@@ -4,7 +4,6 @@ def convert_to_json(json_string):
     try:
         json_data = json.loads(json_string)
         return json_data
-
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}, exiting...")
         sys.exit(1)
@@ -19,10 +18,9 @@ def getPlatoonRate(params):
     return critical_rate
 
 
-def getCriticalRate(json_data):
-    
+def getCriticalRate(num_nodes, json_data):
     position_model = str(json_data['position_model'])
-    platoon_params = updateParams(json_data)
+    platoon_params = updateParams(num_nodes, json_data)
     if position_model.startswith('platoon'):
         rate = getPlatoonRate(platoon_params)
         return rate
@@ -34,7 +32,7 @@ def updateParams(num_nodes, json_data):
     platoon_params = {
         'alpha': float(json_data.get('alpha', -1.933)),
         'gamma': float(json_data.get('gamma', 0.652)),
-        'convergence_value': int(convert_nodes_to_headway(num_nodes, json_data.get('total_distance', 2000))),
+        'convergence_value': int(convert_nodes_to_headway(num_nodes, int(json_data.get('total_distance', 2000)))),
         'velocity_lead_node': int(json_data.get('velocity_lead_node', 25)),
         'tunable_param': int(json_data.get('tunable_param', 500)),
     }
@@ -53,7 +51,7 @@ def convert_headway_to_nodes(json_data):
     dist = json_data['total_distance']
     position_model = str(json_data['position_model'])
     if position_model.startswith('platoon'):
-        num_nodes = json_data['num_nodes_array']
+        num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
     else:
         data = json_data['headway_array']
         for x in data:

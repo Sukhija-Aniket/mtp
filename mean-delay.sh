@@ -28,9 +28,9 @@ print_usage() {
 
 get_script_dir() {
   local fileName="$1"
-  found_file=$(find "$current_dir" -type f -name "$fileName" -print -quit 2>/dev/null)
+  found_file=$(find "." -type f -name "$fileName" -print -quit 2>/dev/null)
   if [ -n "$found_file" ]; then
-    found_directory=$(dirname "$found_file")
+    found_directory=$(realpath $(dirname "$found_file"))
 
     echo "$found_directory"
   else
@@ -74,26 +74,25 @@ cd ${script_directory} || exit
 
 # deleting the previously created inputs, outputs and plots
 cd inputs/
-rm *
+rm -rf *
 cd ../
 
 base_fileName="${fileName%.*}"
 cd outputs/
-rm enqueue_dequeue_trace*
-rm "${base_fileName}"*
+rm -rf enqueue_dequeue_trace*
+rm -rf "${base_fileName}"*
 cd ../
 
 cd plots/
-files_to_delete = $(find -type f -not -name "*save*")
+files_to_delete=$(find -type f -not -name "*save*")
 if [ -n "$files_to_delete" ]; then 
-  echo ${files_to_delete}
-  rm $files_to_delete 
+  rm -rf $files_to_delete 
 fi
 cd ../
 
 # Setting input Parameters
-params["num_nodes_array"]=$num_nodes_array # These are default params
-params["headway_array"]=$headway_array
+params["num_nodes_array"]=${num_nodes_array[*]} # These are default params
+params["headway_array"]=${headway_array[*]}
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
@@ -122,13 +121,15 @@ json_data+="}"
 
 # Generating, Running and analyzing data & Processes
 echo "Running File Generation Process"
-python3 $python_script_process_generation $json_data 
+python3 "$python_script_process_generation" "$json_data" 
+
+exit
 
 echo "Running the Actual ns3 process"
-python3 $python_script_process_runner $fileName $json_data
+python3 "$python_script_process_runner" "$fileName" "$json_data"
 
 echo "Running the Process for output & Plot extraction"
-python3 $python_script_mean_delay $json_data
+python3 "$python_script_mean_delay" "$json_data"
 
 
 
