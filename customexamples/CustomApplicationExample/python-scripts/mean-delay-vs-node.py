@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -21,8 +22,6 @@ import matplotlib.pyplot as plt
 '''
 
 app_dir = os.path.dirname(os.path.dirname(__file__))
-
-area = int(sys.argv[2])
 
 input_path = os.path.join(app_dir, "outputs")
 plot_path = os.path.join(app_dir, "plots")
@@ -78,58 +77,56 @@ def get_mean_mac_delay(fileName, nodes=None):
                     uid_enqueue[uid] = time
 
     for x in range(4):
-        # print(f"QueueNumber: {x}\t total_delay: {mean_delays[x]}\t Count: {counters[x]}\t mean_delay: {mean_delays[x]/counters[x]}")
         if counters[x] == 0:
             continue
         mean_delays[x] = mean_delays[x]/counters[x]
         os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]/counters[x]}ns \n", 'utf-8'))
     os.close(file_descriptor)
-    # print()
     return mean_delays
 
 def main():
-    if(len(sys.argv) < 3):
+    if(len(sys.argv) < 2):
         raise TypeError("Insufficient arguments. At least one additional argument is required.")
 
-    if(sys.argv[1].isdigit()):
-        step = 10
-        num_nodes = np.arange(step, int(sys.argv[1])+step, step)
-        mean_delays = [[], [], [], []]
-        for i in range(len(num_nodes)):
-            input_file = input_file_template + str(num_nodes[i]) + ".log"
-            temparr = get_mean_mac_delay(input_file, num_nodes[i])
-            for x in range(4):
-                mean_delays[x].append(round(temparr[x]/1000000, 5))
+    parameters = sys.argv[1]
+    json_data = convert_to_json(parameters)
+    data = convert_headway_to_nodes(json_data)
+    position_model = str(json_data['position_model'])
+    
 
-        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
-            for x in range(4):
-                if sum(mean_delays[x]) == 0:
-                    continue
-                plt.plot(num_nodes, mean_delays[x], label=inverse_map[x])
-                plt.scatter(num_nodes, mean_delays[x])
-                plt.xlabel("Number of Nodes")
-                plt.ylabel("Mean MAC delay (in ms)")
-            plt.legend()
-            # plt.show()
-            plt.savefig(os.path.join(plot_path, "mean-delay-vs-nodes.png"))
 
-            for x in range(4):
-                if sum(mean_delays[x]) == 0:
-                    continue
-                plt.figure()
-                plt.plot(num_nodes, mean_delays[x])
-                plt.scatter(num_nodes, mean_delays[x])
-                plt.xlabel("Number of Nodes")
-                plt.ylabel("Mean Mac delay (in ms)")
-                # plt.show()
-                plt.savefig(os.path.join(plot_path, f"mean-delay-vs-nodes-{inverse_map[x]}.png"))
-    else:
-        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
-            raise Exception("Invalid flag")
-
-        mean_delays = get_mean_mac_delay(sys.argv[1])
+    mean_delays = [[], [], [], []]
+    for num_nodes in data:
+        input_file = input_file_template + str(num_nodes) + ".log"
+        temparr = get_mean_mac_delay(input_file, num_nodes)
         for x in range(4):
-            print(x, mean_delays[x])
+            mean_delays[x].append(round(temparr[x]/1000000, 5))
+
+    xlabel, plt_data = 'Number of Nodes', data
+    if position_model.startswith('platoon'):
+        xlabel = 'Headway'
+        plt_data = [convert_nodes_to_headway(x, json_data.get('total_distance', 2000)) for x in data]
+    for x in range(4):
+        if sum(mean_delays[x]) == 0:
+            continue
+        plt.plot(plt_data, mean_delays[x], label=inverse_map[x])
+        plt.scatter(plt_data, mean_delays[x])
+        plt.xlabel(xlabel)
+        plt.ylabel("Mean MAC delay (in ms)")
+    plt.legend()
+    # plt.show()
+    plt.savefig(os.path.join(plot_path, "mean-delay-vs-nodes.png"))
+
+    for x in range(4):
+        if sum(mean_delays[x]) == 0:
+            continue
+        plt.figure()
+        plt.plot(plt_data, mean_delays[x])
+        plt.scatter(plt_data, mean_delays[x])
+        plt.xlabel(xlabel)
+        plt.ylabel("Mean Mac delay (in ms)")
+        # plt.show()
+        plt.savefig(os.path.join(plot_path, f"mean-delay-vs-nodes-{inverse_map[x]}.png"))
 
 
 if __name__ == "__main__":

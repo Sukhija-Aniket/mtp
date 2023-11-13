@@ -141,12 +141,8 @@ int main (int argc, char *argv[])
   //Number of nodes
   uint32_t nNodes = 10;
   double simTime = 10; // 10 seconds
-  double interval = 0.002;
-  bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("i", "Broadcast interval in seconds", interval);
   cmd.AddValue ("n", "Number of nodes", nNodes);
-  cmd.AddValue ("pcap", "Enable PCAP", enablePcap);
   cmd.Parse (argc, argv);
 
   NodeContainer nodes;
@@ -189,7 +185,7 @@ int main (int argc, char *argv[])
   for (uint32_t i=0; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
-    interval = 1.0/(prioPacketGenRates[i] + packetGenRates[i]);
+    double interval = 1.0/(prioPacketGenRates[i] + packetGenRates[i]);
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
