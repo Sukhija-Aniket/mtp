@@ -7,7 +7,7 @@ accepted_keys = ['t']
 
 # Functions
 def run_ns3_process(fileName, paramString, nodes):
-    command = ns3_directory + '/ns3 run' + fileName + paramString + f' --n={nodes}'
+    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes}"'
 
     try:
         subprocess.run(command, shell=True, check=True)
@@ -23,8 +23,9 @@ elif len(sys.argv) >= 2:
     ns3_executable = sys.argv[1]
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
-    data = convert_headway_to_nodes(json_data)
+    data, printlines = convert_headway_to_nodes(json_data)
     cli_args = convert_to_cli(json_data, accepted_keys)
     
-    for nodes in data:
+    for i,nodes in enumerate(data):
+        print(printlines[i])
         run_ns3_process(ns3_executable, cli_args, nodes)

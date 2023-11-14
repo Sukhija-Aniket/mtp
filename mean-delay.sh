@@ -14,16 +14,16 @@ total_distance=2000
 print_usage() {
   echo "Usage: $(basename "$0") FILENAME [OPTIONS]"
   echo "Options:"
-  echo "--help                                                  Displays this help message"
-  echo "--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
-  echo "--total_distance=VALUE (default=2000)                   Specify the total distance of road during simulation"
-  echo "--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
-  echo "--general_type={poisson, constant, default=constant}    Specify the distribution for generating general packets"
-  echo "--critical_type={poisson, constant, default=poisson}    Specify the distribution for generating critical packets"
-  echo "--position_model={uniform, platoon, default=uniform}    Specify the position model used during simulation"
+  echo -e "\t--help                                                  Displays this help message"
+  echo -e "\t--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
+  echo -e "\t--total_distance=VALUE (default=2000)                   Specify the total distance of road during simulation"
+  echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
+  echo -e "\t--general_type={poisson, constant, default=constant}    Specify the distribution for generating general packets"
+  echo -e "\t--critical_type={poisson, constant, default=poisson}    Specify the distribution for generating critical packets"
+  echo -e "\t--position_model={uniform, platoon, default=uniform}    Specify the position model used during simulation"
   #TODO: Add a lot of echo options that will help the user to understand how to use the script.
-  echo "Example:"
-  echo "$(basename "$0") myfile.txt --general_type=constant --critical_type=poisson --general_rate=5"
+  echo -e "\nExample:"
+  echo -e "\t$(basename "$0") wave-project.cc --general_type=constant --critical_type=poisson --general_rate=5"
 }
 
 get_script_dir() {
@@ -54,10 +54,15 @@ handle_argument() {
 # Setting paths
 fileName="$1"
 if [ -z "$fileName" ]; then 
-  echo "Error, Please provide a fileName, exiting..."
-  print_usage
+  echo "Error, Please provide a .cc file as input, exiting..."
   exit 1
 fi
+
+if [[ "$#" -eq 1 && "$1" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
 if [[ ! "$fileName" =~ \.cc$ ]]; then
   echo "File name must have a .cc extension, exiting..."
   exit 1
@@ -104,10 +109,9 @@ while [[ "$#" -gt 0 ]]; do
     --*=*)
       handle_argument "$1"
       ;;
-    *)
+      *)
       echo "Invalid Param format: $1, exiting..."
       exit 1
-      ;;
   esac
   shift
 done
@@ -123,10 +127,11 @@ json_data+="}"
 echo "Running File Generation Process"
 python3 "$python_script_process_generation" "$json_data" 
 
-exit
-
+#TODO: testing of the script for Actual NS3 Process
 echo "Running the Actual ns3 process"
 python3 "$python_script_process_runner" "$fileName" "$json_data"
+
+exit
 
 echo "Running the Process for output & Plot extraction"
 python3 "$python_script_mean_delay" "$json_data"

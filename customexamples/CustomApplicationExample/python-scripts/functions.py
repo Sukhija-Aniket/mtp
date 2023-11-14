@@ -48,17 +48,20 @@ def convert_to_cli(json_data, accepted_keys):
 
 def convert_headway_to_nodes(json_data):
     num_nodes = []
-    dist = json_data['total_distance']
+    printlines = []
+    dist = int(json_data['total_distance'])
     position_model = str(json_data['position_model'])
     if position_model.startswith('platoon'):
-        num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
-    else:
-        data = json_data['headway_array']
+        data = list(map(int, json_data['headway_array'].split(' ')))
         for x in data:
             nodes = int(dist/x + 1)
             num_nodes.append(nodes)
+            printlines.append(f"Running for headway={x}")
+    else:
+        num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
+        printlines = list(f"Running for numNodes={x}" for x in num_nodes)
     
-    return num_nodes
+    return num_nodes, printlines
 
 def convert_nodes_to_headway(num_nodes, dist=2000):
     num_nodes = int(num_nodes)

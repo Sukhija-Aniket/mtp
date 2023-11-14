@@ -93,8 +93,6 @@ def main():
     data = convert_headway_to_nodes(json_data)
     position_model = str(json_data['position_model'])
     
-
-
     mean_delays = [[], [], [], []]
     for num_nodes in data:
         input_file = input_file_template + str(num_nodes) + ".log"

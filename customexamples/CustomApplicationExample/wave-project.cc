@@ -140,7 +140,7 @@ int main (int argc, char *argv[])
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   //Number of nodes
   uint32_t nNodes = 10;
-  double simTime = 10; // 10 seconds
+  double simTime = 1; 
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
   cmd.Parse (argc, argv);

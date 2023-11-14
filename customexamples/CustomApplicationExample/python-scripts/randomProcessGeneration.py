@@ -108,13 +108,14 @@ if __name__ == "__main__":
         raise Exception("Insufficient arguments!!")
     parameters = sys.argv[1] 
     json_data = convert_to_json(parameters)
-    data = convert_headway_to_nodes(json_data)
+    data, printlines = convert_headway_to_nodes(json_data)
     position_model = json_data['position_model']
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
 
-    for num_nodes in data:
+    for idx, num_nodes in enumerate(data):
+        print(printlines[idx])
         critical_rate = getCriticalRate(num_nodes, json_data)
         getPositions(num_nodes=num_nodes, position_model=position_model)
         getStartTime(num_nodes=num_nodes)
