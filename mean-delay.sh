@@ -3,7 +3,7 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
-headway_array=(200 400) # Distance between two consecutive nodes to simulate on
+headway_array=(2 4 6 8 10 12 14) # Distance between two consecutive nodes to simulate on
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
