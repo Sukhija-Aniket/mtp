@@ -66,5 +66,5 @@ def convert_headway_to_nodes(json_data):
 def convert_nodes_to_headway(num_nodes, dist=2000):
     num_nodes = int(num_nodes)
     num_nodes -= 1
-    x = int(dist/num_nodes)
+    x = int(int(dist)/num_nodes)
     return x

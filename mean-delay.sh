@@ -3,7 +3,7 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
-headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
+headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
@@ -52,6 +52,9 @@ handle_argument() {
 }
 
 # Setting paths
+touch nohup.out
+echo -n > nohup.out
+
 fileName="$1"
 if [ -z "$fileName" ]; then 
   echo "Error, Please provide a .cc file as input, exiting..."
@@ -91,7 +94,7 @@ cd ../
 cd plots/
 files_to_delete=$(find -type f -not -name "*save*")
 if [ -n "$files_to_delete" ]; then 
-  rm -rf $files_to_delete 
+rm -rf $files_to_delete 
 fi
 cd ../
 
@@ -131,7 +134,6 @@ python3 "$python_script_process_generation" "$json_data"
 echo "Running the Actual ns3 process"
 python3 "$python_script_process_runner" "$fileName" "$json_data"
 
-exit
 
 echo "Running the Process for output & Plot extraction"
 python3 "$python_script_mean_delay" "$json_data"

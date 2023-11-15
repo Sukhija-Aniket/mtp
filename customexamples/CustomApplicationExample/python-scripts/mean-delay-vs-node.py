@@ -90,7 +90,7 @@ def main():
 
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    data = convert_headway_to_nodes(json_data)
+    data, printlines = convert_headway_to_nodes(json_data)
     position_model = str(json_data['position_model'])
     
     mean_delays = [[], [], [], []]
@@ -99,7 +99,6 @@ def main():
         temparr = get_mean_mac_delay(input_file, num_nodes)
         for x in range(4):
             mean_delays[x].append(round(temparr[x]/1000000, 5))
-
     xlabel, plt_data = 'Number of Nodes', data
     if position_model.startswith('platoon'):
         xlabel = 'Headway'

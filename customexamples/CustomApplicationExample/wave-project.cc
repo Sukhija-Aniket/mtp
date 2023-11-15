@@ -68,8 +68,8 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
     string context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/VOQueue";
     Ptr<WifiMacQueue> q = waveMac->GetTxopQueue(AcIndex::AC_VO);
     ConfigureQueue(q, context, objCont);
-    context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/BEQueue";
-    q = waveMac->GetTxopQueue(AcIndex::AC_BE);
+    context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/VIQueue";
+    q = waveMac->GetTxopQueue(AcIndex::AC_VI);
     ConfigureQueue(q, context, objCont);
   }
 }
@@ -77,7 +77,7 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
 /* Method 1*/
 vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
 {
-  vector<uint32_t> data(genRate, 3);
+  vector<uint32_t> data(genRate, 5);
   vector<bool> marked(genRate, false);
   default_random_engine generator;
   uniform_int_distribution<int> distribution(0, genRate-1);
@@ -95,7 +95,7 @@ vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
 /* Method 2 */
 vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
 { 
-  int genv = 3;
+  int genv = 5;
   int priov = 7;
   if (genRate < prioRate) {
     swap(genRate, prioRate);
@@ -139,7 +139,7 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   //Number of nodes
-  uint32_t nNodes = 10;
+  uint32_t nNodes = 27;
   double simTime = 1; 
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
