@@ -15,6 +15,10 @@ elif [ "${current_user}" == "mtp" ]; then
     echo "mtp"
     user_source_path="/home/${current_user}/ns-allinone-3.36.1/ns-3.36.1/scratch/mtp/"
     user_destination_path="/home/${current_user}/ns-allinone-3.36.1/ns-3.36.1/"
+elif [ "${current_user}" == "miclab" ]; then
+    echo "miclab"
+    user_source_path="/home/${current_user}/ns-allinone-3.36.1/ns-3.36.1/scratch/mtp/"
+    user_destination_path="/home/${current_user}/ns-allinone-3.36.1/ns-3.36.1/"
 fi
 
 

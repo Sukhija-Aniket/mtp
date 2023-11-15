@@ -179,3 +179,8 @@ openflow
 -- Configuring done (0.5s)
 -- Generating done (0.7s)
 -- Build files have been written to: /home/miclab/ns-allinone-3.36.1/ns-3.36.1/cmake-cache
+Command 'build/scratch/mtp/customexamples/CustomApplicationExample/ns3.36.1-wave-project-debug --t=2 --n=1001' died with <Signals.SIGKILL: 9>.
+Running for headway=2
+Error: Command '/home/miclab/ns-allinone-3.36.1/ns-3.36.1/ns3 run "wave-project.cc --t=2 --n=1001"' returned non-zero exit status 247., exiting...
+Running the Process for output & Plot extraction
+Error: wave-project-n1001.log doesn't exist in the /home/miclab/ns-allinone-3.36.1/ns-3.36.1/scratch/mtp/customexamples/CustomApplicationExample/outputs directory!!
