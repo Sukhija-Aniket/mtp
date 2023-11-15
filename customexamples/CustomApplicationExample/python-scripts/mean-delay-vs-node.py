@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway, plot_figure
+from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway, plot_figure, func_tcr
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -41,10 +41,11 @@ for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
     context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
 
-def get_mean_std_mac_delay(fileName, nodes=None):
-   
+def get_mean_std_mac_delay(fileName, json_data, nodes=None):
+
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
+    rbl_delays = np.zeros(4)
     counters = np.zeros(4)
     # mean_delay = 0
     uid_enqueue = {}
@@ -63,6 +64,21 @@ def get_mean_std_mac_delay(fileName, nodes=None):
     if file_descriptor == -1:
         raise FileNotFoundError(f"{output_file_path} doesn't exist")
 
+    headway = convert_nodes_to_headway(nodes, int(json_data.get('total_distance',2000)))
+    # TODO fix it later
+    t_cr = {
+        25.0: 0.004777,
+        30.0: 0.005130,
+        35.0: 0.004951,
+        40.0: 0.004368,
+        45.0: 0.004375,
+        50.0: 0.004246,
+        55.0: 0.003597,
+        60.0: 0.003182,
+        65.0: 0.002529,
+        70.0: 0.001498,
+        75.0: 0.000671
+    }
     with open(input_file, "r") as file:
         for line in file:
             attr = line.split(' ')
@@ -74,6 +90,7 @@ def get_mean_std_mac_delay(fileName, nodes=None):
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
+                    rbl_delays[value] = rbl_delays[value] + 1 if t_cr[headway] > ((time-uid_enqueue[uid])/1000000000) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                 elif (context.endswith(context_map[key + "enqueue"])):
                     os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
@@ -85,11 +102,13 @@ def get_mean_std_mac_delay(fileName, nodes=None):
         mean_delays[x] = mean_delays[x]/counters[x]
         std_delays[x] = std_delays[x] - (counters[x] * mean_delays[x]**2)
         std_delays[x] = np.sqrt(std_delays[x]/counters[x])
+        rbl_delays[x] = rbl_delays[x]/counters[x]
         os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]}ns \n", 'utf-8'))
         os.write(file_descriptor, bytes(f"std Delay for {x}: {std_delays[x]}ns \n", 'utf-8'))
-    
+        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_delays[x]}ns \n", 'utf-8'))
+
     os.close(file_descriptor)
-    return mean_delays, std_delays
+    return mean_delays, std_delays, rbl_delays
 
 def main():
     if(len(sys.argv) < 2):
@@ -99,49 +118,34 @@ def main():
     json_data = convert_to_json(parameters)
     data, printlines = convert_headway_to_nodes(json_data)
     position_model = str(json_data['position_model'])
-    
+
     mean_delays = [[], [], [], []]
     std_delays = [[], [], [], []]
-    
+    rbl_delays = [[], [], [], []]
+
     for num_nodes in data:
         input_file = input_file_template + str(num_nodes) + ".log"
-        temparr_mean, temparr_std = get_mean_std_mac_delay(input_file, num_nodes)
+        temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, json_data, num_nodes)
         for x in range(4):
             mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
             std_delays[x].append(round(temparr_std[x]/1000000, 5))
+            rbl_delays[x].append(temparr_rbl[x])
     xlabel, plt_data = 'Number of Nodes', data
     if position_model.startswith('platoon'):
         xlabel = 'Headway'
         plt_data = [convert_nodes_to_headway(x, json_data.get('total_distance', 2000)) for x in data]
-    
-    
+
+
     data_map = {}
     for x in range(4):
         if sum(mean_delays[x]) == 0:
             continue
-        data_map[f'mean_{inverse_map[x]}'] = mean_delays[x] 
-        data_map[f'std_{inverse_map[x]}'] = std_delays[x] 
-    row = ['mean', 'std']
+        data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
+        data_map[f'std_{inverse_map[x]}'] = std_delays[x]
+        data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
+    row = ['mean', 'std', 'rbl']
     col = len(data_map)/len(row) + 1
     plot_figure(data_map, row, col, plt_data, xlabel, plot_path)
-    #     plt.plot(plt_data, mean_delays[x], label=inverse_map[x])
-    #     plt.scatter(plt_data, mean_delays[x])
-    #     plt.xlabel(xlabel)
-    #     plt.ylabel("Mean MAC delay (in ms)")
-    # plt.legend()
-    # # plt.show()
-    # plt.savefig(os.path.join(plot_path, "mean-delay-vs-nodes.png"))
-
-    # for x in range(4):
-    #     if sum(mean_delays[x]) == 0:
-    #         continue
-    #     plt.figure()
-    #     plt.plot(plt_data, mean_delays[x])
-    #     plt.scatter(plt_data, mean_delays[x])
-    #     plt.xlabel(xlabel)
-    #     plt.ylabel("Mean Mac delay (in ms)")
-    #     # plt.show()
-    #     plt.savefig(os.path.join(plot_path, f"mean-delay-vs-nodes-{inverse_map[x]}.png"))
 
 
 if __name__ == "__main__":

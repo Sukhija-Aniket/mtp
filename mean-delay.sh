@@ -3,7 +3,7 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
-headway_array=(2 4 6 8 10 12 14) # Distance between two consecutive nodes to simulate on
+headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
@@ -36,7 +36,7 @@ get_script_dir() {
   else
     echo "File '$fileName' could not be found, exiting..."
     exit 1
-  fi 
+  fi
 }
 
 handle_argument() {
@@ -51,12 +51,37 @@ handle_argument() {
   params["$key"]=$value
 }
 
-# Setting paths
-touch nohup.out
-echo -n > nohup.out
+handle_array() {
+  local arg="$1"
+  local key="${arg%=*}"
+  local value="${arg#*=}"
 
+   key="${key#--}"
+
+  if [[ "$value" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+    IFS=',' read -a values <<< "$value"
+
+    local start="${values[0]}"
+    local end="${values[1]}"
+    local step="${values[2]}"
+
+    local array=()
+    for((i=start; i<=end;i+=step)); do
+      array+=("$i")
+    done
+
+    echo $key
+    params["$key"]="$(IFS=" "; echo "${array[@]}")"
+  else
+    echo "Invalid Argument: $value, exiting..."
+    exit 1
+  fi
+
+}
+
+# Setting paths
 fileName="$1"
-if [ -z "$fileName" ]; then 
+if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
   exit 1
 fi
@@ -73,7 +98,7 @@ fi
 shift
 
 base_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-script_directory=$(get_script_dir "$fileName") 
+script_directory=$(get_script_dir "$fileName")
 python_script_path="${script_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
@@ -81,26 +106,30 @@ python_script_process_runner="${python_script_path}/processRunner.py"
 cd ${script_directory} || exit
 
 # deleting the previously created inputs, outputs and plots
-cd inputs/
-rm -rf *
-cd ../
-
 base_fileName="${fileName%.*}"
-cd outputs/
-rm -rf enqueue_dequeue_trace*
-rm -rf "${base_fileName}"*
-cd ../
 
-cd plots/
-files_to_delete=$(find -type f -not -name "*save*")
-if [ -n "$files_to_delete" ]; then 
-  rm -rf $files_to_delete 
-fi
-cd ../
+# mkdir -p inputs
+# cd inputs/
+# rm -rf *
+# cd ../
+
+# mkdir -p outputs
+# cd outputs/
+# rm -rf enqueue_dequeue_trace*
+# rm -rf "${base_fileName}"*
+# cd ../
+
+# mkdir -p plots
+# cd plots/
+# files_to_delete=$(find -type f -not -name "*save*")
+# if [ -n "$files_to_delete" ]; then
+#   rm -rf $files_to_delete
+# fi
+# cd ../
 
 # Setting input Parameters
-params["num_nodes_array"]=${num_nodes_array[*]} # These are default params
-params["headway_array"]=${headway_array[*]}
+params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
+params["headway_array"]=${headway_array[@]}
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
@@ -109,6 +138,9 @@ params["total_distance"]=$total_distance
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+      --*=*,*,*)
+      handle_array "$1"
+      ;;
     --*=*)
       handle_argument "$1"
       ;;
@@ -123,16 +155,16 @@ json_data="{"
 for key in "${!params[@]}"; do
   json_data+="\"$key\":\"${params[$key]}\","
 done
-json_data="${json_data%,}"  
+json_data="${json_data%,}"
 json_data+="}"
 
 # Generating, Running and analyzing data & Processes
 echo "Running File Generation Process"
-python3 "$python_script_process_generation" "$json_data" 
+# python3 "$python_script_process_generation" "$json_data"
 
 #TODO: testing of the script for Actual NS3 Process
 echo "Running the Actual ns3 process"
-python3 "$python_script_process_runner" "$fileName" "$json_data"
+# python3 "$python_script_process_runner" "$fileName" "$json_data"
 
 
 echo "Running the Process for output & Plot extraction"
@@ -153,10 +185,10 @@ python3 "$python_script_mean_delay" "$json_data"
 #     else
 #       flags="$node $processFlags"
 #       python3 $python_script_process_generation $flags
-#     fi 
+#     fi
 #     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
 #     # Run the simulations
-    
+
 #     ../../../../ns3 run "$fileName --n=$node"
 #     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
 # done

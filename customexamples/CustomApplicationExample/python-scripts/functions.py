@@ -1,5 +1,6 @@
 import json, os, sys, math
 import matplotlib.pyplot as plt
+import random
 
 def convert_to_json(json_string):
     try:
@@ -8,14 +9,14 @@ def convert_to_json(json_string):
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}, exiting...")
         sys.exit(1)
-    
+
 
 def getPlatoonRate(params):
     # Get probablity that 2-wheelers(non-communicating nodes) will intercept the platoon
     alpha, gamma, y_star, x_dot0, p = params.get('alpha'), params.get('gamma'), params.get('convergence_value'), params.get('velocity_lead_node'), params.get('tunable_param')
     term = alpha + gamma*(y_star/x_dot0)
-    prob = math.exp(term)/(1 + math.exp(term))  
-    critical_rate = round(float(p) * prob, 3) 
+    prob = math.exp(term)/(1 + math.exp(term))
+    critical_rate = round(float(p) * prob, 3)
     return critical_rate
 
 
@@ -44,7 +45,7 @@ def convert_to_cli(json_data, accepted_keys):
     for key, value in json_data.items():
         if key in accepted_keys:
             cli_arguments += f' --{key}={value}'
-    return cli_arguments 
+    return cli_arguments
 
 
 def convert_headway_to_nodes(json_data):
@@ -61,7 +62,7 @@ def convert_headway_to_nodes(json_data):
     else:
         num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
         printlines = list(f"Running for numNodes={x}" for x in num_nodes)
-    
+
     return num_nodes, printlines
 
 def convert_nodes_to_headway(num_nodes, dist=2000):
@@ -71,23 +72,33 @@ def convert_nodes_to_headway(num_nodes, dist=2000):
     return x
 
 def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
+    fontsize = 6
     col = int(col)
-    plt.figure(figsize=(20, 10))
-    f, ax = plt.subplots(len(row), col)
+    plt.figure(figsize=(50, 20))
+    f, ax = plt.subplots(len(row), col, gridspec_kw={'hspace':0.3, 'wspace':0.3})
     for i,x in enumerate(row):
         cnt= 0
         for key, values in data_map.items():
             if key.startswith(x):
                 ax[i][cnt].plot(xvalue, values, label=str(key.split('_')[1]))
-                ax[i][cnt].legend()
-                ax[len(row)-1][cnt].set(xlabel=xlabel)
+                ax[i][cnt].legend(fontsize=fontsize)
+                ax[len(row)-1][cnt].set_xlabel(xlabel,fontsize=fontsize)
                 cnt += 1
-                ax[len(row)-1][cnt].set(xlabel=xlabel)
- 
+                ax[len(row)-1][cnt].set_xlabel(xlabel=xlabel, fontsize=fontsize)
+
         for key, values in data_map.items():
             if key.startswith(x):
                 label = str(key.split('_')[1])
                 ax[i][col-1].plot(xvalue, values, label=label)
-        ax[i][0].set(ylabel=f"{x} mac delays (in ms)")
-        ax[i][col-1].legend()
+        ax[i][0].set_ylabel(f"{x} mac delays (in ms)", fontsize=fontsize)
+        ax[i][col-1].legend(fontsize=fontsize)
+    for i in range(len(row)):
+        for j in range(col):
+            ax[i][j].tick_params(axis='x', labelsize=fontsize)
+            ax[i][j].tick_params(axis='y', labelsize=fontsize)
+
     plt.savefig(os.path.join(plot_path, "mtp-plot-mac-delay.png"))
+
+def func_tcr(tn, mean=0.1, std_dev=0.01):
+    k = random.gauss(mu=mean, sigma=std_dev)
+    return k*tn
