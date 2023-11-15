@@ -1,4 +1,5 @@
 import json, os, sys, math
+import matplotlib.pyplot as plt
 
 def convert_to_json(json_string):
     try:
@@ -68,3 +69,22 @@ def convert_nodes_to_headway(num_nodes, dist=2000):
     num_nodes -= 1
     x = int(int(dist)/num_nodes)
     return x
+
+def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
+    plt.figure(figsize=(15, 7))
+    f, ax = plt.subplots(len(row), col)
+    for i,x in enumerate(row):
+        cnt= 0
+        for key, values in data_map.items():
+            if key.startswith(x):
+                ax[i][cnt].plot(xvalue, values)
+                ax[i][cnt].xlabel(xlabel)
+                ax[i][cnt].ylabel(f"{x} mac delays (in ms)")
+
+        for key, values in data_map.items():
+            if key.startswith(x):
+                ax[i][col-1].plot(xvalue, values, label=key.split('_')[1])
+        ax[i][col-1].xlabel(xlabel)
+        ax[i][col-1].ylabel(f"{x} mac delays (in ms)")
+        ax[i][col-1].legend()
+    plt.savefig(os.path.join(plot_path, "mtp-plot-mac-delay.png"))

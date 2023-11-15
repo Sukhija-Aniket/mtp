@@ -94,7 +94,7 @@ cd ../
 cd plots/
 files_to_delete=$(find -type f -not -name "*save*")
 if [ -n "$files_to_delete" ]; then 
-rm -rf $files_to_delete 
+  rm -rf $files_to_delete 
 fi
 cd ../
 
