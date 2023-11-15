@@ -3,7 +3,7 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
-headway_array=(2 4 6 8 10 12 14) # Distance between two consecutive nodes to simulate on
+headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
@@ -56,18 +56,22 @@ handle_array() {
   local key="${arg%=*}"
   local value="${arg#*=}"
 
+   key="${key#--}"
+
   if [[ "$value" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
-    local IFS=',' read -ra values <<< "$value"
+    IFS=',' read -a values <<< "$value"
+
     local start="${values[0]}"
     local end="${values[1]}"
     local step="${values[2]}"
 
     local array=()
     for((i=start; i<=end;i+=step)); do
-      array += ("$i")
+      array+=("$i")
     done
 
-    params["$key"]="${printf '%s ' "${array[@]}"}"
+    echo $key
+    params["$key"]="$(IFS=" "; echo "${array[@]}")"
   else
     echo "Invalid Argument: $value, exiting..."
     exit 1
@@ -76,9 +80,6 @@ handle_array() {
 }
 
 # Setting paths
-touch nohup.out
-echo -n > nohup.out
-
 fileName="$1"
 if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
@@ -105,16 +106,20 @@ python_script_process_runner="${python_script_path}/processRunner.py"
 cd ${script_directory} || exit
 
 # deleting the previously created inputs, outputs and plots
+base_fileName="${fileName%.*}"
+
+mkdir -p inputs
 cd inputs/
 rm -rf *
 cd ../
 
-base_fileName="${fileName%.*}"
+mkdir -p outputs
 cd outputs/
 rm -rf enqueue_dequeue_trace*
 rm -rf "${base_fileName}"*
 cd ../
 
+mkdir -p plots
 cd plots/
 files_to_delete=$(find -type f -not -name "*save*")
 if [ -n "$files_to_delete" ]; then
