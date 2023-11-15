@@ -71,20 +71,23 @@ def convert_nodes_to_headway(num_nodes, dist=2000):
     return x
 
 def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
-    plt.figure(figsize=(15, 7))
+    col = int(col)
+    plt.figure(figsize=(20, 10))
     f, ax = plt.subplots(len(row), col)
     for i,x in enumerate(row):
         cnt= 0
         for key, values in data_map.items():
             if key.startswith(x):
-                ax[i][cnt].plot(xvalue, values)
-                ax[i][cnt].xlabel(xlabel)
-                ax[i][cnt].ylabel(f"{x} mac delays (in ms)")
-
+                ax[i][cnt].plot(xvalue, values, label=str(key.split('_')[1]))
+                ax[i][cnt].legend()
+                ax[len(row)-1][cnt].set(xlabel=xlabel)
+                cnt += 1
+                ax[len(row)-1][cnt].set(xlabel=xlabel)
+ 
         for key, values in data_map.items():
             if key.startswith(x):
-                ax[i][col-1].plot(xvalue, values, label=key.split('_')[1])
-        ax[i][col-1].xlabel(xlabel)
-        ax[i][col-1].ylabel(f"{x} mac delays (in ms)")
+                label = str(key.split('_')[1])
+                ax[i][col-1].plot(xvalue, values, label=label)
+        ax[i][0].set(ylabel=f"{x} mac delays (in ms)")
         ax[i][col-1].legend()
     plt.savefig(os.path.join(plot_path, "mtp-plot-mac-delay.png"))

@@ -84,7 +84,7 @@ def get_mean_std_mac_delay(fileName, nodes=None):
             continue
         mean_delays[x] = mean_delays[x]/counters[x]
         std_delays[x] = std_delays[x] - (counters[x] * mean_delays[x]**2)
-        std_delays[x] = std_delays[x]/counters[x]
+        std_delays[x] = np.sqrt(std_delays[x]/counters[x])
         os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]}ns \n", 'utf-8'))
         os.write(file_descriptor, bytes(f"std Delay for {x}: {std_delays[x]}ns \n", 'utf-8'))
     
