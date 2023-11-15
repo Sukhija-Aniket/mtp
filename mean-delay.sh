@@ -108,24 +108,24 @@ cd ${script_directory} || exit
 # deleting the previously created inputs, outputs and plots
 base_fileName="${fileName%.*}"
 
-mkdir -p inputs
-cd inputs/
-rm -rf *
-cd ../
+# mkdir -p inputs
+# cd inputs/
+# rm -rf *
+# cd ../
 
-mkdir -p outputs
-cd outputs/
-rm -rf enqueue_dequeue_trace*
-rm -rf "${base_fileName}"*
-cd ../
+# mkdir -p outputs
+# cd outputs/
+# rm -rf enqueue_dequeue_trace*
+# rm -rf "${base_fileName}"*
+# cd ../
 
-mkdir -p plots
-cd plots/
-files_to_delete=$(find -type f -not -name "*save*")
-if [ -n "$files_to_delete" ]; then
-  rm -rf $files_to_delete
-fi
-cd ../
+# mkdir -p plots
+# cd plots/
+# files_to_delete=$(find -type f -not -name "*save*")
+# if [ -n "$files_to_delete" ]; then
+#   rm -rf $files_to_delete
+# fi
+# cd ../
 
 # Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
@@ -160,11 +160,11 @@ json_data+="}"
 
 # Generating, Running and analyzing data & Processes
 echo "Running File Generation Process"
-python3 "$python_script_process_generation" "$json_data"
+# python3 "$python_script_process_generation" "$json_data"
 
 #TODO: testing of the script for Actual NS3 Process
 echo "Running the Actual ns3 process"
-python3 "$python_script_process_runner" "$fileName" "$json_data"
+# python3 "$python_script_process_runner" "$fileName" "$json_data"
 
 
 echo "Running the Process for output & Plot extraction"

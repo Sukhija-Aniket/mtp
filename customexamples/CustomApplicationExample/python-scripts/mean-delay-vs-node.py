@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway, plot_figure
+from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway, plot_figure, func_tcr
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -66,7 +66,7 @@ def get_mean_std_mac_delay(fileName, json_data, nodes=None):
 
     headway = convert_nodes_to_headway(nodes, int(json_data.get('total_distance',2000)))
     # TODO fix it later
-    t_cu = {
+    t_cr = {
         25.0: 0.004777,
         30.0: 0.005130,
         35.0: 0.004951,
@@ -90,7 +90,7 @@ def get_mean_std_mac_delay(fileName, json_data, nodes=None):
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
-                    rbl_delays[value] = rbl_delays[value] + 1 if t_cu[headway] > (time-uid_enqueue[uid]) else rbl_delays[value]
+                    rbl_delays[value] = rbl_delays[value] + 1 if t_cr[headway] > ((time-uid_enqueue[uid])/1000000000) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                 elif (context.endswith(context_map[key + "enqueue"])):
                     os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
