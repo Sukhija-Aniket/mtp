@@ -36,7 +36,7 @@ get_script_dir() {
   else
     echo "File '$fileName' could not be found, exiting..."
     exit 1
-  fi 
+  fi
 }
 
 handle_argument() {
@@ -51,12 +51,36 @@ handle_argument() {
   params["$key"]=$value
 }
 
+handle_array() {
+  local arg="$1"
+  local key="${arg%=*}"
+  local value="${arg#*=}"
+
+  if [[ "$value" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+    local IFS=',' read -ra values <<< "$value"
+    local start="${values[0]}"
+    local end="${values[1]}"
+    local step="${values[2]}"
+
+    local array=()
+    for((i=start; i<=end;i+=step)); do
+      array += ("$i")
+    done
+
+    params["$key"]="${printf '%s ' "${array[@]}"}"
+  else
+    echo "Invalid Argument: $value, exiting..."
+    exit 1
+  fi
+
+}
+
 # Setting paths
 touch nohup.out
 echo -n > nohup.out
 
 fileName="$1"
-if [ -z "$fileName" ]; then 
+if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
   exit 1
 fi
@@ -73,7 +97,7 @@ fi
 shift
 
 base_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-script_directory=$(get_script_dir "$fileName") 
+script_directory=$(get_script_dir "$fileName")
 python_script_path="${script_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
@@ -93,14 +117,14 @@ cd ../
 
 cd plots/
 files_to_delete=$(find -type f -not -name "*save*")
-if [ -n "$files_to_delete" ]; then 
-  rm -rf $files_to_delete 
+if [ -n "$files_to_delete" ]; then
+  rm -rf $files_to_delete
 fi
 cd ../
 
 # Setting input Parameters
-params["num_nodes_array"]=${num_nodes_array[*]} # These are default params
-params["headway_array"]=${headway_array[*]}
+params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
+params["headway_array"]=${headway_array[@]}
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
@@ -109,6 +133,9 @@ params["total_distance"]=$total_distance
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+      --*=*,*,*)
+      handle_array "$1"
+      ;;
     --*=*)
       handle_argument "$1"
       ;;
@@ -123,12 +150,12 @@ json_data="{"
 for key in "${!params[@]}"; do
   json_data+="\"$key\":\"${params[$key]}\","
 done
-json_data="${json_data%,}"  
+json_data="${json_data%,}"
 json_data+="}"
 
 # Generating, Running and analyzing data & Processes
 echo "Running File Generation Process"
-python3 "$python_script_process_generation" "$json_data" 
+python3 "$python_script_process_generation" "$json_data"
 
 #TODO: testing of the script for Actual NS3 Process
 echo "Running the Actual ns3 process"
@@ -153,10 +180,10 @@ python3 "$python_script_mean_delay" "$json_data"
 #     else
 #       flags="$node $processFlags"
 #       python3 $python_script_process_generation $flags
-#     fi 
+#     fi
 #     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
 #     # Run the simulations
-    
+
 #     ../../../../ns3 run "$fileName --n=$node"
 #     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
 # done
