@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, convert_nodes_to_headway, plot_figure, func_tcr
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, func_tcr
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -41,7 +41,7 @@ for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
     context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
 
-def get_mean_std_mac_delay(fileName, json_data, nodes=None):
+def get_mean_std_mac_delay(fileName, nodes=None, headway=None):
 
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
@@ -64,7 +64,6 @@ def get_mean_std_mac_delay(fileName, json_data, nodes=None):
     if file_descriptor == -1:
         raise FileNotFoundError(f"{output_file_path} doesn't exist")
 
-    headway = convert_nodes_to_headway(nodes, int(json_data.get('total_distance',2000)))
     # TODO fix it later
     t_cr = {
         25.0: 0.004777,
@@ -116,24 +115,24 @@ def main():
 
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    data, printlines = convert_headway_to_nodes(json_data)
+    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     position_model = str(json_data['position_model'])
 
     mean_delays = [[], [], [], []]
     std_delays = [[], [], [], []]
     rbl_delays = [[], [], [], []]
 
-    for num_nodes in data:
+    for idx, num_nodes in enumerate(nodes):
         input_file = input_file_template + str(num_nodes) + ".log"
-        temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, json_data, num_nodes)
+        temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, nodes=num_nodes, headway=headways[idx])
         for x in range(4):
             mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
             std_delays[x].append(round(temparr_std[x]/1000000, 5))
             rbl_delays[x].append(temparr_rbl[x])
-    xlabel, plt_data = 'Number of Nodes', data
+    xlabel, plt_data = 'Number of Nodes', nodes
     if position_model.startswith('platoon'):
         xlabel = 'Headway'
-        plt_data = [convert_nodes_to_headway(x, json_data.get('total_distance', 2000)) for x in data]
+        plt_data = headways
 
 
     data_map = {}

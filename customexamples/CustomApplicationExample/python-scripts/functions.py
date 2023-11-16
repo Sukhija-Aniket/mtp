@@ -30,11 +30,11 @@ def getCriticalRate(num_nodes, json_data):
         rate = json_data.get('critical_rate', 100)
         return rate
 
-def updateParams(num_nodes, json_data):
+def updateParams(headway, json_data):
     platoon_params = {
         'alpha': float(json_data.get('alpha', -1.933)),
         'gamma': float(json_data.get('gamma', 0.652)),
-        'convergence_value': int(convert_nodes_to_headway(num_nodes, int(json_data.get('total_distance', 2000)))),
+        'convergence_value': int(headway),
         'velocity_lead_node': int(json_data.get('velocity_lead_node', 25)),
         'tunable_param': int(json_data.get('tunable_param', 500)),
     }
@@ -51,11 +51,12 @@ def convert_to_cli(json_data, accepted_keys):
 def convert_headway_to_nodes(json_data):
     num_nodes = []
     printlines = []
+    headway = None
     dist = int(json_data['total_distance'])
     position_model = str(json_data['position_model'])
     if position_model.startswith('platoon'):
-        data = list(map(int, json_data['headway_array'].split(' ')))
-        for x in data:
+        headway = list(map(int, json_data['headway_array'].split(' ')))
+        for x in headway:
             nodes = int(dist/x + 1)
             num_nodes.append(nodes)
             printlines.append(f"Running for headway={x}")
@@ -63,13 +64,7 @@ def convert_headway_to_nodes(json_data):
         num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
         printlines = list(f"Running for numNodes={x}" for x in num_nodes)
 
-    return num_nodes, printlines
-
-def convert_nodes_to_headway(num_nodes, dist=2000):
-    num_nodes = int(num_nodes)
-    num_nodes -= 1
-    x = int(int(dist)/num_nodes)
-    return x
+    return num_nodes, headway, printlines
 
 def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
     fontsize = 6
