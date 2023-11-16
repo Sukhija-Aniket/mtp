@@ -3,23 +3,22 @@ import os
 import numpy as np
 import sys
 import math
-from functions import convert_to_json, convert_headway_to_nodes, convert_nodes_to_headway, getCriticalRate
+from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate
 
 par_dir = os.path.dirname((os.path.dirname(__file__)))
 app_dir = os.path.join(par_dir, 'inputs')
 
 
 ############################################### Helper Functions ###########################################
-def getPositions(num_nodes=10, position_model='uniform'):
+def getPositions(num_nodes=10, headway=25, position_model='uniform'):
     positions = []
     if(position_model.startswith('uniform')):
         # Generate random X and Y positions for nodes uniformly distributed between 0 and 2000 meters
         positions = [(random.uniform(0, 2000), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
-        
+
     elif(position_model.startswith('platoon')):
-        headway = convert_nodes_to_headway(num_nodes, int(json_data.get('total_distance', 2000)))
         positions = [((i*headway), 0) for i in range(num_nodes+1)]
-    
+
     # Sort the positions by X coordinate in ascending order
     positions.sort(key=lambda x: x[0])
     # Define the output file name
@@ -100,24 +99,24 @@ def getPrioPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=100, type='po
             file.write(f"{x}\n")
 
     print(f"Application Priority Packet Generation Rate have been saved to {output_file}")
-    
+
 
 # Main Script
 if __name__ == "__main__":
     if(len(sys.argv) < 2):
         raise Exception("Insufficient arguments!!")
-    parameters = sys.argv[1] 
+    parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    data, printlines = convert_headway_to_nodes(json_data)
+    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     position_model = json_data['position_model']
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
 
-    for idx, num_nodes in enumerate(data):
+    for idx, num_nodes in enumerate(nodes):
         print(printlines[idx])
         critical_rate = getCriticalRate(num_nodes, json_data)
-        getPositions(num_nodes=num_nodes, position_model=position_model)
+        getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model)
         getStartTime(num_nodes=num_nodes)
         getVelocities(num_nodes=num_nodes)
         getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type)

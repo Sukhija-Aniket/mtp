@@ -16,16 +16,16 @@ def run_ns3_process(fileName, paramString, nodes):
         sys.exit(1)
 
 # Main Script
-if len(sys.argv) == 1:  
+if len(sys.argv) == 1:
     print("Usage: python script_name.py ns3_executable [parameters]")
     sys.exit(1)
 elif len(sys.argv) >= 2:
     ns3_executable = sys.argv[1]
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
-    data, printlines = convert_headway_to_nodes(json_data)
+    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     cli_args = convert_to_cli(json_data, accepted_keys)
-    
-    for i,nodes in enumerate(data):
+
+    for i,nodes in enumerate(nodes):
         print(printlines[i])
         run_ns3_process(ns3_executable, cli_args, nodes)
