@@ -9,6 +9,7 @@ general_type='constant'
 critical_type='poisson'
 general_rate=30
 total_distance=2000
+plot=0
 
 # Functions
 print_usage() {
@@ -105,28 +106,6 @@ python_script_process_generation="${python_script_path}/randomProcessGeneration.
 python_script_process_runner="${python_script_path}/processRunner.py"
 cd ${script_directory} || exit
 
-# deleting the previously created inputs, outputs and plots
-base_fileName="${fileName%.*}"
-
-mkdir -p inputs
-cd inputs/
-rm -rf *
-cd ../
-
-mkdir -p outputs
-cd outputs/
-rm -rf enqueue_dequeue_trace*
-rm -rf "${base_fileName}"*
-cd ../
-
-mkdir -p plots
-cd plots/
-files_to_delete=$(find -type f -not -name "*save*")
-if [ -n "$files_to_delete" ]; then
-  rm -rf $files_to_delete
-fi
-cd ../
-
 # Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
 params["headway_array"]=${headway_array[@]}
@@ -138,6 +117,9 @@ params["total_distance"]=$total_distance
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+      --plot)
+      plot=1
+      ;;
       --*=*,*,*)
       handle_array "$1"
       ;;
@@ -151,6 +133,31 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+echo "$plot"
+
+# deleting the previously created inputs, outputs and plots
+base_fileName="${fileName%.*}"
+if [ $plot -ne 1 ]; then
+  mkdir -p inputs
+  cd inputs/
+  rm -rf *
+  cd ../
+
+  mkdir -p outputs
+  cd outputs/
+  rm -rf enqueue_dequeue_trace*
+  rm -rf "${base_fileName}"*
+  cd ../
+
+  mkdir -p plots
+  cd plots/
+  files_to_delete=$(find -type f -not -name "*save*")
+  if [ -n "$files_to_delete" ]; then
+    rm -rf $files_to_delete
+  fi
+  cd ../
+fi
+
 json_data="{"
 for key in "${!params[@]}"; do
   json_data+="\"$key\":\"${params[$key]}\","
@@ -159,13 +166,15 @@ json_data="${json_data%,}"
 json_data+="}"
 
 # Generating, Running and analyzing data & Processes
-echo "Running File Generation Process"
-python3 "$python_script_process_generation" "$json_data"
+if [ $plot -ne 1 ]; then 
+  echo "Running File Generation Process"
+  python3 "$python_script_process_generation" "$json_data"
 
-#TODO: testing of the script for Actual NS3 Process
-echo "Running the Actual ns3 process"
+  #TODO: testing of the script for Actual NS3 Process
+  echo "Running the Actual ns3 process"
 python3 "$python_script_process_runner" "$fileName" "$json_data"
 
+fi
 
 echo "Running the Process for output & Plot extraction"
 python3 "$python_script_mean_delay" "$json_data"
