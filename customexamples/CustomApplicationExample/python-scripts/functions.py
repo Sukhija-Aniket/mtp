@@ -76,7 +76,7 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
         for key, values in data_map.items():
             if key.startswith(x):
                 ax[i][cnt].plot(xvalue, values, label=str(key.split('_')[1]))
-		ax[i][cnt].scatter(xvalue, values, label=str(key.split('_')[1]))
+                ax[i][cnt].scatter(xvalue, values)
                 ax[i][cnt].legend(fontsize=fontsize)
                 ax[len(row)-1][cnt].set_xlabel(xlabel,fontsize=fontsize)
                 cnt += 1
@@ -86,7 +86,7 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
             if key.startswith(x):
                 label = str(key.split('_')[1])
                 ax[i][col-1].plot(xvalue, values, label=label)
-		ax[i][col-1].plot(xvalue, values, label=label)
+                ax[i][col-1].scatter(xvalue, values)
         ax[i][0].set_ylabel(f"{x} mac delays (in ms)", fontsize=fontsize)
         ax[i][col-1].legend(fontsize=fontsize)
     for i in range(len(row)):

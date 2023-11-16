@@ -136,6 +136,9 @@ done
 echo "$plot"
 
 # deleting the previously created inputs, outputs and plots
+touch nohup.out
+echo -n > nohup.out
+
 base_fileName="${fileName%.*}"
 if [ $plot -ne 1 ]; then
   mkdir -p inputs
