@@ -89,7 +89,6 @@ def get_mean_std_mac_delay(fileName, nodes=None, headway=None):
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
-                    print(headway)
                     rbl_delays[value] = rbl_delays[value] + 1 if t_cr[headway] > ((time - uid_enqueue[uid])/1000000000) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                 elif (context.endswith(context_map[key + "enqueue"])):
