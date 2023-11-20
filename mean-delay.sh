@@ -71,7 +71,6 @@ handle_array() {
       array+=("$i")
     done
 
-    echo $key
     params["$key"]="$(IFS=" "; echo "${array[@]}")"
   else
     echo "Invalid Argument: $value, exiting..."
@@ -133,8 +132,6 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-echo "$plot"
-
 # deleting the previously created inputs, outputs and plots
 touch nohup.out
 echo -n > nohup.out
@@ -175,7 +172,7 @@ if [ $plot -ne 1 ]; then
 
   #TODO: testing of the script for Actual NS3 Process
   echo "Running the Actual ns3 process"
-python3 "$python_script_process_runner" "$fileName" "$json_data"
+  python3 "$python_script_process_runner" "$fileName" "$json_data"
 
 fi
 

@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     for idx, num_nodes in enumerate(nodes):
         print(printlines[idx])
-        critical_rate = getCriticalRate(num_nodes, json_data)
+        critical_rate = getCriticalRate(headways[idx], json_data)
         getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model)
         getStartTime(num_nodes=num_nodes)
         getVelocities(num_nodes=num_nodes)

@@ -20,9 +20,9 @@ def getPlatoonRate(params):
     return critical_rate
 
 
-def getCriticalRate(num_nodes, json_data):
+def getCriticalRate(headway, json_data):
     position_model = str(json_data['position_model'])
-    platoon_params = updateParams(num_nodes, json_data)
+    platoon_params = updateParams(headway, json_data)
     if position_model.startswith('platoon'):
         rate = getPlatoonRate(platoon_params)
         return rate
@@ -35,7 +35,7 @@ def updateParams(headway, json_data):
         'alpha': float(json_data.get('alpha', -1.933)),
         'gamma': float(json_data.get('gamma', 0.652)),
         'convergence_value': int(headway),
-        'velocity_lead_node': int(json_data.get('velocity_lead_node', 25)),
+        'velocity_lead_node': int(json_data.get('velocity_lead_node', 250)),
         'tunable_param': int(json_data.get('tunable_param', 500)),
     }
     return platoon_params
@@ -95,6 +95,31 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
             ax[i][j].tick_params(axis='y', labelsize=fontsize)
 
     plt.savefig(os.path.join(plot_path, "mtp-plot-mac-delay.png"))
+
+def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None):
+    fontsize = 6
+    for key, values in data_map.items():      
+        plt.figure()      
+        plt.plot(xvalue, values, label=str(key.split('_')[1]))
+        plt.scatter(xvalue, values)
+        plt.legend(fontsize = fontsize)
+        plt.xlabel(xlabel)
+        plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
+        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}"))
+
+    for x in row:
+        plt.figure()
+        for key, values in data_map.items():
+            key = str(key)
+            if key.startswith(x):
+                plt.plot(xvalue, values, label=str(key.split('_')[1]))
+                plt.scatter(xvalue, values)
+                plt.legend(fontsize = fontsize)
+                plt.xlabel(xlabel)
+                plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
+        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}"))
+
+
 
 def func_tcr(tn, mean=0.1, std_dev=0.01):
     k = random.gauss(mu=mean, sigma=std_dev)

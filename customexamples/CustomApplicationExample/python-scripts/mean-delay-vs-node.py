@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, plot_figure, func_tcr
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, func_tcr
 
 '''
     --------------------------------------------README--------------------------------------------
@@ -144,7 +144,7 @@ def main():
         data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
     row = ['mean', 'std', 'rbl']
     col = len(data_map)/len(row) + 1
-    plot_figure(data_map, row, col, plt_data, xlabel, plot_path)
+    plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path)
 
 
 if __name__ == "__main__":
