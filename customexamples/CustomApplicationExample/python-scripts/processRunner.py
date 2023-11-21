@@ -6,8 +6,8 @@ ns3_directory = app_dir.split('/scratch')[0]
 accepted_keys = ['t']
 
 # Functions
-def run_ns3_process(fileName, paramString, nodes):
-    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes}"'
+def run_ns3_process(fileName, paramString, nodes, distance):
+    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes} --d={distance}"'
 
     try:
         subprocess.run(command, shell=True, check=True)
@@ -25,7 +25,7 @@ elif len(sys.argv) >= 2:
     json_data = convert_to_json(parameters)
     nodes, headways, printlines = convert_headway_to_nodes(json_data)
     cli_args = convert_to_cli(json_data, accepted_keys)
-
-    for i,nodes in enumerate(nodes):
-        print(printlines[i])
-        run_ns3_process(ns3_executable, cli_args, nodes)
+    for distance in json_data['total_distance']:
+        for i,node in enumerate(nodes):
+            print(printlines[i])
+            run_ns3_process(ns3_executable, cli_args, node, distance)

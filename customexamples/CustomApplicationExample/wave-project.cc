@@ -141,8 +141,10 @@ int main (int argc, char *argv[])
   //Number of nodes
   uint32_t nNodes = 27;
   double simTime = 1; 
+  double distance = 2000;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
+  cmd.AddValue("d", "total Distance", distance);
   cmd.Parse (argc, argv);
 
   NodeContainer nodes;
@@ -156,11 +158,11 @@ int main (int argc, char *argv[])
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
 
-  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + ".txt");
-  vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities-" + to_string(nNodes) + ".txt");
-  vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + ".txt");
-  vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), "inputs/packetGenRates-" + to_string(nNodes) + ".txt");
-  vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), "inputs/prioPacketGenRates-" + to_string(nNodes) + ".txt");
+  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
@@ -193,11 +195,6 @@ int main (int argc, char *argv[])
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
-  
-  // string fileN = "outputs/wave-project-n" + to_string(nNodes);
-
-  // string fileName = getCustomFileName (__FILE__, fileN + ".log");
-  // FILE* fp = freopen(fileName.c_str (), "w", stdout);
 
   ConnectTraceMACQueues(nodes, objContainers);
   
@@ -212,7 +209,7 @@ int main (int argc, char *argv[])
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
 
-  string fileN = "outputs/wave-project-n" + to_string(nNodes);
+  string fileN = "outputs/wave-project-n" + to_string(nNodes) + +'-d'+to_string(distance);
 
   Simulator::Stop(Seconds(simTime+1));
   Simulator::Run();

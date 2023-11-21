@@ -35,7 +35,7 @@ def updateParams(headway, json_data):
         'alpha': float(json_data.get('alpha', -1.933)),
         'gamma': float(json_data.get('gamma', 0.652)),
         'convergence_value': int(headway),
-        'velocity_lead_node': int(json_data.get('velocity_lead_node', 250)),
+        'velocity_lead_node': int(json_data.get('velocity_lead_node', 25)),
         'tunable_param': int(json_data.get('tunable_param', 500)),
     }
     return platoon_params
@@ -66,7 +66,7 @@ def convert_headway_to_nodes(json_data):
 
     return num_nodes, headway, printlines
 
-def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
+def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100):
     fontsize = 6
     col = int(col)
     plt.figure(figsize=(50, 20))
@@ -94,9 +94,9 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None):
             ax[i][j].tick_params(axis='x', labelsize=fontsize)
             ax[i][j].tick_params(axis='y', labelsize=fontsize)
 
-    plt.savefig(os.path.join(plot_path, "mtp-plot-mac-delay.png"))
+    plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{distance}.png"))
 
-def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None):
+def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100):
     fontsize = 6
     for key, values in data_map.items():      
         plt.figure()      
@@ -105,7 +105,7 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None):
         plt.legend(fontsize = fontsize)
         plt.xlabel(xlabel)
         plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
-        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}"))
+        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}-{distance}"))
 
     for x in row:
         plt.figure()
@@ -117,7 +117,7 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None):
                 plt.legend(fontsize = fontsize)
                 plt.xlabel(xlabel)
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
-        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}"))
+        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
 
 
 

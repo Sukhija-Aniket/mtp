@@ -10,11 +10,11 @@ app_dir = os.path.join(par_dir, 'inputs')
 
 
 ############################################### Helper Functions ###########################################
-def getPositions(num_nodes=10, headway=25, position_model='uniform'):
+def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform'):
     positions = []
     if(position_model.startswith('uniform')):
         # Generate random X and Y positions for nodes uniformly distributed between 0 and 2000 meters
-        positions = [(random.uniform(0, 2000), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
+        positions = [(random.uniform(0, distance), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
 
     elif(position_model.startswith('platoon')):
         positions = [((i*headway), 0) for i in range(num_nodes+1)]
@@ -22,7 +22,7 @@ def getPositions(num_nodes=10, headway=25, position_model='uniform'):
     # Sort the positions by X coordinate in ascending order
     positions.sort(key=lambda x: x[0])
     # Define the output file name
-    output_file = app_dir + "/positions-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/positions-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -32,7 +32,7 @@ def getPositions(num_nodes=10, headway=25, position_model='uniform'):
     print(f"Node positions have been saved to {output_file}")
 
 
-def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
+def getVelocities(distance=100, num_nodes=10, mean_velocity=60, std_deviation=10):
 
     velocities = [random.gauss(mean_velocity, std_deviation) for _ in range(num_nodes)]
 
@@ -40,7 +40,7 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
     velocities_mps = [v * (1000 / 3600) for v in velocities]
 
     # Define the output file name
-    output_file = app_dir +  "/velocities-" + str(num_nodes) + ".txt"
+    output_file = app_dir +  "/velocities-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -50,12 +50,12 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
     print(f"Node Velocities have been saved to {output_file}")
 
 
-def getStartTime(num_nodes=10, mean_st=0, std_deviation=0.3):
+def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.3):
 
     startTimes = [abs(random.gauss(mean_st, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
-    output_file = app_dir + "/startTimes-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/startTimes-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -74,10 +74,10 @@ def getGenRate(num_nodes, mean_packet_gen_rate, type):
     return packetGenRate
 
 
-def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=30, type='constant'):
+def getPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate=30, type='constant'):
     packetGenRate = getGenRate(num_nodes,mean_packet_gen_rate, type)
     # Define the output file name
-    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -86,12 +86,12 @@ def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=30, type='constan
 
     print(f"Application Packet Generation Rate have been saved to {output_file}")
 
-def getPrioPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=100, type='poisson'):
+def getPrioPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate=100, type='poisson'):
 
     packetGenRate = getGenRate(num_nodes, mean_packet_gen_rate, type)
 
     # Define the output file name
-    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:

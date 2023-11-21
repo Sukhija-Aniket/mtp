@@ -8,7 +8,7 @@ position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
 general_rate=30
-total_distance=2000
+total_distance=(100 300 500 700 900)
 plot=0
 
 # Functions
@@ -79,7 +79,7 @@ handle_array() {
 
 }
 
-# Setting paths
+# Step 1: Checking for Execution
 fileName="$1"
 if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
@@ -97,6 +97,11 @@ if [[ ! "$fileName" =~ \.cc$ ]]; then
 fi
 shift
 
+# Step 2: Clearing old outputs
+touch nohup.out
+echo -n > nohup.out
+
+# Step 3: Moving to script Directory
 base_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 script_directory=$(get_script_dir "$fileName")
 python_script_path="${script_directory}/python-scripts"
@@ -105,14 +110,16 @@ python_script_process_generation="${python_script_path}/randomProcessGeneration.
 python_script_process_runner="${python_script_path}/processRunner.py"
 cd ${script_directory} || exit
 
-# Setting input Parameters
+# Step 4: Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
 params["headway_array"]=${headway_array[@]}
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
-params["total_distance"]=$total_distance
+params["total_distance"]=${total_distance[@]} # Fishy
+
+
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -133,8 +140,6 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # deleting the previously created inputs, outputs and plots
-touch nohup.out
-echo -n > nohup.out
 
 base_fileName="${fileName%.*}"
 if [ $plot -ne 1 ]; then
@@ -178,39 +183,3 @@ fi
 
 echo "Running the Process for output & Plot extraction"
 python3 "$python_script_mean_delay" "$json_data"
-
-
-
-
-# # Running the simulation for different nodes
-# for node in "${num_nodes_array[@]}"
-# do
-#     # echo "-------------------------Number of Nodes: $node -----------------------------"
-#     # echo "-------------------------Generating Random Processes-------------------------"
-#     # Script to generate the parameters of simulation using some distributions
-#     if [[ ${#processFlags} -eq 2 ]]; then
-#       flags=$node
-#       python3 $python_script_process_generation $flags
-#     else
-#       flags="$node $processFlags"
-#       python3 $python_script_process_generation $flags
-#     fi
-#     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
-#     # Run the simulations
-
-#     ../../../../ns3 run "$fileName --n=$node"
-#     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
-# done
-
-# output_path="${script_directory}/outputs"
-
-# # Preparing arguments for plot script
-# last_element="${num_nodes_array[${#num_nodes_array[@]}-1]}"
-# flags="--plot"
-
-# cd ${script_directory}
-
-# echo "-------------------------Running the plot script ----------------------------------"
-# python3 $python_script_mean_delay $last_element $flags
-
-# echo "------------------------- Job Completed!! -----------------------------------------"
