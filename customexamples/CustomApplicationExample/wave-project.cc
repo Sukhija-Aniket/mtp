@@ -141,7 +141,7 @@ int main (int argc, char *argv[])
   //Number of nodes
   uint32_t nNodes = 27;
   double simTime = 1; 
-  double distance = 2000;
+  int distance = 2000;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
   cmd.AddValue("d", "total Distance", distance);
@@ -157,7 +157,6 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
-
   vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
@@ -208,8 +207,7 @@ int main (int argc, char *argv[])
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
-
-  string fileN = "outputs/wave-project-n" + to_string(nNodes) + +'-d'+to_string(distance);
+  string fileN = "outputs/wave-project-n" + to_string(nNodes) + "-d" + to_string(distance);
 
   Simulator::Stop(Seconds(simTime+1));
   Simulator::Run();

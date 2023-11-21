@@ -3,7 +3,7 @@ import os
 import numpy as np
 import sys
 import math
-from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate
+from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array
 
 par_dir = os.path.dirname((os.path.dirname(__file__)))
 app_dir = os.path.join(par_dir, 'inputs')
@@ -107,19 +107,22 @@ if __name__ == "__main__":
         raise Exception("Insufficient arguments!!")
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     position_model = json_data['position_model']
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
-
-    for idx, num_nodes in enumerate(nodes):
-        print(printlines[idx])
-        critical_rate = getCriticalRate(headways[idx], json_data)
-        getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model)
-        getStartTime(num_nodes=num_nodes)
-        getVelocities(num_nodes=num_nodes)
-        getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type)
-        getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type)
-        print("\n\n")
+    distances = get_array(json_data['total_distance'])
+    
+    for distance in distances:
+        print("this is the problem", distance)
+        nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
+        for idx, num_nodes in enumerate(nodes):
+            print(printlines[idx])
+            critical_rate = getCriticalRate(headways[idx], json_data)
+            getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model, distance=distance)
+            getStartTime(num_nodes=num_nodes, distance=distance)
+            getVelocities(num_nodes=num_nodes, distance=distance)
+            getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+            getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+            print("\n\n")
 

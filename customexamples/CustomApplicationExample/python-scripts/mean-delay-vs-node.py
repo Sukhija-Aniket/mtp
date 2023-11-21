@@ -4,8 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, func_tcr
-
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, func_tcr, get_array
 '''
     --------------------------------------------README--------------------------------------------
 
@@ -115,14 +114,15 @@ def main():
 
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    nodes, headways, _ = convert_headway_to_nodes(json_data)
     position_model = str(json_data['position_model'])
+    distances = get_array(json_data['total_distance'])
 
-    mean_delays = [[], [], [], []]
-    std_delays = [[], [], [], []]
-    rbl_delays = [[], [], [], []]
-
-    for distance in json_data['total_distance']:
+    for distance in distances:
+        nodes, headways, _ = convert_headway_to_nodes(json_data, distance)
+        mean_delays = [[], [], [], []]
+        std_delays = [[], [], [], []]
+        rbl_delays = [[], [], [], []]
+        
         for idx, num_nodes in enumerate(nodes):
             input_file = input_file_template + str(num_nodes) +'-d' + str(distance) + ".log"
             temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, nodes=num_nodes, headway=headways[idx])

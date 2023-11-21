@@ -47,12 +47,15 @@ def convert_to_cli(json_data, accepted_keys):
             cli_arguments += f' --{key}={value}'
     return cli_arguments
 
+def get_array(str):
+    arr = list(map(int, str.split(' ')))
+    return arr
 
-def convert_headway_to_nodes(json_data):
+def convert_headway_to_nodes(json_data, distance=100):
     num_nodes = []
     printlines = []
     headway = None
-    dist = int(json_data['total_distance'])
+    dist = int(distance)
     position_model = str(json_data['position_model'])
     if position_model.startswith('platoon'):
         headway = list(map(int, json_data['headway_array'].split(' ')))

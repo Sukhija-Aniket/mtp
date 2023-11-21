@@ -4,11 +4,11 @@
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
+total_distance=(100 300 500 700 900)
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
 general_rate=30
-total_distance=(100 300 500 700 900)
 plot=0
 
 # Functions
@@ -17,7 +17,6 @@ print_usage() {
   echo "Options:"
   echo -e "\t--help                                                  Displays this help message"
   echo -e "\t--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
-  echo -e "\t--total_distance=VALUE (default=2000)                   Specify the total distance of road during simulation"
   echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
   echo -e "\t--general_type={poisson, constant, default=constant}    Specify the distribution for generating general packets"
   echo -e "\t--critical_type={poisson, constant, default=poisson}    Specify the distribution for generating critical packets"

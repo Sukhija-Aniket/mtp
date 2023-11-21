@@ -1,5 +1,5 @@
 import os, subprocess, sys
-from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes
+from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes, get_array
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ns3_directory = app_dir.split('/scratch')[0]
@@ -23,9 +23,11 @@ elif len(sys.argv) >= 2:
     ns3_executable = sys.argv[1]
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
-    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     cli_args = convert_to_cli(json_data, accepted_keys)
-    for distance in json_data['total_distance']:
+    distances = get_array(json_data['total_distance'])
+    
+    for distance in distances:
+        nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
         for i,node in enumerate(nodes):
             print(printlines[i])
             run_ns3_process(ns3_executable, cli_args, node, distance)
