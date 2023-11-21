@@ -27,7 +27,6 @@ elif len(sys.argv) >= 2:
     distances = get_array(json_data['total_distance'])
     
     for distance in distances:
-        nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
+        nodes, headways, _ = convert_headway_to_nodes(json_data, distance)
         for i,node in enumerate(nodes):
-            print(printlines[i])
             run_ns3_process(ns3_executable, cli_args, node, distance)
