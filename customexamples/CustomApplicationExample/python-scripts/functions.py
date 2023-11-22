@@ -35,7 +35,7 @@ def updateParams(headway, json_data):
         'alpha': float(json_data.get('alpha', -1.933)),
         'gamma': float(json_data.get('gamma', 0.652)),
         'convergence_value': int(headway),
-        'velocity_lead_node': int(json_data.get('velocity_lead_node', 25)),
+        'velocity_lead_node': int(json_data.get('velocity_lead_node', 120)),
         'tunable_param': int(json_data.get('tunable_param', 500)),
     }
     return platoon_params

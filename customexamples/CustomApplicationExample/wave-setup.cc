@@ -30,7 +30,9 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enabl
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"),
-  						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
+  						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+              "MaxSlrc", UintegerValue(2),
+              "MaxSsrc", UintegerValue(2));
 
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -38,9 +40,13 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enabl
 
   for(uint32_t iNode=0;iNode<devices.GetN();iNode++){
     Ptr<WaveNetDevice> node = DynamicCast<WaveNetDevice> (devices.Get(iNode));
-    uint32_t retryLimit = 2;
-    node->GetRemoteStationManager()->SetMaxSlrc(retryLimit);
-    node->GetRemoteStationManager()->SetMaxSsrc(retryLimit);
+    // uint32_t retryLimit = 2;
+    // std::cout<<"ERROR HERE"<<std::endl;
+    // Ptr<WifiRemoteStationManager> wrsm = node->GetRemoteStationManager(); 
+    // std::cout<<wrsm<<std::endl;
+    // node->GetRemoteStationManager()->SetMaxSlrc(retryLimit);
+    // node->GetRemoteStationManager()->SetMaxSsrc(retryLimit);
+    // std::cout<<"ERROR HERE"<<std::endl;
     // Change AIFs[1] = 3; AIFs[0] = 2; cw_min = 15; cw_max = 31
     Ptr<OcbWifiMac> nodeMac = node->GetMac(178);
     Ptr<QosTxop> viTxop = nodeMac->GetQosTxop(AC_VI);

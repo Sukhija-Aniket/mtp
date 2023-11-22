@@ -1,9 +1,10 @@
+
 import random
 import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, func_tcr, get_array
 '''
     --------------------------------------------README--------------------------------------------
 
@@ -22,21 +23,35 @@ import matplotlib.pyplot as plt
 
 app_dir = os.path.dirname(os.path.dirname(__file__))
 
-area = int(sys.argv[2])
-
 input_path = os.path.join(app_dir, "outputs")
 plot_path = os.path.join(app_dir, "plots")
-input_file_template = "static-node-delay-calc-n"
+input_file_template = "wave-project-n"
 
-context_map = {
-    "enqueue": "/$ns3::WifiNetDevice/Mac/Txop/Queue/Enqueue",
-    "dequeue": "/$ns3::WifiNetDevice/Mac/Txop/Queue/Dequeue"
-}
+queueMap = {
+    'BE': 0,
+    'BK': 1,
+    'VI': 2,
+    'VO': 3,
+    }
+context_map = {}
+inverse_map = ['BE', 'BK', 'VI', 'VO']
 
-def get_mean_mac_delay(fileName, nodes=None):
-    mean_delay = 0
-    counter = 0
+for key, pair in queueMap.items():
+    context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
+    context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
+
+context_map['TxDrop'] = "/MacTxDrop"
+
+def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
+
+    mean_delays = np.zeros(4)
+    std_delays = np.zeros(4)
+    rbl_delays = np.zeros(4)
+    counters = np.zeros(4)
+    # mean_delay = 0
     uid_enqueue = {}
+    uid_dequeue = {}
+    uid_drop = {}
 
     input_file = os.path.join(input_path, fileName)
     if not os.path.isfile(input_file):
@@ -45,62 +60,126 @@ def get_mean_mac_delay(fileName, nodes=None):
     output_file_path = os.path.join(input_path, "mean-delay-calculation.log")
 
     if not (nodes==None):
-        output_file_path = os.path.join(input_path, f"enqueue_dequeue_trace_n{nodes}")
+        output_file_path = os.path.join(input_path, f"enqueue_dequeue_trace_n{nodes}_d{distance}")
 
     file_descriptor = os.open(output_file_path, os.O_WRONLY | os.O_CREAT, 0o644)
 
     if file_descriptor == -1:
         raise FileNotFoundError(f"{output_file_path} doesn't exist")
 
+    # TODO fix it later
+    t_cr = {
+        25.0: 0.004777,
+        30.0: 0.005130,
+        35.0: 0.004951,
+        40.0: 0.004368,
+        45.0: 0.004375,
+        50.0: 0.004246,
+        55.0: 0.003597,
+        60.0: 0.003182,
+        65.0: 0.002529,
+        70.0: 0.001498,
+        75.0: 0.000671
+    }
+
+    # Scan the traces
     with open(input_file, "r") as file:
         for line in file:
             attr = line.split(' ')
             uid = int(attr[0])
             context = attr[1]
             time = float(attr[2])
-            if (context.endswith(context_map["dequeue"]) and uid_enqueue[uid]):
-                os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
-                mean_delay = mean_delay + (time - uid_enqueue[uid])
-                counter = counter + 1
-            elif(context.endswith(context_map["enqueue"])):
-                os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
-                uid_enqueue[uid] = time
+            for key, value in queueMap.items():
+                if (context.endswith(context_map[key + "dequeue"])):
+                    os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
+                    uid_dequeue[f"{uid}_{value}"] = time
+                elif (context.endswith(context_map[key + "enqueue"])):
+                    os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
+                    uid_enqueue[f"{uid}_{value}"] = time
+                elif (context.endswith(context_map["TxDrop"])):
+                    os.write(file_descriptor, bytes(f"Drop time for uid {uid} is {time}ns \n", 'utf-8'))
+                    uid_drop[f"{uid}"] = time
 
+    # Calculate the MAC delay for packets except for the droppped packets
+    for uid_type, time in uid_dequeue.items():
+        uid = uid_type.split('_')[0]
+        value = int(uid_type.split('_')[1])
+        if(uid_drop[uid]):
+            continue
+        mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid_type])
+        std_delays[value] = std_delays[value] + (time - uid_enqueue[uid_type])**2
+        rbl_delays[value] = rbl_delays[value] + 1 if (t_cr.__contains__(headway) and t_cr[headway] > ((time - uid_enqueue[uid_type])/1000000000)) else rbl_delays[value]
+        counters[value] = counters[value] + 1
 
-    if counter==0:
-        return -1
+    # with open(input_file, "r") as file:
+    #     for line in file:
+    #         attr = line.split(' ')
+    #         uid = int(attr[0])
+    #         context = attr[1]
+    #         time = float(attr[2])
+    #         for key, value in queueMap.items():
+    #             if (context.endswith(context_map[key + "dequeue"]) and uid_enqueue.__contains__(uid)):
+    #                 os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
+    #                 mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
+    #                 std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
+    #                 rbl_delays[value] = rbl_delays[value] + 1 if (t_cr.__contains__(headway) and t_cr[headway] > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+    #                 counters[value] = counters[value] + 1
+    #             elif (context.endswith(context_map[key + "enqueue"])):
+    #                 os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
+    #                 uid_enqueue[uid] = time
 
-    os.write(file_descriptor, bytes(f"Mean Delay: {mean_delay/counter}ns \n", 'utf-8'))
+    for x in range(4):
+        if counters[x] == 0:
+            continue
+        mean_delays[x] = mean_delays[x]/counters[x]
+        std_delays[x] = std_delays[x] - (counters[x] * mean_delays[x]**2)
+        std_delays[x] = np.sqrt(std_delays[x]/counters[x])
+        rbl_delays[x] = rbl_delays[x]/counters[x]
+        os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"std Delay for {x}: {std_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_delays[x]}ns \n", 'utf-8'))
+
     os.close(file_descriptor)
-    return mean_delay/counter
+    return mean_delays, std_delays, rbl_delays
 
 def main():
-    if(len(sys.argv) < 3):
+    if(len(sys.argv) < 2):
         raise TypeError("Insufficient arguments. At least one additional argument is required.")
 
-    if(sys.argv[1].isdigit()):
-        step = 10
-        num_nodes = np.arange(step, int(sys.argv[1])+step, step)
-        mean_delay = []
-        for i in range(len(num_nodes)):
-            input_file = input_file_template + str(num_nodes[i]) + ".log"
-            mean_delay.append(round(get_mean_mac_delay(input_file, num_nodes[i])/1000000, 3))
-        print(mean_delay)
+    parameters = sys.argv[1]
+    json_data = convert_to_json(parameters)
+    position_model = str(json_data['position_model'])
+    distances = get_array(json_data['total_distance'])
 
-        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
-            plt.plot(num_nodes, mean_delay)
-            plt.scatter(num_nodes, mean_delay)
-            plt.xlabel("Number of Nodes")
-            plt.ylabel("Mean AMC delay (in ms)")
-            plt.show()
-            plt.savefig(os.path.join(plot_path, "mean-delay-vs-nodes.png"))
+    for distance in distances:
+        nodes, headways, _ = convert_headway_to_nodes(json_data, distance)
+        mean_delays = [[], [], [], []]
+        std_delays = [[], [], [], []]
+        rbl_delays = [[], [], [], []]
+        
+        for idx, num_nodes in enumerate(nodes):
+            input_file = input_file_template + str(num_nodes) +'-d' + str(distance) + ".log"
+            temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, nodes=num_nodes, headway=headways[idx])
+            for x in range(4):
+                mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
+                std_delays[x].append(round(temparr_std[x]/1000000, 5))
+                rbl_delays[x].append(temparr_rbl[x])
+        xlabel, plt_data = 'Number of Nodes', nodes
+        if position_model.startswith('platoon'):
+            xlabel = 'Headway'
+            plt_data = headways
 
-    else:
-        if(len(sys.argv)>=4 and sys.argv[3]=='--plot'):
-            raise Exception("Invalid flag")
 
-        mean_delay = get_mean_mac_delay(sys.argv[1])
-        print(mean_delay)
+        data_map = {}
+        for x in range(4):
+            if sum(mean_delays[x]) == 0:
+                continue
+            data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
+            data_map[f'std_{inverse_map[x]}'] = std_delays[x]
+            data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
+        row = ['mean', 'std', 'rbl']
+        col = len(data_map)/len(row) + 1
+        plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
 
 
 if __name__ == "__main__":
