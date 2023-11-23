@@ -40,13 +40,6 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enabl
 
   for(uint32_t iNode=0;iNode<devices.GetN();iNode++){
     Ptr<WaveNetDevice> node = DynamicCast<WaveNetDevice> (devices.Get(iNode));
-    // uint32_t retryLimit = 2;
-    // std::cout<<"ERROR HERE"<<std::endl;
-    // Ptr<WifiRemoteStationManager> wrsm = node->GetRemoteStationManager(); 
-    // std::cout<<wrsm<<std::endl;
-    // node->GetRemoteStationManager()->SetMaxSlrc(retryLimit);
-    // node->GetRemoteStationManager()->SetMaxSsrc(retryLimit);
-    // std::cout<<"ERROR HERE"<<std::endl;
     // Change AIFs[1] = 3; AIFs[0] = 2; cw_min = 15; cw_max = 31
     Ptr<OcbWifiMac> nodeMac = node->GetMac(178);
     Ptr<QosTxop> viTxop = nodeMac->GetQosTxop(AC_VI);
@@ -57,10 +50,10 @@ NetDeviceContainer WaveSetup::ConfigureDevices (NodeContainer& nodes, bool enabl
     voTxop->SetAifsn(2);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
-    Time sifs = Time::FromInteger(32, Time::US);
-    nodePhy->SetSifs(sifs);
-    Time slot = Time::FromInteger(13, Time::US);
-    nodePhy->SetSlot(slot);
+    // Time sifs = Time::FromInteger(32, Time::US);
+    // nodePhy->SetSifs(sifs);
+    // Time slot = Time::FromInteger(13, Time::US);
+    // nodePhy->SetSlot(slot);
 
     // Set Tx Power to 500m
     nodePhy->SetTxPowerStart(19.9);

@@ -75,6 +75,7 @@ enum TraceNum {
   DEQUEUENUM,
   MACDEQUEUENUM,
   MACRXDROPNUM,
+  MACTXBACKOFFNUM,
   IPV4L3PROTOCOLRXNUM,    // Network
   TCPSOCKETBASERXNUM,     // Transport
   UDPSERVERRXNUM,         // Application

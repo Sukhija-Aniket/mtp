@@ -197,6 +197,7 @@ int main (int argc, char *argv[])
 
   ConnectTraceMACQueues(nodes, objContainers);
   
+  WifiNetDevice;
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
@@ -207,6 +208,7 @@ int main (int argc, char *argv[])
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
+  Config::Connect("/NodeList/[i]/DeviceList/[i]/$ns3::WaveNetDevice/MacEntities/*/Txop", MakeBoundCallback(&MacTxBackOffTrace, objContainers[MACTXBACKOFFNUM]));
   string fileN = "outputs/wave-project-n" + to_string(nNodes) + "-d" + to_string(distance);
 
   Simulator::Stop(Seconds(simTime+1));

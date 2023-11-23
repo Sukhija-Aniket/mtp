@@ -69,6 +69,8 @@ def getGenRate(num_nodes, mean_packet_gen_rate, type):
     type = str(type)
     if (type.startswith('poisson')):
         packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
+    elif (type.startswith('gaussian')):
+        packetGenRate = [abs(random.gauss(mean_packet_gen_rate, 1)) for _ in range(num_nodes)]
     else:
         packetGenRate = [mean_packet_gen_rate for _ in range(num_nodes)]
     return packetGenRate
