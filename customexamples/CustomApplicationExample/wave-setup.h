@@ -1,21 +1,23 @@
-#ifndef WAVE_SETUP_H
-#define WAVE_SETUP_H
-#include "ns3/core-module.h"
-#include "ns3/wave-module.h"
-#include "ns3/network-module.h"
+// #ifndef WAVE_SETUP_H
+// #define WAVE_SETUP_H
+// #include "ns3/core-module.h"
+// #include "ns3/wave-module.h"
+// #include "ns3/network-module.h"
+// #include "ns3/trace-functions.h"
 
-namespace ns3
-{
-/** \brief This is a "utility class". It does not an extension to ns3. 
- */
-  class WaveSetup
-  {
-    public:
-      WaveSetup ();
-      virtual ~WaveSetup ();
 
-      NetDeviceContainer ConfigureDevices (NodeContainer &n, bool enablePcap);
-  };
-}
+// namespace ns3
+// {
+// /** \brief This is a "utility class". It does not an extension to ns3. 
+//  */
+//   class WaveSetup
+//   {
+//     public:
+//       WaveSetup ();
+//       virtual ~WaveSetup ();
 
-#endif 
+//       NetDeviceContainer ConfigureDevices (NodeContainer &n, vector<vector<DisplayObject>*> objContainers);
+//   };
+// }
+
+// #endif 

@@ -70,7 +70,7 @@ def getGenRate(num_nodes, mean_packet_gen_rate, type):
     if (type.startswith('poisson')):
         packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
     elif (type.startswith('gaussian')):
-        packetGenRate = [abs(random.gauss(mean_packet_gen_rate, 1)) for _ in range(num_nodes)]
+        packetGenRate = [abs(random.gauss(mean_packet_gen_rate, 10)) for _ in range(num_nodes)]
     else:
         packetGenRate = [mean_packet_gen_rate for _ in range(num_nodes)]
     return packetGenRate
@@ -116,7 +116,6 @@ if __name__ == "__main__":
     distances = get_array(json_data['total_distance'])
     
     for distance in distances:
-        print("this is the problem", distance)
         nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
         for idx, num_nodes in enumerate(nodes):
             print(printlines[idx])

@@ -2,7 +2,6 @@
 #define TRACE_FUNCTIONS_H
 
 #include "ns3/core-module.h"
-#include "ns3/custom-display.h"
 #include "mutex"
 #include "ns3/phy-entity.h"
 #include "ns3/wifi-mac.h"
@@ -10,8 +9,9 @@
 #include "tcp-header.h"
 #include "tcp-socket-base.h"
 #include "filesystem"
-#include "ns3/custom-enums.h"
 #include "ns3/ipv4.h"
+#include "ns3/custom-display.h"
+#include "ns3/custom-enums.h"
 
 #define CONT_SIZE 100
 
@@ -169,9 +169,14 @@ void MacRxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<c
   (*objs).push_back(obj);
 }
 
-void MacTxBackOffTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
-  DisplayObject obj = Trace(context, pkt, MACRXDROP);
+void MacTxBackOffTrace(std::vector<DisplayObject> *objs, std::string context, uint32_t backoffNum) {
+  Time now = Simulator::Now ();
+  double t = now.GetNanoSeconds();
+  cout<<backoffNum<<endl;
+  DisplayObject obj = DisplayObject(context, t, backoffNum, 1000);
   (*objs).push_back(obj);
+  // DisplayObject obj = Trace(context, pkt, MACRXDROP);
+  // (*objs).push_back(obj);
 }
 
 void Ipv4L3ProtocolTxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, Ptr<Ipv4> ipv4, uint32_t n) {

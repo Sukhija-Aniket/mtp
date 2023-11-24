@@ -3,6 +3,9 @@
 #include "ns3/application.h"
 #include "ns3/wave-net-device.h"
 #include "ns3/wifi-phy.h"
+#include "ns3/mobility-model.h"
+#include "custom-data-tag.h"
+#include "ns3/random-variable-stream.h"
 #include <vector>
 
 namespace ns3

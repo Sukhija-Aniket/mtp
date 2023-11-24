@@ -102,5 +102,3 @@ std::ostream& operator<<(std::ostream& os, const DisplayObject& obj) {
 }
 
 #endif
-
-// add something
