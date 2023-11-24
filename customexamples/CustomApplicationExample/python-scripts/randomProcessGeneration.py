@@ -123,3 +123,4 @@ if __name__ == "__main__":
         getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type)
         print("\n\n")
 
+

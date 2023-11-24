@@ -70,7 +70,6 @@ handle_array() {
       array+=("$i")
     done
 
-    echo $key
     params["$key"]="$(IFS=" "; echo "${array[@]}")"
   else
     echo "Invalid Argument: $value, exiting..."
