@@ -4,11 +4,12 @@
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
+total_distance=(100 300 500 700 900)
 position_model='platoon-ps1'
 general_type='constant'
 critical_type='poisson'
 general_rate=30
-total_distance=2000
+plot=0
 
 # Functions
 print_usage() {
@@ -16,7 +17,6 @@ print_usage() {
   echo "Options:"
   echo -e "\t--help                                                  Displays this help message"
   echo -e "\t--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
-  echo -e "\t--total_distance=VALUE (default=2000)                   Specify the total distance of road during simulation"
   echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
   echo -e "\t--general_type={poisson, constant, default=constant}    Specify the distribution for generating general packets"
   echo -e "\t--critical_type={poisson, constant, default=poisson}    Specify the distribution for generating critical packets"
@@ -78,7 +78,7 @@ handle_array() {
 
 }
 
-# Setting paths
+# Step 1: Checking for Execution
 fileName="$1"
 if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
@@ -96,6 +96,11 @@ if [[ ! "$fileName" =~ \.cc$ ]]; then
 fi
 shift
 
+# Step 2: Clearing old outputs
+touch nohup.out
+echo -n > nohup.out
+
+# Step 3: Moving to script Directory
 base_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 script_directory=$(get_script_dir "$fileName")
 python_script_path="${script_directory}/python-scripts"
@@ -104,39 +109,22 @@ python_script_process_generation="${python_script_path}/randomProcessGeneration.
 python_script_process_runner="${python_script_path}/processRunner.py"
 cd ${script_directory} || exit
 
-# deleting the previously created inputs, outputs and plots
-base_fileName="${fileName%.*}"
-
-mkdir -p inputs
-cd inputs/
-rm -rf *
-cd ../
-
-mkdir -p outputs
-cd outputs/
-rm -rf enqueue_dequeue_trace*
-rm -rf "${base_fileName}"*
-cd ../
-
-mkdir -p plots
-cd plots/
-files_to_delete=$(find -type f -not -name "*save*")
-if [ -n "$files_to_delete" ]; then
-  rm -rf $files_to_delete
-fi
-cd ../
-
-# Setting input Parameters
+# Step 4: Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
 params["headway_array"]=${headway_array[@]}
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
-params["total_distance"]=$total_distance
+params["total_distance"]=${total_distance[@]} # Fishy
+
+
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+      --plot)
+      plot=1
+      ;;
       --*=*,*,*)
       handle_array "$1"
       ;;
@@ -150,6 +138,30 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+# deleting the previously created inputs, outputs and plots
+
+base_fileName="${fileName%.*}"
+if [ $plot -ne 1 ]; then
+  mkdir -p inputs
+  cd inputs/
+  rm -rf *
+  cd ../
+
+  mkdir -p outputs
+  cd outputs/
+  rm -rf enqueue_dequeue_trace*
+  rm -rf "${base_fileName}"*
+  cd ../
+
+  mkdir -p plots
+  cd plots/
+  files_to_delete=$(find -type f -not -name "*save*")
+  if [ -n "$files_to_delete" ]; then
+    rm -rf $files_to_delete
+  fi
+  cd ../
+fi
+
 json_data="{"
 for key in "${!params[@]}"; do
   json_data+="\"$key\":\"${params[$key]}\","
@@ -158,49 +170,15 @@ json_data="${json_data%,}"
 json_data+="}"
 
 # Generating, Running and analyzing data & Processes
-echo "Running File Generation Process"
-python3 "$python_script_process_generation" "$json_data"
+if [ $plot -ne 1 ]; then 
+  echo "Running File Generation Process"
+  python3 "$python_script_process_generation" "$json_data"
 
-#TODO: testing of the script for Actual NS3 Process
-echo "Running the Actual ns3 process"
-python3 "$python_script_process_runner" "$fileName" "$json_data"
+  #TODO: testing of the script for Actual NS3 Process
+  echo "Running the Actual ns3 process"
+  python3 "$python_script_process_runner" "$fileName" "$json_data"
 
+fi
 
 echo "Running the Process for output & Plot extraction"
 python3 "$python_script_mean_delay" "$json_data"
-
-
-
-
-# # Running the simulation for different nodes
-# for node in "${num_nodes_array[@]}"
-# do
-#     # echo "-------------------------Number of Nodes: $node -----------------------------"
-#     # echo "-------------------------Generating Random Processes-------------------------"
-#     # Script to generate the parameters of simulation using some distributions
-#     if [[ ${#processFlags} -eq 2 ]]; then
-#       flags=$node
-#       python3 $python_script_process_generation $flags
-#     else
-#       flags="$node $processFlags"
-#       python3 $python_script_process_generation $flags
-#     fi
-#     echo "-------------------------Running ${fileName} for ${node} nodes -----------------------------"
-#     # Run the simulations
-
-#     ../../../../ns3 run "$fileName --n=$node"
-#     echo "------------------------- Simulation successfully done for ${node} nodes -------------------------"
-# done
-
-# output_path="${script_directory}/outputs"
-
-# # Preparing arguments for plot script
-# last_element="${num_nodes_array[${#num_nodes_array[@]}-1]}"
-# flags="--plot"
-
-# cd ${script_directory}
-
-# echo "-------------------------Running the plot script ----------------------------------"
-# python3 $python_script_mean_delay $last_element $flags
-
-# echo "------------------------- Job Completed!! -----------------------------------------"

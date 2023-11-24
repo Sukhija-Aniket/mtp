@@ -40,6 +40,7 @@ const char* traceMap[] = {
   "DEQUEUENUM",
   "MACDEQUEUENUM",
   "MACRXDROPNUM",
+  "MACTXBACKOFFNUM",
   "IPV4L3PROTOCOLRXNUM",    // Network
   "TCPSOCKETBASERXNUM",     // Transport
   "UDPSERVERRXNUM",         // Application
@@ -164,6 +165,11 @@ void MacTxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<c
 }
 
 void MacRxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
+  DisplayObject obj = Trace(context, pkt, MACRXDROP);
+  (*objs).push_back(obj);
+}
+
+void MacTxBackOffTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt) {
   DisplayObject obj = Trace(context, pkt, MACRXDROP);
   (*objs).push_back(obj);
 }

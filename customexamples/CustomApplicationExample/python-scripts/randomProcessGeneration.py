@@ -3,18 +3,18 @@ import os
 import numpy as np
 import sys
 import math
-from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate
+from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array
 
 par_dir = os.path.dirname((os.path.dirname(__file__)))
 app_dir = os.path.join(par_dir, 'inputs')
 
 
 ############################################### Helper Functions ###########################################
-def getPositions(num_nodes=10, headway=25, position_model='uniform'):
+def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform'):
     positions = []
     if(position_model.startswith('uniform')):
         # Generate random X and Y positions for nodes uniformly distributed between 0 and 2000 meters
-        positions = [(random.uniform(0, 2000), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
+        positions = [(random.uniform(0, distance), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
 
     elif(position_model.startswith('platoon')):
         positions = [((i*headway), 0) for i in range(num_nodes+1)]
@@ -22,7 +22,7 @@ def getPositions(num_nodes=10, headway=25, position_model='uniform'):
     # Sort the positions by X coordinate in ascending order
     positions.sort(key=lambda x: x[0])
     # Define the output file name
-    output_file = app_dir + "/positions-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/positions-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -32,7 +32,7 @@ def getPositions(num_nodes=10, headway=25, position_model='uniform'):
     print(f"Node positions have been saved to {output_file}")
 
 
-def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
+def getVelocities(distance=100, num_nodes=10, mean_velocity=60, std_deviation=10):
 
     velocities = [random.gauss(mean_velocity, std_deviation) for _ in range(num_nodes)]
 
@@ -40,7 +40,7 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
     velocities_mps = [v * (1000 / 3600) for v in velocities]
 
     # Define the output file name
-    output_file = app_dir +  "/velocities-" + str(num_nodes) + ".txt"
+    output_file = app_dir +  "/velocities-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -50,12 +50,12 @@ def getVelocities(num_nodes=10, mean_velocity=60, std_deviation=10):
     print(f"Node Velocities have been saved to {output_file}")
 
 
-def getStartTime(num_nodes=10, mean_st=0, std_deviation=0.3):
+def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.3):
 
     startTimes = [abs(random.gauss(mean_st, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
-    output_file = app_dir + "/startTimes-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/startTimes-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -69,15 +69,17 @@ def getGenRate(num_nodes, mean_packet_gen_rate, type):
     type = str(type)
     if (type.startswith('poisson')):
         packetGenRate = np.random.poisson(mean_packet_gen_rate, size=num_nodes)
+    elif (type.startswith('gaussian')):
+        packetGenRate = [abs(random.gauss(mean_packet_gen_rate, 1)) for _ in range(num_nodes)]
     else:
         packetGenRate = [mean_packet_gen_rate for _ in range(num_nodes)]
     return packetGenRate
 
 
-def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=30, type='constant'):
+def getPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate=30, type='constant'):
     packetGenRate = getGenRate(num_nodes,mean_packet_gen_rate, type)
     # Define the output file name
-    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -86,12 +88,12 @@ def getPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=30, type='constan
 
     print(f"Application Packet Generation Rate have been saved to {output_file}")
 
-def getPrioPacketGenerationRate(num_nodes=10, mean_packet_gen_rate=100, type='poisson'):
+def getPrioPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate=100, type='poisson'):
 
     packetGenRate = getGenRate(num_nodes, mean_packet_gen_rate, type)
 
     # Define the output file name
-    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + ".txt"
+    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -107,20 +109,23 @@ if __name__ == "__main__":
         raise Exception("Insufficient arguments!!")
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
-    nodes, headways, printlines = convert_headway_to_nodes(json_data)
     position_model = json_data['position_model']
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
-
-    for idx, num_nodes in enumerate(nodes):
-        print(printlines[idx])
-        critical_rate = getCriticalRate(num_nodes, json_data)
-        getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model)
-        getStartTime(num_nodes=num_nodes)
-        getVelocities(num_nodes=num_nodes)
-        getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type)
-        getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type)
-        print("\n\n")
+    distances = get_array(json_data['total_distance'])
+    
+    for distance in distances:
+        print("this is the problem", distance)
+        nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
+        for idx, num_nodes in enumerate(nodes):
+            print(printlines[idx])
+            critical_rate = getCriticalRate(headways[idx], json_data)
+            getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model, distance=distance)
+            getStartTime(num_nodes=num_nodes, distance=distance)
+            getVelocities(num_nodes=num_nodes, distance=distance)
+            getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+            getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+            print("\n\n")
 
 
