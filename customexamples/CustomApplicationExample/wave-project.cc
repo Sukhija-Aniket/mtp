@@ -113,6 +113,8 @@ vector<uint32_t> getGenRates(int n, string name) {
   return genRates;
 }
 
+WifiMacQueue a;
+
 void ConfigureQueue(Ptr<WifiMacQueue> q, string context, vector<vector<DisplayObject>*> &objCont) {
     q->SetMaxSize(QueueSize("1000000000p"));
     q->SetMaxDelay(Time(MilliSeconds(500000)));
@@ -127,7 +129,7 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
     Ptr<Node> node = nodes.Get(i);
     Ptr<WaveNetDevice> waveNetDevice = DynamicCast<WaveNetDevice> (node->GetDevice(0));
     Ptr<OcbWifiMac> waveMac = DynamicCast<OcbWifiMac> (waveNetDevice->GetMac(178));
-    
+
     string context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/VOQueue";
     Ptr<WifiMacQueue> q = waveMac->GetTxopQueue(AcIndex::AC_VO);
     ConfigureQueue(q, context, objCont);
@@ -157,7 +159,7 @@ vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
 
 /* Method 2 */
 vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
-{ 
+{
   int genv = 5;
   int priov = 7;
   if (genRate < prioRate) {
@@ -203,7 +205,7 @@ int main (int argc, char *argv[])
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   //Number of nodes
   uint32_t nNodes = 27;
-  double simTime = 1; 
+  double simTime = 1;
   int distance = 2000;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
@@ -225,7 +227,7 @@ int main (int argc, char *argv[])
   vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  
+
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     //set initial positions, and velocities
