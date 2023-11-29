@@ -115,10 +115,10 @@ def main():
     parameters = sys.argv[1]
     json_data = convert_to_json(parameters)
     position_model = str(json_data['position_model'])
-    distances = get_array(json_data['total_distance'])
+    distance_array = get_array(json_data['distance_array'])
 
-    for distance in distances:
-        nodes, headways, _ = convert_headway_to_nodes(json_data, distance)
+    for distance in distance_array:
+        nodes, headways = convert_headway_to_nodes(json_data, distance)
         mean_delays = [[], [], [], []]
         std_delays = [[], [], [], []]
         rbl_delays = [[], [], [], []]

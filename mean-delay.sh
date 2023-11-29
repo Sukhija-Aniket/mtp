@@ -4,8 +4,8 @@
 declare -A params
 num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
 headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
-total_distance=(100 300 500 700 900)
-position_model='platoon-ps1'
+distance_array=(100 300 500 700 900) # Total Distance to consider
+position_model='platoon-nodes' 
 general_type='constant'
 critical_type='poisson'
 general_rate=30
@@ -16,11 +16,16 @@ print_usage() {
   echo "Usage: $(basename "$0") FILENAME [OPTIONS]"
   echo "Options:"
   echo -e "\t--help                                                  Displays this help message"
+  echo -e "\t--plot                                                  Runs only code for obtaining plots"
   echo -e "\t--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
   echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
-  echo -e "\t--general_type={poisson, constant, default=constant}    Specify the distribution for generating general packets"
-  echo -e "\t--critical_type={poisson, constant, default=poisson}    Specify the distribution for generating critical packets"
-  echo -e "\t--position_model={uniform, platoon, default=uniform}    Specify the position model used during simulation"
+  echo -e "\t--general_type={poisson, constant, gaussian, default=constant}    Specify the distribution for generating general packets"
+  echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify the distribution for generating critical packets"
+  echo -e "\t--position_model={platoon-nodes, platoon-distance, uniform, default=platoon-nodes}    Specify the position model used during simulation"
+  echo -e "\t--headway_array=(start,stop,step) start and stop both are inclusive."
+  echo -e "\t--distance_array=(start,stop,step) start and stop both are inclusive."
+  echo -e "\t--num_nodes_array=(start,stop,step) start and stop both are inclusive."
+  
   #TODO: Add a lot of echo options that will help the user to understand how to use the script.
   echo -e "\nExample:"
   echo -e "\t$(basename "$0") wave-project.cc --general_type=constant --critical_type=poisson --general_rate=5"
@@ -116,7 +121,7 @@ params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
-params["total_distance"]=${total_distance[@]} # Fishy
+params["distance_array"]=${distance_aray[@]} # Fishy
 
 
 

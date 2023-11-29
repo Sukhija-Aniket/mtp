@@ -51,9 +51,21 @@ def get_array(str):
     arr = list(map(int, str.split(' ')))
     return arr
 
+def Printlines(headway=None, nodes=None, distance=None):
+    if headway and nodes:
+        distance = (nodes-1)*headway
+    elif headway and distance:
+        nodes = int(distance/headway + 1)
+    
+    if headway:
+        print(f'Running for headway={headway}, nodes={nodes}, distance={distance}')
+    else:
+        print(f'Running for nodes={nodes}, distance={distance}')
+
+
 def convert_headway_to_nodes(json_data, distance=100):
+    position_model =  str(json_data['position-model'])
     num_nodes = []
-    printlines = []
     headway = None
     dist = int(distance)
     position_model = str(json_data['position_model'])
@@ -62,12 +74,10 @@ def convert_headway_to_nodes(json_data, distance=100):
         for x in headway:
             nodes = int(dist/x + 1)
             num_nodes.append(nodes)
-            printlines.append(f"Running for headway={x}")
     else:
         num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
-        printlines = list(f"Running for numNodes={x}" for x in num_nodes)
 
-    return num_nodes, headway, printlines
+    return num_nodes, headway
 
 def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100):
     fontsize = 6

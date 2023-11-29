@@ -24,9 +24,11 @@ elif len(sys.argv) >= 2:
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
     cli_args = convert_to_cli(json_data, accepted_keys)
-    distances = get_array(json_data['total_distance'])
+    distance_array = get_array(json_data['distance_array'])
+    nodes_array = get_array(json_data['num_nodes_array'])
+    headway_array = get_array(json_data['headway_array'])
     
-    for distance in distances:
-        nodes, headways, _ = convert_headway_to_nodes(json_data, distance)
+    for distance in distance_array:
+        nodes, headways = convert_headway_to_nodes(json_data, distance)
         for i,node in enumerate(nodes):
             run_ns3_process(ns3_executable, cli_args, node, distance)

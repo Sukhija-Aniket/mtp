@@ -3,8 +3,7 @@ import os
 import numpy as np
 import sys
 import math
-from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array
-
+from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array, Printlines
 par_dir = os.path.dirname((os.path.dirname(__file__)))
 app_dir = os.path.join(par_dir, 'inputs')
 
@@ -17,7 +16,7 @@ def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform
         positions = [(random.uniform(0, distance), np.ceil(random.uniform(0, 2))) for _ in range(num_nodes)]
 
     elif(position_model.startswith('platoon')):
-        positions = [((i*headway), 0) for i in range(num_nodes+1)]
+        positions = [((i*headway), 0) for i in range(num_nodes)]
 
     # Sort the positions by X coordinate in ascending order
     positions.sort(key=lambda x: x[0])
@@ -113,17 +112,37 @@ if __name__ == "__main__":
     general_type = json_data['general_type']
     general_rate = json_data['general_rate']
     critical_type = json_data['critical_type']
-    distances = get_array(json_data['total_distance'])
+    distance_array = get_array(json_data['distance_array'])
+    nodes_array = get_array(json_data['num_nodes_array'])
+    headway_array = get_array(json_data['headway_array'])
     
-    for distance in distances:
-        nodes, headways, printlines = convert_headway_to_nodes(json_data, distance)
-        for idx, num_nodes in enumerate(nodes):
-            print(printlines[idx])
-            critical_rate = getCriticalRate(headways[idx], json_data)
-            getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model, distance=distance)
-            getStartTime(num_nodes=num_nodes, distance=distance)
-            getVelocities(num_nodes=num_nodes, distance=distance)
-            getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
-            getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
-            print("\n\n")
-
+    
+    if str(position_model).endswith('distance'):
+        for distance in distance_array:
+            nodes, headways = convert_headway_to_nodes(json_data, distance)
+            for idx, num_nodes in enumerate(nodes):
+                Printlines(headways[idx], distance)
+                critical_rate = getCriticalRate(headways[idx], json_data)
+                getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model, distance=distance)
+                getStartTime(num_nodes=num_nodes, distance=distance)
+                getVelocities(num_nodes=num_nodes, distance=distance)
+                getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+                getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+                print("\n\n")
+    
+    elif str(position_model).endswith('nodes'):
+        for nodes in nodes_array:
+            for headway in headway_array:
+                Printlines(headway=headway, nodes=nodes)
+                critical_rate = getCriticalRate(headway, json_data)
+                distance=headway*(nodes-1)
+                getPositions(num_nodes=nodes, headway=headway, position_model=position_model, distance=distance)
+                getStartTime(num_nodes=nodes, distance=distance)
+                getVelocities(num_nodes=nodes, distance=distance)
+                getPacketGenerationRate(num_nodes=nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+                getPrioPacketGenerationRate(num_nodes=nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+                print("\n\n")
+    
+                
+            
+        
