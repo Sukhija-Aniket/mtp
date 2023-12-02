@@ -64,7 +64,7 @@ def Printlines(headway=None, nodes=None, distance=None):
 
 
 def convert_headway_to_nodes(json_data, distance=100):
-    position_model =  str(json_data['position-model'])
+    position_model =  str(json_data['position_model'])
     num_nodes = []
     headway = None
     dist = int(distance)

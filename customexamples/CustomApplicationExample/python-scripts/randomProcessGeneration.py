@@ -119,11 +119,11 @@ if __name__ == "__main__":
     
     if str(position_model).endswith('distance'):
         for distance in distance_array:
-            nodes, headways = convert_headway_to_nodes(json_data, distance)
-            for idx, num_nodes in enumerate(nodes):
-                Printlines(headways[idx], distance)
-                critical_rate = getCriticalRate(headways[idx], json_data)
-                getPositions(num_nodes=num_nodes, headway=headways[idx], position_model=position_model, distance=distance)
+            nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
+            for idx, num_nodes in enumerate(nodes_array):
+                Printlines(headway_array[idx], distance)
+                critical_rate = getCriticalRate(headway_array[idx], json_data)
+                getPositions(num_nodes=num_nodes, headway=headway_array[idx], position_model=position_model, distance=distance)
                 getStartTime(num_nodes=num_nodes, distance=distance)
                 getVelocities(num_nodes=num_nodes, distance=distance)
                 getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)

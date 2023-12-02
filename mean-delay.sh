@@ -2,13 +2,14 @@
 
 # Declarations and variables
 declare -A params
-num_nodes_array=(10 20 30 40 50 60 70 80 90 100) # Number of nodes to simulate on
-headway_array=(25 30 35 40 45 50 55 60 65 70 75) # Distance between two consecutive nodes to simulate on
-distance_array=(100 300 500 700 900) # Total Distance to consider
+num_nodes_array=(10 20) # Number of nodes to simulate on
+headway_array=(25) # Distance between two consecutive nodes to simulate on
+distance_array=(100 120) # Total Distance to consider
 position_model='platoon-nodes' 
 general_type='constant'
 critical_type='poisson'
 general_rate=30
+velocity_lead_node=120  
 plot=0
 
 # Functions
@@ -21,7 +22,7 @@ print_usage() {
   echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
   echo -e "\t--general_type={poisson, constant, gaussian, default=constant}    Specify the distribution for generating general packets"
   echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify the distribution for generating critical packets"
-  echo -e "\t--position_model={platoon-nodes, platoon-distance, uniform, default=platoon-nodes}    Specify the position model used during simulation"
+  echo -e "\t--position_model={platoon-nodes, platoon-distance, nodes-distance, default=platoon-nodes}    Specify the position model used during simulation"
   echo -e "\t--headway_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--distance_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--num_nodes_array=(start,stop,step) start and stop both are inclusive."
@@ -121,7 +122,7 @@ params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
-params["distance_array"]=${distance_aray[@]} # Fishy
+params["distance_array"]=${distance_array[@]} # Fishy
 
 
 
