@@ -49,7 +49,7 @@ def getVelocities(distance=100, num_nodes=10, mean_velocity=60, std_deviation=10
     print(f"Node Velocities have been saved to {output_file}")
 
 
-def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.3):
+def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.01):
 
     startTimes = [abs(random.gauss(mean_st, std_deviation)) for _ in range(num_nodes)]
 
@@ -59,7 +59,8 @@ def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.3):
     # Write the positions to the output file
     with open(output_file, "w") as file:
         for x in startTimes:
-            file.write(f"{x:.2f}\n")
+            x = x/1000
+            file.write(f"{x:.6f}\n")
         print(f"Client Start Time have been saved to {output_file}")
 
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
         for distance in distance_array:
             nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
             for idx, num_nodes in enumerate(nodes_array):
-                Printlines(headway_array[idx], distance)
+                Printlines(headway=headway_array[idx], distance=distance)
                 critical_rate = getCriticalRate(headway_array[idx], json_data)
                 getPositions(num_nodes=num_nodes, headway=headway_array[idx], position_model=position_model, distance=distance)
                 getStartTime(num_nodes=num_nodes, distance=distance)
