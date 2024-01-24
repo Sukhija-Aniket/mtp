@@ -77,6 +77,8 @@ def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
         70.0: 0.001498,
         75.0: 0.000671
     }
+    
+    
     with open(input_file, "r") as file:
         for line in file:
             attr = line.split(' ')

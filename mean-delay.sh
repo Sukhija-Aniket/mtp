@@ -4,7 +4,7 @@
 declare -A params
 num_nodes_array=(10 20) # Number of nodes to simulate on
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
-distance_array=(100 300 500 700) # Total Distance to consider
+distance_array=(100) # Total Distance to consider
 position_model='platoon-distance' 
 general_type='constant'
 critical_type='poisson'

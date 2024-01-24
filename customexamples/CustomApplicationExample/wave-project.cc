@@ -51,6 +51,7 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2));
   // );
+  wavePhy.EnablePcapAll("wave-project", true);
   
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -68,11 +69,11 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     // viTxop->TraceConnect("CwTrace", "VICwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VIMACTXCWNUM]));
     // voTxop->TraceConnect("CwTrace", "VOCwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VOMACTXCWNUM]));
     
-    // viTxop->SetMinCw(15);
-    // viTxop->SetMaxCw(31);
+    viTxop->SetMinCw(15);
+    viTxop->SetMaxCw(31);
   
-    // voTxop->SetMinCw(7);
-    // voTxop->SetMaxCw(15);
+    voTxop->SetMinCw(7);
+    voTxop->SetMaxCw(15);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
     // Time sifs = Time::FromInteger(32, Time::US);
@@ -199,10 +200,10 @@ vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
       cnt++;
     }
   }
-  for(auto x:data) {
-    std::cout<<x<<" ";
-  } 
-  std::cout<<std::endl;
+  // for(auto x:data) {
+  //   std::cout<<x<<" ";
+  // } 
+  // std::cout<<std::endl;
   return data;
 }
 
@@ -282,7 +283,7 @@ int main (int argc, char *argv[])
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
-    vector<uint32_t> data = generateData3(prioPacketGenRates[i], packetGenRates[i]);
+    vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
@@ -314,3 +315,5 @@ int main (int argc, char *argv[])
 
   fclose(fp);
 }
+
+

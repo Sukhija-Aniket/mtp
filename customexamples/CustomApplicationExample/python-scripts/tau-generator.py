@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-a, ym, y_dash = 5, 50, 100 # Reference [12]
+a, ym, y_dash = 5, 5, 10 # Reference [12]
 x=25
 l = 0
 
@@ -20,7 +20,7 @@ values = [
 ]
 
 
-headways = np.arange(20,110,10)
+headways = np.arange(2,10,1)
 
 def func_tn_simp(y,d):
     log_num = 5*(1+np.sqrt(2))
