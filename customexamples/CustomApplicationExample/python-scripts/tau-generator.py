@@ -3,9 +3,9 @@ import random
 
 # Default values to use
 a, ym, y_dash = 5, 5, 10 
-x=25 
+x0=25 
 l = 0
-headways = np.arange(2,10,1) # Using headways to obtain values for t_cr for headway ranging from 2 to 10.
+headways = np.arange(2,11,1) # Using headways to obtain values for t_cr for headway ranging from 2 to 10.
 
 
 # tn --> ( -1 / ( (̃d) * (2 + root(2)) ) )  * ln[ ((̃d)(a + 𝑙)(−2 − root(2)) − 𝑎𝑉′(𝑦∗)) / ( (̃d) * (−2 − root(2)) )^2 ]
@@ -33,11 +33,11 @@ def get_d_bar(y):
 
 # Calculating value of Vo satisfying the equation --> 𝑦∗ = 𝑉^(-1)(𝑥`0)
 def V_0(y):
-    return (x/(np.tanh((y - ym)/y_dash) + np.tanh(ym/y_dash))) 
-
+    v0 = (x0 /( np.tanh((y - ym)/y_dash) + np.tanh(ym/y_dash) )) 
+    return v0
 
 def V_bar(y):
-    val = (V_0(y) * (1-(np.tanh((y - ym)/y_dash)**2)) * 1/y_dash)
+    val = (V_0(y) * ( 1 - (np.tanh((y - ym)/y_dash)**2) ) * (1/y_dash))
     return val
 
 def get_rel(t_cr, t_tr, headway): # for linear reliability
@@ -68,7 +68,7 @@ Mac_header_size = 112 # 112 bits
 E_p = 500 * 8 # 500 bytes
 R_b = 1 * 1024 * 1024 # 1Mbps
 R_d = 3 * 1024 * 1024 # 3Mbps
-delta = 2 # TODO fix it today
+delta = 0 # TODO fix it today
 t_tr = Phy_header_size/R_b + (Mac_header_size + E_p)/R_d + delta
 for i,x in enumerate(headways):
     d_bar = get_d_bar(x)
