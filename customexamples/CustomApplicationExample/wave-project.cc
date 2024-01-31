@@ -6,6 +6,10 @@
 #include "custom-mobility-model.h"
 #include "iomanip"
 #include "ns3/trace-functions.h"
+#include <bits/stdc++.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 // #include "wave-setup.h"
 #include <random>
 
@@ -25,7 +29,7 @@ vector<Vector3D> getPV(int n, string name)  {
   return pv;
 }
 
-NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers) {
+NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap) {
   /*
     Setting up WAVE devices. With PHY & MAC using default settings. 
   */
@@ -47,11 +51,11 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"),
-  						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+  						"NonUnicastMode", StringValue ("OfdmRate3MbpsBW10MHz"),
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2));
   // );
-  wavePhy.EnablePcapAll("wave-project", true);
+  // wavePhy.EnablePcapAll("wave-project", true);
   
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -76,6 +80,14 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     voTxop->SetMaxCw(15);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
+    // (Aniket Sukhija)
+    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel(); 
+    uint16_t number = opChannel.GetNumber();
+    uint16_t channel = opChannel.GetFrequency();
+    uint16_t cw = opChannel.GetWidth();
+    uint16_t band = nodePhy->GetPhyBand();
+    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band); 
+    // (Aniket Sukhija)
     // Time sifs = Time::FromInteger(32, Time::US);
     // nodePhy->SetSifs(sifs);
     // Time slot = Time::FromInteger(13, Time::US);
@@ -90,6 +102,21 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     nodePhy->SetRxSensitivity(-84.87);
   }
 
+  if(enablePcap) {
+    int numNodes = devices.GetN();
+    string filename = "static-node-delay-calc-n" + std::to_string(numNodes);
+    // char* filename = (char*)malloc((tempFilename.size()+1)*sizeof(char));
+    // long unsigned int filenameInd;
+    // for(filenameInd=0;filenameInd<tempFilename.size();filenameInd++){
+    //   filename[filenameInd] = tempFilename[filenameInd];
+    // }
+    // filename[filenameInd] = '\0';
+    // printf("Pcap file for %d node: %s\n", numNodes, filename);
+    // int fd = open(filename, O_WRONLY | O_CREAT, 0644);
+    wavePhy.EnablePcap(filename, devices);
+    // close(fd);
+  }
+  //wavePhy.EnablePcap ("custom-application" + std::to_string(numNodes), devices); //This generates *.pcap files
   return devices;
 }
 
@@ -233,7 +260,7 @@ int main (int argc, char *argv[])
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   //Number of nodes
   uint32_t nNodes = 11;
-  double simTime = 2;
+  double simTime = 1;
   int distance = 100;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
@@ -269,7 +296,7 @@ int main (int argc, char *argv[])
 
   // Wifi Phy and Mac Layer
   // WaveSetup wave;
-  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers);
+  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, true);
 
   //Create Application in nodes
 

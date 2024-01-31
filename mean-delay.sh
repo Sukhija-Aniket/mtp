@@ -81,7 +81,6 @@ handle_array() {
     echo "Invalid Argument: $value, exiting..."
     exit 1
   fi
-
 }
 
 # Step 1: Checking for Execution
@@ -123,8 +122,6 @@ params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
 params["distance_array"]=${distance_array[@]} # Fishy
-
-
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
