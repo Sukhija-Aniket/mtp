@@ -27,7 +27,7 @@ vector<Vector3D> getPV(int n, string name)  {
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers) {
   /*
-    Setting up WAVE devices. With PHY & MAC using default settings. 
+    Setting up WAVE devices. With PHY & MAC using default settings.
   */
   YansWifiChannelHelper waveChannel = YansWifiChannelHelper();
   waveChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -73,6 +73,12 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     voTxop->SetAifsn(2);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
+    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
+    uint16_t number = opChannel.GetNumber();
+    uint16_t channel = opChannel.GetFrequency();
+    uint16_t cw = opChannel.GetWidth();
+    uint16_t band = nodePhy->GetPhyBand();
+    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
     // Time sifs = Time::FromInteger(32, Time::US);
     // nodePhy->SetSifs(sifs);
     // Time slot = Time::FromInteger(13, Time::US);
@@ -261,7 +267,7 @@ int main (int argc, char *argv[])
   }
 
   ConnectTraceMACQueues(nodes, objContainers);
-  
+
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
