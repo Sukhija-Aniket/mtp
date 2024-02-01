@@ -1,6 +1,63 @@
 import json, os, sys, math
 import matplotlib.pyplot as plt
 import random
+import numpy as np
+from constants import *
+
+# Code for obtaining theoratical Reliability Values
+
+def get_rel(t_cr, headway):
+    x1_ac0 = 0.0566
+    x2_ac0 = 0.1277
+    x1_ac1 = 0.0156
+    x2_ac1 = 0.057
+    print(f"t_tr: {TRANSMISSION_TIME}, t_cr: {TRANSMISSION_TIME}, expo: {-1*(x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME)}")
+    if t_cr >= TRANSMISSION_TIME:
+        rel_ac0 = 1 - np.exp((x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME))
+        rel_ac1 = 1 - np.exp((x1_ac1*headway + x2_ac1) * (t_cr - TRANSMISSION_TIME))
+        return rel_ac0, rel_ac1 # TODO change it later
+    else:
+        return 0,0
+
+# Code for Obtaining the communication and Critical Delays
+
+# tn --> ( -1 / ( (̃d) * (2 + root(2)) ) )  * ln[ ((̃d)(a + 𝑙)(−2 − root(2)) − 𝑎𝑉′(𝑦∗)) / ( (̃d) * (−2 − root(2)) )^2 ]
+# tn is the communication delay
+def get_tn(y, d, a, l, x0, y_dash, ym):
+    log_num = (-d * (a + l)*(-2-np.sqrt(2))) - a*V_bar(y, x0, y_dash, ym)
+    log_den = (d * (-2-np.sqrt(2)))**2
+    val = -1/(d*(2+np.sqrt(2)))
+    tn = val * np.log(log_num/log_den)
+    return tn
+
+# This function provides the value of critical delay, considering tn as only 10% of the delay
+def get_t_cr(tn, mean=0.1, std_dev=0.01):
+    k = random.gauss(mu=mean, sigma=std_dev)
+    return k*tn
+
+
+# d_bar --> (̃d) = 𝑎𝑉′(𝑦∗)∕(𝑎 + 𝑙)
+def get_d_bar(y, a, l, x0, y_dash, ym):
+    num = a * V_bar(y, x0, y_dash, ym)
+    den = a + l
+    d_bar = num/den
+    return d_bar
+
+# Calculating value of Vo satisfying the equation --> 𝑦∗ = 𝑉^(-1)(𝑥`0)
+def V_0(y, x0, y_dash, ym):
+    v0 = (x0 /( np.tanh((y - ym)/y_dash) + np.tanh(ym/y_dash) )) 
+    return v0
+
+def V_bar(y, x0, y_dash, ym):
+    val = (V_0(y, x0, y_dash, ym) * ( 1 - (np.tanh((y - ym)/y_dash)**2) ) * (1/y_dash))
+    return val
+
+def get_tcr(headway, a=5, l=0, x0=25, y_dash=10, ym=5):
+    d_bar = get_d_bar(headway, a, l, x0, y_dash, ym)
+    tn = get_tn(headway, d_bar, a, l, x0, y_dash, ym)
+    t_cr = get_t_cr(tn)
+    return t_cr
+
 
 def convert_to_json(json_string):
     try:
@@ -131,9 +188,3 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
                 plt.xlabel(xlabel)
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
         plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
-
-
-
-def func_tcr(tn, mean=0.1, std_dev=0.01):
-    k = random.gauss(mu=mean, sigma=std_dev)
-    return k*tn

@@ -3,13 +3,13 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 20) # Number of nodes to simulate on
-headway_array=(25) # Distance between two consecutive nodes to simulate on
-distance_array=(100 120) # Total Distance to consider
-position_model='platoon-nodes' 
+headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
+distance_array=(100) # Total Distance to consider
+position_model='platoon-distance' 
 general_type='constant'
 critical_type='poisson'
 general_rate=30
-velocity_lead_node=120  
+velocity_lead_node=25
 plot=0
 
 # Functions
@@ -48,7 +48,7 @@ get_script_dir() {
 handle_argument() {
   local arg="$1"
   local key="${arg%=*}"
-  local value="${arg#*=}"
+  local value="${arg#*=}" 
 
   # Remove leading "--" from the key
   key="${key#--}"
@@ -81,7 +81,6 @@ handle_array() {
     echo "Invalid Argument: $value, exiting..."
     exit 1
   fi
-
 }
 
 # Step 1: Checking for Execution
@@ -123,8 +122,6 @@ params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
 params["distance_array"]=${distance_array[@]} # Fishy
-
-
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in

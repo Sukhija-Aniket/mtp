@@ -40,7 +40,10 @@ const char* traceMap[] = {
   "DEQUEUENUM",
   "MACDEQUEUENUM",
   "MACRXDROPNUM",
-  "MACTXBACKOFFNUM",
+  "VIMACTXBACKOFFNUM",
+  "VOMACTXBACKOFFNUM",
+  "VIMACTXCWNUM",
+  "VOMACTXCWNUM",
   "IPV4L3PROTOCOLRXNUM",    // Network
   "TCPSOCKETBASERXNUM",     // Transport
   "UDPSERVERRXNUM",         // Application
@@ -172,11 +175,18 @@ void MacRxDropTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<c
 void MacTxBackOffTrace(std::vector<DisplayObject> *objs, std::string context, uint32_t backoffNum) {
   Time now = Simulator::Now ();
   double t = now.GetNanoSeconds();
-  cout<<backoffNum<<endl;
+  cout<<context<<": "<<backoffNum<<endl;
   DisplayObject obj = DisplayObject(context, t, backoffNum, 1000);
   (*objs).push_back(obj);
-  // DisplayObject obj = Trace(context, pkt, MACRXDROP);
-  // (*objs).push_back(obj);
+}
+
+void MacTxCwTrace(std::vector<DisplayObject> *objs, std::string context, uint32_t oldCw, uint32_t newCw) {
+  Time now = Simulator::Now ();
+  double t = now.GetNanoSeconds();
+  cout<<context<<" old: "<<oldCw<<" new: "<<newCw<<endl;
+  DisplayObject obj = DisplayObject(context, t, oldCw, 1000);
+  (*objs).push_back(obj);
+ 
 }
 
 void Ipv4L3ProtocolTxTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, Ptr<Ipv4> ipv4, uint32_t n) {

@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, func_tcr, get_array
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, get_array, get_tcr
 '''
     --------------------------------------------README--------------------------------------------
 
@@ -61,22 +61,8 @@ def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
     file_descriptor = os.open(output_file_path, os.O_WRONLY | os.O_CREAT, 0o644)
 
     if file_descriptor == -1:
-        raise FileNotFoundError(f"{output_file_path} doesn't exist")
-
-    # TODO fix it later
-    t_cr = {
-        25.0: 0.004777,
-        30.0: 0.005130,
-        35.0: 0.004951,
-        40.0: 0.004368,
-        45.0: 0.004375,
-        50.0: 0.004246,
-        55.0: 0.003597,
-        60.0: 0.003182,
-        65.0: 0.002529,
-        70.0: 0.001498,
-        75.0: 0.000671
-    }
+        raise FileNotFoundError(f"{output_file_path} doesn't exist")   
+    
     with open(input_file, "r") as file:
         for line in file:
             attr = line.split(' ')
@@ -88,7 +74,7 @@ def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
-                    rbl_delays[value] = rbl_delays[value] + 1 if (t_cr.__contains__(headway) and t_cr[headway] > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+                    rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                 elif (context.endswith(context_map[key + "enqueue"])):
                     os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))

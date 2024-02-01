@@ -6,6 +6,10 @@
 #include "custom-mobility-model.h"
 #include "iomanip"
 #include "ns3/trace-functions.h"
+#include <bits/stdc++.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 // #include "wave-setup.h"
 #include <random>
 
@@ -25,7 +29,7 @@ vector<Vector3D> getPV(int n, string name)  {
   return pv;
 }
 
-NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers) {
+NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap) {
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
   */
@@ -35,10 +39,9 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   YansWavePhyHelper wavePhy =  YansWavePhyHelper::Default ();
   Ptr<YansWifiChannel> channel = waveChannel.Create();
   wavePhy.SetChannel (channel);
-  uint32_t channelID = channel->GetId();
-  wavePhy.Set("Frequency", UintegerValue(5900));
-  std::string channelTuple = "{" + std::to_string(channelID) + ", " + std::to_string(10) + ", BAND_5GHZ, 0}";
-  wavePhy.Set("ChannelSettings", StringValue(channelTuple));
+  // wavePhy.Set("Frequency", UintegerValue(5900));
+  // std::string channelTuple = "{" + std::to_string(channelID) + ", " + std::to_string(10) + ", BAND_5GHZ, 0}";
+  // wavePhy.Set("ChannelSettings", StringValue(channelTuple));
 
   wavePhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
   //Setup up MAC
@@ -48,10 +51,11 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"),
-  						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+  						"NonUnicastMode", StringValue ("OfdmRate3MbpsBW10MHz"),
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2));
   // );
+  // wavePhy.EnablePcapAll("wave-project", true);
 
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -63,22 +67,28 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     Ptr<OcbWifiMac> nodeMac = node->GetMac(178);
     Ptr<QosTxop> viTxop = nodeMac->GetQosTxop(AC_VI);
     Ptr<QosTxop> voTxop = nodeMac->GetQosTxop(AC_VO);
-    // viTxop->TraceConnect("BackoffTrace", "BackOffTrace", ns3::MakeBoundCallback(&MacTxBackOffTrace, objContainers[MACTXBACKOFFNUM]));
-    // voTxop->TraceConnect("BackoffTrace", "BackOffTrace", MakeBoundCallback(&MacTxBackOffTrace, objContainers[MACTXBACKOFFNUM]));
+
+    // viTxop->TraceConnect("BackoffTrace", "VIBackOffTrace/" + to_string(iNode), ns3::MakeBoundCallback(&MacTxBackOffTrace, objContainers[VIMACTXBACKOFFNUM]));
+    // voTxop->TraceConnect("BackoffTrace", "VOBackOffTrace/" + to_string(iNode), ns3::MakeBoundCallback(&MacTxBackOffTrace, objContainers[VOMACTXBACKOFFNUM]));
+    // viTxop->TraceConnect("CwTrace", "VICwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VIMACTXCWNUM]));
+    // voTxop->TraceConnect("CwTrace", "VOCwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VOMACTXCWNUM]));
+
     viTxop->SetMinCw(15);
     viTxop->SetMaxCw(31);
-    voTxop->SetMinCw(15);
-    voTxop->SetMinCw(31);
-    viTxop->SetAifsn(3);
-    voTxop->SetAifsn(2);
+
+    voTxop->SetMinCw(7);
+    voTxop->SetMaxCw(15);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
+    // (Aniket Sukhija)
     WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
+
     uint16_t number = opChannel.GetNumber();
     uint16_t channel = opChannel.GetFrequency();
     uint16_t cw = opChannel.GetWidth();
     uint16_t band = nodePhy->GetPhyBand();
     NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
+    // (Aniket Sukhija)
     // Time sifs = Time::FromInteger(32, Time::US);
     // nodePhy->SetSifs(sifs);
     // Time slot = Time::FromInteger(13, Time::US);
@@ -93,6 +103,21 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     nodePhy->SetRxSensitivity(-84.87);
   }
 
+  if(enablePcap) {
+    int numNodes = devices.GetN();
+    string filename = "static-node-delay-calc-n" + std::to_string(numNodes);
+    // char* filename = (char*)malloc((tempFilename.size()+1)*sizeof(char));
+    // long unsigned int filenameInd;
+    // for(filenameInd=0;filenameInd<tempFilename.size();filenameInd++){
+    //   filename[filenameInd] = tempFilename[filenameInd];
+    // }
+    // filename[filenameInd] = '\0';
+    // printf("Pcap file for %d node: %s\n", numNodes, filename);
+    // int fd = open(filename, O_WRONLY | O_CREAT, 0644);
+    wavePhy.EnablePcap(filename, devices);
+    // close(fd);
+  }
+  //wavePhy.EnablePcap ("custom-application" + std::to_string(numNodes), devices); //This generates *.pcap files
   return devices;
 }
 
@@ -122,8 +147,8 @@ vector<uint32_t> getGenRates(int n, string name) {
 WifiMacQueue a;
 
 void ConfigureQueue(Ptr<WifiMacQueue> q, string context, vector<vector<DisplayObject>*> &objCont) {
-    q->SetMaxSize(QueueSize("1000000000p"));
-    q->SetMaxDelay(Time(MilliSeconds(500000)));
+    // q->SetMaxSize(QueueSize("1000000000p"));
+    // q->SetMaxDelay(Time(MilliSeconds(500000)));
     q->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
     q->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
     q->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
@@ -187,6 +212,7 @@ vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
   sort(prioNums.begin(), prioNums.end());
   vector<uint32_t> data(genRate + prioRate);
   uint32_t idx = 0;
+  cnt=0;
   while(cnt < genRate)
   {
     if ((idx < prioRate) && (prioNums[idx] <= cnt))
@@ -202,7 +228,31 @@ vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
       cnt++;
     }
   }
+  // for(auto x:data) {
+  //   std::cout<<x<<" ";
+  // }
+  // std::cout<<std::endl;
   return data;
+}
+
+vector<uint32_t> generateData3(uint32_t prioRate, uint32_t genRate)
+{
+  std::vector<uint32_t> result(prioRate + genRate, 5);
+  for (uint32_t i = 0; i < prioRate; ++i) {
+      result[i] = 7;
+  }
+
+  // Use Fisher-Yates shuffle to randomize the array
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::shuffle(result.begin(), result.end(), g);
+
+  for(auto x:result) {
+    std::cout<<x<<" ";
+  }
+  std::cout<<std::endl;
+
+  return result;
 }
 
 int main (int argc, char *argv[])
@@ -210,9 +260,9 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
   //Number of nodes
-  uint32_t nNodes = 27;
+  uint32_t nNodes = 11;
   double simTime = 1;
-  int distance = 2000;
+  int distance = 100;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
   cmd.AddValue("d", "total Distance", distance);
@@ -247,7 +297,7 @@ int main (int argc, char *argv[])
 
   // Wifi Phy and Mac Layer
   // WaveSetup wave;
-  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers);
+  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, true);
 
   //Create Application in nodes
 
@@ -268,8 +318,8 @@ int main (int argc, char *argv[])
 
   ConnectTraceMACQueues(nodes, objContainers);
 
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", ns3::MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
+  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", ns3::MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxDrop", MakeBoundCallback(&PhyTxDropTrace, objContainers[PHYTXDROPNUM]));
@@ -284,12 +334,14 @@ int main (int argc, char *argv[])
   Simulator::Run();
   Simulator::Destroy();
 
-  int sz = objContainers[MACTXBACKOFFNUM]->size();
-  int sz2 = objContainers[MACENQUEUENUM]->size();
-  cout<<"this is size: "<<sz <<" "<<sz2<<endl;
+  // int sz = objContainers[MACTXBACKOFFNUM]->size();
+  // int sz2 = objContainers[MACENQUEUENUM]->size();
+  // cout<<"this is size: "<<sz <<" "<<sz2<<endl;
   string fileName = getCustomFileName (__FILE__, fileN + ".log");
   FILE* fp = freopen(fileName.c_str (), "w", stdout);
   getObjTrace(objContainers, MACENQUEUENUM, fp);
 
   fclose(fp);
 }
+
+

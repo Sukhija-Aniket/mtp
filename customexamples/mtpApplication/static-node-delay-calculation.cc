@@ -4,105 +4,15 @@
 #include "ns3/core-module.h"
 #include "custom-application.h"
 #include "custom-mobility-model.h"
-#include "wave-setup.h"
-#include "ns3/udp-client.h"
-#include "ns3/udp-echo-client.h"
-#include "ns3/udp-server.h"
-#include "ns3/udp-echo-server.h"
-#include "ns3/ipv4-address-helper.h"
-#include "ns3/custom-enums.h"
-#include "ns3/custom-display.h"
+#include "iomanip"
 #include "ns3/trace-functions.h"
-#include "ns3/ipv4-interface.h"
-#include "ns3/node-list.h"
+// #include "wave-setup.h"
+#include <random>
 
 using namespace ns3;
 using namespace std;
 
-/*
-  Task
-    - Calculate the mean MAC delay for the stationary nodes topology
-    - Find Traffic density i.e. (# of vehicles/area of rectangle)
-    - Plot Average MAC delay vs density graph by varying num_nodes from 10 - 100 in step of 10
-    - Also have a trace of timestamp of enque and deque in MAC for each simulation
-
-  Params to change
-    - Number of nodes
-
-*/
-
-NS_LOG_COMPONENT_DEFINE ("staticNodeApplication");
-
-void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int reciever) {
-  int numpacketsSent = objGrid[sender]->size();
-  int numpacketsRecieved = objGrid[reciever]->size();
-  int numpacketsDropped = numpacketsSent - numpacketsRecieved;
-  int phycnt = 0;
-  int ipv4cnt = 0;
-  int maccnt = 0;
-  int appcnt = 0;
-  int enqueDequecnt = 0;
-  double phyavg = 0;
-  double macavg = 0;
-  double ipv4avg = 0;
-  double appavg = 0;
-  double enqueDequeavg = 0;
-  // create a map
-  std::map<int,std::vector<double>> mp;
-  int n = objGrid.size();
-
-  for(auto &obj: *(objGrid[sender])) {
-    if (mp.find(obj.getUid()) == mp.end()) {
-      mp[obj.getUid()] = std::vector<double>(n);
-    }
-  }
-
-  for(int i=0;i<n;i++) {
-    for(auto &obj: *(objGrid[i])) {
-      if (mp.find(obj.getUid()) == mp.end()) continue;
-      mp[obj.getUid()][i] = obj.getTime();
-    }
-  }
-
-  for(auto x:mp) {
-    if (x.second[PHYTXBEGINNUM] > 0 && x.second[PHYRXENDNUM] > 0) {
-      phyavg += (x.second[PHYRXENDNUM] - x.second[PHYTXBEGINNUM]);
-      phycnt++;
-    }
-    if (x.second[IPV4L3PROTOCOLTXNUM] > 0 && x.second[IPV4L3PROTOCOLRXNUM] > 0) {
-      ipv4avg += (x.second[IPV4L3PROTOCOLRXNUM] - x.second[IPV4L3PROTOCOLTXNUM]);
-      ipv4cnt++;
-    }
-    if (x.second[MACTXNUM] > 0 && x.second[MACRXNUM] > 0) {
-      macavg += (x.second[MACRXNUM] - x.second[MACTXNUM]);
-      maccnt++;
-    }
-    if (x.second[sender] > 0 && x.second[reciever] > 0) {
-      appavg += (x.second[reciever] - x.second[sender]);
-      appcnt++;
-    }
-    if (x.second[MACENQUEUENUM] > 0 && x.second[MACDEQUEUENUM] > 0) {
-      enqueDequeavg += (x.second[MACDEQUEUENUM] - x.second[MACENQUEUENUM]);
-      enqueDequecnt++;
-    }
-  }
-
-  enqueDequeavg /= enqueDequecnt;
-  macavg /= maccnt;
-  phyavg /= phycnt;
-  ipv4avg /= ipv4cnt;
-  appavg /= appcnt;
-
-  cout<<"Total Transmitted packets: "<<numpacketsSent<<endl;
-  cout<<"Total Received packets: "<<numpacketsRecieved<<endl;
-  cout<<"Total Dropped packets: "<<numpacketsDropped<<endl;
-
-  cout<<"AppAvg: "<<appavg<<endl;
-  cout<<"Ipv4Avg: "<<ipv4avg<<endl;
-  cout<<"EnqueDequeAvg: "<<enqueDequeavg<<endl;
-  cout<<"MacAvg: "<<macavg<<endl;
-  cout<<"phyAvg : "<<phyavg<<endl;
-}
+NS_LOG_COMPONENT_DEFINE ("CustomApplicationExample");
 
 vector<Vector3D> getPV(int n, string name)  {
   string fileName = getCustomFileName(__FILE__, name);
@@ -117,90 +27,207 @@ vector<Vector3D> getPV(int n, string name)  {
 
 vector<double> getStartTimes(int n, string name){
   string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<double> pv(n);
-  for(int i(0);i<n;i++) {
-    cin>>pv[i];
+  // FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<double> startTimes(n);
+  if(freopen(fileName.c_str(), "r", stdin)){
+    for(int i(0);i<n;i++) {
+      string x;
+      cin>>x;
+      cout << x << " " << i << endl;
+    }
   }
-  fclose(fp);
-  return pv;
+  // fclose(fp);
+  return startTimes;
 }
 
-void ConnectTraceMACQueues(NodeContainer &nodes, uint8_t tos, vector<vector<DisplayObject>*> &objCont){
+NetDeviceContainer ConfigureDevices(NodeContainer &nodes) {
+  /*
+    Setting up WAVE devices. With PHY & MAC using default settings. 
+  */
+  YansWifiChannelHelper waveChannel = YansWifiChannelHelper();
+  waveChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
+  waveChannel.AddPropagationLoss ("ns3::FriisPropagationLossModel", "Frequency", DoubleValue(5.9e9));
+  Ptr<YansWifiChannel> channel = waveChannel.Create();
+  YansWavePhyHelper wavePhy =  YansWavePhyHelper::Default ();
+  wavePhy.SetChannel (channel);
+  wavePhy.Set("Frequency", UintegerValue(5900));
 
+  wavePhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
+  //Setup up MAC
+  QosWaveMacHelper waveMac = QosWaveMacHelper::Default ();
+  WaveHelper waveHelper = WaveHelper::Default ();
+
+  waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+  						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
+  						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"),
+  						"NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+              "MaxSlrc", UintegerValue(2),
+              "MaxSsrc", UintegerValue(2));
+  // );
+
+  NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
+
+  for(uint32_t iNode=0;iNode<devices.GetN();iNode++){
+    Ptr<WaveNetDevice> node = DynamicCast<WaveNetDevice> (devices.Get(iNode));
+    // Change AIFs[1] = 3; AIFs[0] = 2; cw_min = 15; cw_max = 31
+    Ptr<OcbWifiMac> nodeMac = node->GetMac(178);
+    Ptr<QosTxop> viTxop = nodeMac->GetQosTxop(AC_VI);
+    Ptr<QosTxop> voTxop = nodeMac->GetQosTxop(AC_VO);
+    // viTxop->TraceConnect("BackoffTrace", "BackOffTrace", ns3::MakeBoundCallback(&MacTxBackOffTrace, objContainers[MACTXBACKOFFNUM]));
+    // voTxop->TraceConnect("BackoffTrace", "BackOffTrace", MakeBoundCallback(&MacTxBackOffTrace, objContainers[MACTXBACKOFFNUM]));
+    viTxop->SetMinCw(15);
+    viTxop->SetMaxCw(31);
+    voTxop->SetMinCw(7);
+    voTxop->SetMinCw(15);
+    viTxop->SetAifsn(3);
+    voTxop->SetAifsn(2);
+
+    Ptr<WifiPhy> nodePhy = node->GetPhy(0);
+    // Time sifs = Time::FromInteger(32, Time::US);
+    // nodePhy->SetSifs(sifs);
+    // Time slot = Time::FromInteger(13, Time::US);
+    // nodePhy->SetSlot(slot);
+
+    // Set Tx Power to 500m
+    nodePhy->SetTxPowerStart(19.9);
+    nodePhy->SetTxPowerEnd(19.9);
+    // Set CSR to 700m
+    nodePhy->SetCcaEdThreshold(-84.87);
+    // Set RX Sensitivity
+    nodePhy->SetRxSensitivity(-84.87);
+  }
+
+  return devices;
+}
+
+
+vector<uint32_t> getGenRates(int n, string name) {
+  string fileName = getCustomFileName(__FILE__, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<uint32_t> genRates(n);
+  for(int i(0);i<n;i++) {
+    cin>>genRates[i];
+  }
+
+  fclose(fp);
+  return genRates;
+}
+
+void ConfigureQueue(Ptr<WifiMacQueue> q, string context, vector<vector<DisplayObject>*> &objCont) {
+    q->SetMaxSize(QueueSize("1000000000p"));
+    q->SetMaxDelay(Time(MilliSeconds(500000)));
+    q->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
+    q->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
+    q->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
+    q->TraceConnect("Drop", (context + "/Drop"), MakeBoundCallback(&MacDropTrace, objCont[MACDROPNUM]));
+}
+
+void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> &objCont) {
   for(uint32_t i=0; i<nodes.GetN(); i++){
     Ptr<Node> node = nodes.Get(i);
-    Ptr<WifiNetDevice> wifiNetDevice = DynamicCast<WifiNetDevice> (node->GetDevice(0));
-    Ptr<WifiMac> wifiMAC = wifiNetDevice->GetMac();
+    Ptr<WaveNetDevice> waveNetDevice = DynamicCast<WaveNetDevice> (node->GetDevice(0));
+    Ptr<OcbWifiMac> waveMac = DynamicCast<OcbWifiMac> (waveNetDevice->GetMac(178));
 
-    string context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/Queue";
-    if(tos == NS3_TOS_VAL::TOS_VO){
-      Ptr<WifiMacQueue> vo = wifiMAC->GetTxopQueue(AcIndex::AC_VO);
-      vo->SetMaxSize(QueueSize("1000000000p"));
-      vo->SetMaxDelay(Time(MilliSeconds(500000)));
-      vo->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
-      vo->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
-      vo->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
-      vo->TraceConnect("Drop", (context + "/Drop"), MakeBoundCallback(&MacDropTrace, objCont[MACDROPNUM]));
-    } else {
-      Ptr<WifiMacQueue> be = wifiMAC->GetTxopQueue(AcIndex::AC_BE);
-      be->SetMaxSize(QueueSize("1000000000p"));
-      be->SetMaxDelay(Time(MilliSeconds(500000)));
-      be->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
-      be->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
-      be->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
-      be->TraceConnect("Drop", (context + "/Drop"), MakeBoundCallback(&MacDropTrace, objCont[MACDROPNUM]));
-
-    }
-
+    string context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/VOQueue";
+    Ptr<WifiMacQueue> q = waveMac->GetTxopQueue(AcIndex::AC_VO);
+    ConfigureQueue(q, context, objCont);
+    context = "/NodeList/" + to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/Txop/VIQueue";
+    q = waveMac->GetTxopQueue(AcIndex::AC_VI);
+    ConfigureQueue(q, context, objCont);
   }
+}
+
+/* Method 1*/
+vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
+{
+  vector<uint32_t> data(genRate, 5);
+  vector<bool> marked(genRate, false);
+  default_random_engine generator;
+  uniform_int_distribution<int> distribution(0, genRate-1);
+  uint32_t cnt = 0;
+  while(cnt < prioRate) {
+    int num = distribution(generator);
+    if (marked[num]) continue;
+    data[num] = 7;
+    marked[num] = true;
+    cnt++;
+  }
+  return data;
+}
+
+/* Method 2 */
+vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
+{
+  int genv = 5;
+  int priov = 7;
+  if (genRate < prioRate) {
+    swap(genRate, prioRate);
+    swap(genv, priov);
+  }
+  vector<bool> marked(genRate, false);
+  vector<uint32_t> prioNums;
+  default_random_engine generator;
+  uniform_int_distribution<uint32_t> distribution(0, genRate-1);
+  uint32_t cnt = 0;
+  while(cnt < prioRate)
+  {
+    uint32_t num = distribution(generator);
+    if (marked[num]) continue;
+    prioNums.push_back(num);
+    cnt++;
+  }
+  sort(prioNums.begin(), prioNums.end());
+  vector<uint32_t> data(genRate + prioRate);
+  uint32_t idx = 0;
+  while(cnt < genRate)
+  {
+    if ((idx < prioRate) && (prioNums[idx] <= cnt))
+    {
+      data[idx+cnt] = priov;
+      idx++;
+      data[idx+cnt] = genv;
+      cnt++;
+    }
+    else
+    {
+      data[idx+cnt] = genv;
+      cnt++;
+    }
+  }
+  return data;
 }
 
 int main (int argc, char *argv[])
 {
-
-  uint32_t nNodes = 10;
-  uint32_t packetsPerSecond = 5;
-  uint32_t packetSize = 200;
-  double interval = 2;
-  double simTime = 5;
-  bool enablePcap = false;
-
-  vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
-  string fileName;
-  string fileN;
   CommandLine cmd;
-
-  cmd.AddValue ("n", "Number of nodes", nNodes);
-  cmd.AddValue("pps", "packets per second", packetsPerSecond);
-  cmd.AddValue("ps", "packet size", packetSize);
-
+  //Number of nodes
+  uint32_t nNodes = 2;
+  double simTime = 1;
+  int distance = 2000;
   cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("pcap", "Enable PCAP", enablePcap);
-  cmd.AddValue ("outputFile", "The name of output file for logs and traces", fileN);
+  cmd.AddValue ("n", "Number of nodes", nNodes);
+  cmd.AddValue("d", "total Distance", distance);
   cmd.Parse (argc, argv);
-
-   uint32_t tos = NS3_TOS_VAL::TOS_VO;
-  double packetInterval = 1.0/packetsPerSecond;
-  double maxPackets = interval * packetsPerSecond;
-
 
   NodeContainer nodes;
   nodes.Create(nNodes);
 
-  // LogComponentEnable ("CustomApplication", LOG_LEVEL_FUNCTION);
+  //LogComponentEnable ("CustomApplication", LOG_LEVEL_FUNCTION);
   /*
     You must setup Mobility. Any mobility will work. Use one suitable for your work
   */
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
-  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + ".txt");
-  // vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities.txt");
-  vector<double> startTimes = getStartTimes(nodes.GetN(), "inputs/startTimes-" + to_string(nNodes) + ".txt");
+  vector<Vector3D> positions = getPV(nodes.GetN(), "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<Vector3D> velocities = getPV(nodes.GetN(), "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<double> startTimes = {0.02, 0.09};
+  vector<uint32_t> packetGenRates = {30, 30};
+  vector<uint32_t> prioPacketGenRates = {60, 60};
 
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
+    cout << setprecision(15) << positions[i].x << " " << velocities[i].x << " " << startTimes[i] << " " << packetGenRates[i] << " " << prioPacketGenRates[i] << endl;
     //set initial positions, and velocities
     NS_LOG_LOGIC ("Setting up mobility for node " << i);
     NS_LOG_ERROR ("An error happened :(");
@@ -211,83 +238,51 @@ int main (int argc, char *argv[])
   }
 
   // Wifi Phy and Mac Layer
-  WaveSetup wave;
-  NetDeviceContainer devices = wave.ConfigureDevices(nodes, enablePcap);
+  // WaveSetup wave;
 
-  // Network Layer
-  InternetStackHelper internet;
-  internet.Install(nodes);
-  Ipv4AddressHelper address;
-  address.SetBase ("10.1.1.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = address.Assign (devices);
+  NetDeviceContainer devices = ConfigureDevices(nodes);
 
-  for(uint32_t i = 0; i < interfaces.GetN(); i++) {
-    pair<Ptr<Ipv4>, uint32_t> p = interfaces.Get(i);
-    Ptr<Ipv4Interface> ipv4Interface = p.first->GetObject<Ipv4L3Protocol>()->GetInterface(p.second);
-    ipv4Interface->SetForwarding(false);
-    // p.first->SetDown(p.second);
-  }
+  //Create Application in nodes
 
-  // Application Layer
-  ObjectFactory client;
-  client.SetTypeId("ns3::UdpEchoClient");
-  uint16_t serverPort = 12345;
-  ObjectFactory server;
-  server.SetTypeId ("ns3::UdpEchoServer");
-  InetSocketAddress sockAddress = InetSocketAddress(Ipv4Address::GetBroadcast(), serverPort);
-  sockAddress.SetTos(tos);
-
-  for (uint32_t i=0 ; i<nodes.GetN() ; i++)
+  //Method 1
+  /*
+  */
+  for (uint32_t i=0; i<nodes.GetN(); i++)
   {
-    Ptr<UdpEchoServer> udpEchoServer = server.Create<UdpEchoServer> ();
-    udpEchoServer->SetAttribute("Port", UintegerValue(sockAddress.GetPort()));
-    udpEchoServer->SetStartTime(Seconds(0));
-    udpEchoServer->SetStopTime(Seconds(simTime));
-    nodes.Get(i)->AddApplication(udpEchoServer);
-
-    Ptr<UdpEchoClient> udpEchoClient = client.Create <UdpEchoClient> ();
-    udpEchoClient->SetAttribute("MaxPackets", UintegerValue(maxPackets));
-    udpEchoClient->SetAttribute("Interval", TimeValue(Seconds(packetInterval)));
-    udpEchoClient->SetAttribute("PacketSize", UintegerValue(packetSize));
-    udpEchoClient->SetAttribute("RemoteAddress", AddressValue(sockAddress));
-    // Changing the start Time
-    udpEchoClient->SetStartTime(Seconds(startTimes[i]));
-    udpEchoClient->SetStopTime(Seconds(simTime));
-    nodes.Get(i)->AddApplication(udpEchoClient);
-
+    Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
+    double interval = 1.0/(prioPacketGenRates[i] + packetGenRates[i]);
+    app_i->SetBroadcastInterval (Seconds(interval));
+    app_i->SetStartTime (Seconds (startTimes[i]));
+    app_i->SetStopTime (Seconds (simTime));
+    vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
+    app_i->SetData(data);
+    nodes.Get(i)->AddApplication (app_i);
   }
 
-  ConnectTraceMACQueues(nodes, tos, objContainers);
+  // ConnectTraceMACQueues(nodes, objContainers);
+  
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxDrop", MakeBoundCallback(&PhyTxDropTrace, objContainers[PHYTXDROPNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
+  // // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
+  // string fileN = "outputs/wave-project-n" + to_string(nNodes) + "-d" + to_string(distance);
 
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoClient/Tx", MakeBoundCallback (&UdpEchoClientTxTrace, objContainers[UDPECHOCLIENTTXNUM]));
-  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Tx", MakeBoundCallback(&Ipv4L3ProtocolTxTrace, objContainers[IPV4L3PROTOCOLTXNUM]));
-  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/SendOutgoing", MakeBoundCallback(&Ipv4L3ProtocolUnicastTrace, objContainers[IPV4L3PROTOCOLUNICASTNUM]));
-  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/LocalDeliver", MakeBoundCallback(&Ipv4L3ProtocolMulticastTrace, objContainers[IPV4L3PROTOCOLMULTICASTNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTx", MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacTxDrop", MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyTxDrop", MakeBoundCallback(&PhyTxDropTrace, objContainers[PHYTXDROPNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
-  Config::Connect("NodeList/*/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback(&Ipv4L3ProtocolRxTrace, objContainers[IPV4L3PROTOCOLRXNUM]));
-  Config::Connect("NodeList/*/ApplicationList/*/$ns3::UdpEchoServer/Rx", MakeBoundCallback(&UdpEchoServerRxTrace, objContainers[UDPECHOSERVERRXNUM]));
+  // Simulator::Stop(Seconds(simTime+1));
+  // Simulator::Run();
+  // Simulator::Destroy();
 
-  Simulator::Stop(Seconds(simTime));
-  Simulator::Run();
-  Simulator::Destroy();
+  // int sz = objContainers[MACTXBACKOFFNUM]->size();
+  // int sz2 = objContainers[MACENQUEUENUM]->size();
+  // cout<<"this is size: "<<sz <<" "<<sz2<<endl;
+  // string fileName = getCustomFileName (__FILE__, fileN + ".log");
+  // FILE* fp = freopen(fileName.c_str (), "w", stdout);
+  // getObjTrace(objContainers, MACENQUEUENUM, fp);
 
-  // Choosing a preferred file name for the output files
-  fileN = "outputs/static-node-delay-calc-n" + to_string(nNodes);
-
-  fileName = getCustomFileName (__FILE__, fileN + ".log");
-  FILE* fp = freopen(fileName.c_str (), "w", stdout);
-  getObjTrace(objContainers, UDPECHOCLIENTTXNUM, fp);
-  fileName = getCustomFileName(__FILE__, fileN + ".txt");
-  FILE* fp2 = freopen(fileName.c_str (), "w", stdout);
-  getOutput(objContainers, fp2, UDPECHOCLIENTTXNUM, UDPECHOSERVERRXNUM);
-
+  // fclose(fp);
 }
