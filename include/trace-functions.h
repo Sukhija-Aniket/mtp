@@ -2,7 +2,6 @@
 #define TRACE_FUNCTIONS_H
 
 #include "ns3/core-module.h"
-#include "mutex"
 #include "ns3/phy-entity.h"
 #include "ns3/wifi-mac.h"
 #include "ns3/wifi-mac-queue.h"
@@ -51,55 +50,9 @@ const char* traceMap[] = {
   "PACKETSINKRXNUM",
 };
 
-const char* featureMap[] = {
-  "PHYAVERAGE",
-  "MACAVERAGE",
-  "APPLICATIONAVERAGE",
-  "IPV4L3AVERAGE",
-  "PHYTXDROPCOUNT",
-  "PHYRXDROPCOUNT",
-  "PHYDROPCOUNT",
-  "MACDROPCOUNT",
-  "TOTALTXCOUNT",
-  "TOTALRXCOUNT",
-  "TOTALDROPCOUNT",
-};
-
 using namespace std;
 
 namespace ns3 {
-
-std::string getFileName (const std::string& filePath) {
-  std::string path = filePath.substr(filePath.find("scratch"));
-  std::filesystem::path p(std::filesystem::absolute(path));
-  p = p.lexically_normal();
-  std::string fileName = p.string();
-  fileName = fileName.substr(0,fileName.find_last_of('.'));
-  return fileName;
-}
-
-std::string getOutputFileName (const std::string &filePath, const std::string fN) {
-  std::string fileName = getFileName(filePath);
-  if (fileName.find_first_of('/') == 0) fileName = fN + ".txt";
-  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/outputs/" + fN + ".txt";
-  fileName = "/" + fileName;
-  return fileName;
-}
-
-std::string getLogFileName (const std::string &filePath, const std::string fN) {
-  std::string fileName = getFileName(filePath);
-  if (fileName.find_first_of('/') == 0) fileName = fN + ".log";
-  else fileName = fileName.substr(0, fileName.find_last_of('/')) + "/outputs/" + fN + ".log";
-  fileName = "/" + fileName;
-  return fileName;
-}
-
-std::string getCustomFileName(const std::string &filePath, const std::string &name) {
-  std::string fileName = getFileName(filePath);
-  fileName = fileName.substr(0, fileName.find_last_of('/'));
-  fileName =  fileName + "/" + name;
-  return fileName;
-}
 
 DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string color) {
   Time now = Simulator::Now ();
@@ -270,7 +223,6 @@ void UdpEchoServerRxTrace(std::vector<DisplayObject> *objs, std::string context,
 }
 
 void OnOffApplicationTxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, const Address& addr1, const Address& addr2) {
-  // std::cout<<"OnOff: "<<addr1<<": "<<addr2<<std::endl;
   DisplayObject obj = Trace(context, pkt, ONOFFTX);
   (*objs).push_back(obj);
 }
@@ -281,13 +233,11 @@ void BulkSendApplicationTxWithAddressesTrace(std::vector<DisplayObject> *objs, s
 }
 
 void PacketSinkApplicationTxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, const Address& addr1, const Address& addr2) {
-  // std::cout<<"packetSink"<<addr1<<": "<<addr2<<"\n\n";
   DisplayObject obj = Trace(context, pkt, PACKETSINKRX);
   (*objs).push_back(obj);
 }
 
 void PacketSinkApplicationRxWithAddressesTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const Packet> pkt, const Address& addr1, const Address& addr2) {
-  // std::cout<<addr1<<": "<<addr2<<"\n\n";
   DisplayObject obj = Trace(context, pkt, PACKETSINKRX);
   (*objs).push_back(obj);
 }
@@ -297,7 +247,6 @@ void MacEnqueueTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<
   DisplayObject obj = Trace(context, pkt, MACENQUEUE);
   (*objs).push_back(obj);
 }
-
 
 void MacDequeueTrace(std::vector<DisplayObject> *objs, std::string context, Ptr<const WifiMacQueueItem> item) {
   Ptr<const Packet> pkt = item->GetPacket();
@@ -323,77 +272,6 @@ bool cmp(std::pair<double,int>&a, std::pair<double,int> &b) {
 bool objcmp(std::pair<DisplayObject,int>&a, std::pair<DisplayObject,int> &b) {
   return a.first.getTime() < b.first.getTime();
 }
-
-// void getOutput(vector<vector<DisplayObject>*> objGrid, FILE* fp, int sender, int reciever) {
-//   int numpacketsSent = objGrid[sender]->size();
-//   int numpacketsRecieved = objGrid[reciever]->size();
-//   int numpacketsDropped = numpacketsSent - numpacketsRecieved;
-//   int phycnt = 0;
-//   int ipv4cnt = 0;
-//   int maccnt = 0;
-//   int appcnt = 0;
-//   int enqueDequecnt = 0;
-//   double phyavg = 0;
-//   double macavg = 0;
-//   double ipv4avg = 0;
-//   double appavg = 0;
-//   double enqueDequeavg = 0;
-//   // create a map
-//   std::map<int,std::vector<double>> mp;
-//   int n = objGrid.size();
-
-//   for(auto &obj: *(objGrid[sender])) {
-//     if (mp.find(obj.getUid()) == mp.end()) {
-//       mp[obj.getUid()] = std::vector<double>(n);
-//     }
-//   }
-
-//   for(int i=0;i<n;i++) {
-//     for(auto &obj: *(objGrid[i])) {
-//       if (mp.find(obj.getUid()) == mp.end()) continue;
-//       mp[obj.getUid()][i] = obj.getTime();
-//     }
-//   }
-
-//   for(auto x:mp) {
-//     if (x.second[PHYTXBEGINENUM] > 0 && x.second[PHYRXENDNUM] > 0) {
-//       phyavg += (x.second[PHYRXENDNUM] - x.second[PHYTXBEGINENUM]);
-//       phycnt++;
-//     }
-//     if (x.second[IPV4L3PROTOCOLTXNUM] > 0 && x.second[IPV4L3PROTOCOLRXNUM] > 0) {
-//       ipv4avg += (x.second[IPV4L3PROTOCOLRXNUM] - x.second[IPV4L3PROTOCOLTXNUM]);
-//       ipv4cnt++;
-//     }
-//     if (x.second[MACTXNUM] > 0 && x.second[MACRXNUM] > 0) {
-//       macavg += (x.second[MACRXNUM] - x.second[MACTXNUM]);
-//       maccnt++;
-//     }
-//     if (x.second[sender] > 0 && x.second[reciever] > 0) {
-//       appavg += (x.second[reciever] - x.second[sender]);
-//       appcnt++;
-//     }
-//     if (x.second[MACENQUEUENUM] > 0 && x.second[MACDEQUEUENUM] > 0) {
-//       enqueDequeavg += (x.second[MACDEQUEUENUM] - x.second[MACENQUEUENUM]);
-//       enqueDequecnt++;
-//     }
-//   }
-
-//   enqueDequeavg /= enqueDequecnt;
-//   macavg /= maccnt;
-//   phyavg /= phycnt;
-//   ipv4avg /= ipv4cnt;
-//   appavg /= appcnt;
-
-//   cout<<"Total Transmitted packets: "<<numpacketsSent<<endl;
-//   cout<<"Total Received packets: "<<numpacketsRecieved<<endl;
-//   cout<<"Total Dropped packets: "<<numpacketsDropped<<endl;
-
-//   cout<<"AppAvg: "<<appavg<<endl;
-//   cout<<"Ipv4Avg: "<<ipv4avg<<endl;
-//   cout<<"EnqueDequeAvg: "<<enqueDequeavg<<endl;
-//   cout<<"MacAvg: "<<macavg<<endl;
-//   cout<<"phyAvg : "<<phyavg<<endl;
-// }
 
 void getTimeTrace(std::vector<std::vector<DisplayObject>*> objGrid, int clr, FILE* fp=NULL) {
   std::map<int, std::vector<std::pair<std::string,double>>> mp;
@@ -467,9 +345,6 @@ std::vector<std::vector<DisplayObject>*> CreateObjContainer() {
   return objContainer;
 }
 
-template<class T> void prettyPrint(std::vector<T>& v) { for (T x : v) {std::cout<<x<<std::endl;} }
-template<class T, class V> void prettyPrint(std::pair<T,V> &p) {std::cout<<"first: "<<p.first<<"\nsecond: "<<p.second<<std::endl;}
-template<class T, class V> void prettyPrint(std::map<T,V>& m) {for(auto x: m) {std::cout<<"key: "<<x.first<<"\nvalue: "<<x.second<<std::endl;}}
 }
 
 #endif

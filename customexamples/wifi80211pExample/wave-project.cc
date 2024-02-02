@@ -4,52 +4,13 @@
 #include "ns3/core-module.h"
 #include "custom-application.h"
 #include "custom-mobility-model.h"
-#include "ns3/functions.h"
-#include "iomanip"
 #include "ns3/trace-functions.h"
-#include <bits/stdc++.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <random>
+#include "ns3/functions.h"
 
 using namespace ns3;
 using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExample");
-
-vector<Vector3D> getPV(int n, string name)  {
-  string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<Vector3D> pv(n);
-  for(int i(0);i<n;i++) {
-    cin>>pv[i].x>>pv[i].y>>pv[i].z;
-  }
-  fclose(fp);
-  return pv;
-}
-
-vector<double> getStartTimes(int n, string name){
-  string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<double> startTimes(n);
-  for(int i(0);i<n;i++) {
-    cin>>startTimes[i];
-  }
-  fclose(fp);
-  return startTimes;
-}
-
-vector<uint32_t> getGenRates(int n, string name) {
-  string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<uint32_t> genRates(n);
-  for(int i(0);i<n;i++) {
-    cin>>genRates[i];
-  }
-
-  fclose(fp);
-  return genRates;
-}
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap) {
   /*
@@ -165,88 +126,6 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
   }
 }
 
-/* Method 1*/
-vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
-{
-  vector<uint32_t> data(genRate, 5);
-  vector<bool> marked(genRate, false);
-  default_random_engine generator;
-  uniform_int_distribution<int> distribution(0, genRate-1);
-  uint32_t cnt = 0;
-  while(cnt < prioRate) {
-    int num = distribution(generator);
-    if (marked[num]) continue;
-    data[num] = 7;
-    marked[num] = true;
-    cnt++;
-  }
-  return data;
-}
-
-/* Method 2 */
-vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
-{
-  int genv = 5;
-  int priov = 7;
-  if (genRate < prioRate) {
-    swap(genRate, prioRate);
-    swap(genv, priov);
-  }
-  vector<bool> marked(genRate, false);
-  vector<uint32_t> prioNums;
-  default_random_engine generator;
-  uniform_int_distribution<uint32_t> distribution(0, genRate-1);
-  uint32_t cnt = 0;
-  while(cnt < prioRate)
-  {
-    uint32_t num = distribution(generator);
-    if (marked[num]) continue;
-    prioNums.push_back(num);
-    cnt++;
-  }
-  sort(prioNums.begin(), prioNums.end());
-  vector<uint32_t> data(genRate + prioRate);
-  uint32_t idx = 0;
-  cnt=0;
-  while(cnt < genRate)
-  {
-    if ((idx < prioRate) && (prioNums[idx] <= cnt))
-    {
-      data[idx+cnt] = priov;
-      idx++;
-      data[idx+cnt] = genv;
-      cnt++;
-    }
-    else
-    {
-      data[idx+cnt] = genv;
-      cnt++;
-    }
-  }
-  return data;
-}
-
-/* Method 3 */
-vector<uint32_t> generateData3(uint32_t prioRate, uint32_t genRate)
-{
-  std::vector<uint32_t> result(prioRate + genRate, 5);
-  for (uint32_t i = 0; i < prioRate; ++i) {
-      result[i] = 7;
-  }
-
-  // Use Fisher-Yates shuffle to randomize the array
-  std::random_device rd;
-  std::mt19937 g(rd());
-  std::shuffle(result.begin(), result.end(), g);
-
-  for(auto x:result) {
-    std::cout<<x<<" ";
-  }
-  std::cout<<std::endl;
-
-  return result;
-}
-
 int main (int argc, char *argv[])
 {
   CommandLine cmd;
@@ -283,10 +162,6 @@ int main (int argc, char *argv[])
   NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, true);
 
   //Create Application in nodes
-
-  //Method 1
-  /*
-  */
   for (uint32_t i=0; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
