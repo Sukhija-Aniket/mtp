@@ -177,7 +177,7 @@ if [ $plot -ne 1 ]; then
   echo "Running File Generation Process"
   python3 "$python_script_process_generation" "$json_data"
 
-  #TODO: testing of the script for Actual NS3 Process
+  # testing of the script for Actual NS3 Process
   echo "Running the Actual ns3 process"
   python3 "$python_script_process_runner" "$fileName" "$json_data"
 

@@ -4,13 +4,12 @@
 #include "ns3/core-module.h"
 #include "custom-application.h"
 #include "custom-mobility-model.h"
+#include "ns3/functions.h"
 #include "iomanip"
 #include "ns3/trace-functions.h"
 #include <bits/stdc++.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-// #include "wave-setup.h"
 #include <random>
 
 using namespace ns3;
@@ -27,6 +26,29 @@ vector<Vector3D> getPV(int n, string name)  {
   }
   fclose(fp);
   return pv;
+}
+
+vector<double> getStartTimes(int n, string name){
+  string fileName = getCustomFileName(__FILE__, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<double> startTimes(n);
+  for(int i(0);i<n;i++) {
+    cin>>startTimes[i];
+  }
+  fclose(fp);
+  return startTimes;
+}
+
+vector<uint32_t> getGenRates(int n, string name) {
+  string fileName = getCustomFileName(__FILE__, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<uint32_t> genRates(n);
+  for(int i(0);i<n;i++) {
+    cin>>genRates[i];
+  }
+
+  fclose(fp);
+  return genRates;
 }
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap) {
@@ -120,34 +142,7 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   return devices;
 }
 
-vector<double> getStartTimes(int n, string name){
-  string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<double> startTimes(n);
-  for(int i(0);i<n;i++) {
-    cin>>startTimes[i];
-  }
-  fclose(fp);
-  return startTimes;
-}
-
-vector<uint32_t> getGenRates(int n, string name) {
-  string fileName = getCustomFileName(__FILE__, name);
-  FILE* fp = freopen(fileName.c_str(), "r", stdin);
-  vector<uint32_t> genRates(n);
-  for(int i(0);i<n;i++) {
-    cin>>genRates[i];
-  }
-
-  fclose(fp);
-  return genRates;
-}
-
-WifiMacQueue a;
-
 void ConfigureQueue(Ptr<WifiMacQueue> q, string context, vector<vector<DisplayObject>*> &objCont) {
-    // q->SetMaxSize(QueueSize("1000000000p"));
-    // q->SetMaxDelay(Time(MilliSeconds(500000)));
     q->TraceConnect("Enqueue", (context + "/Enqueue"), MakeBoundCallback(&MacEnqueueTrace, objCont[MACENQUEUENUM]));
     q->TraceConnect("Dequeue", (context + "/Dequeue"), MakeBoundCallback(&MacDequeueTrace, objCont[MACDEQUEUENUM]));
     q->TraceConnect("Expired", (context + "/Expired"), MakeBoundCallback(&MacExpiredTrace, objCont[MACEXPIREDNUM]));
@@ -227,13 +222,10 @@ vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
       cnt++;
     }
   }
-  // for(auto x:data) {
-  //   std::cout<<x<<" ";
-  // } 
-  // std::cout<<std::endl;
   return data;
 }
 
+/* Method 3 */
 vector<uint32_t> generateData3(uint32_t prioRate, uint32_t genRate)
 {
   std::vector<uint32_t> result(prioRate + genRate, 5);
@@ -258,7 +250,6 @@ int main (int argc, char *argv[])
 {
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
-  //Number of nodes
   uint32_t nNodes = 11;
   double simTime = 1;
   int distance = 100;
@@ -270,10 +261,6 @@ int main (int argc, char *argv[])
   NodeContainer nodes;
   nodes.Create(nNodes);
 
-  //LogComponentEnable ("CustomApplication", LOG_LEVEL_FUNCTION);
-  /*
-    You must setup Mobility. Any mobility will work. Use one suitable for your work
-  */
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::CustomMobilityModel");
   mobility.Install(nodes);
@@ -286,16 +273,12 @@ int main (int argc, char *argv[])
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
     //set initial positions, and velocities
-    NS_LOG_LOGIC ("Setting up mobility for node " << i);
-    NS_LOG_ERROR ("An error happened :(");
     Ptr<CustomMobilityModel> cmm = DynamicCast<CustomMobilityModel> (nodes.Get(i)->GetObject<MobilityModel>());
     cmm->SetPosition (positions[i]);
-    // set velocity as 0
-    cmm->SetVelocityAndAcceleration (Vector3D(0, 0, 0), Vector3D(0, 0, 0));
+    cmm->SetVelocityAndAcceleration (Vector3D(0, 0, 0), Vector3D(0, 0, 0)); // setting velocity as 0
   }
 
   // Wifi Phy and Mac Layer
-  // WaveSetup wave;
   NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, true);
 
   //Create Application in nodes

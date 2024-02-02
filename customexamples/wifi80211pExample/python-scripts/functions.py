@@ -11,10 +11,10 @@ def get_rel(t_cr, headway):
     x2_ac0 = 0.1277
     x1_ac1 = 0.0156
     x2_ac1 = 0.057
-    print(f"t_tr: {TRANSMISSION_TIME}, t_cr: {TRANSMISSION_TIME}, expo: {-1*(x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME)}")
+    print(f"t_tr: {TRANSMISSION_TIME}, t_cr: {t_cr}, expo: {-1*(x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME) * 1000}")
     if t_cr >= TRANSMISSION_TIME:
-        rel_ac0 = 1 - np.exp((x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME))
-        rel_ac1 = 1 - np.exp((x1_ac1*headway + x2_ac1) * (t_cr - TRANSMISSION_TIME))
+        rel_ac0 = 1 - np.exp(-1* (x1_ac0*headway + x2_ac0) * (t_cr - TRANSMISSION_TIME) * 1000) #Note: values must be in (ms)
+        rel_ac1 = 1 - np.exp(-1* (x1_ac1*headway + x2_ac1) * (t_cr - TRANSMISSION_TIME) * 1000)
         return rel_ac0, rel_ac1 # TODO change it later
     else:
         return 0,0
@@ -188,3 +188,16 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
                 plt.xlabel(xlabel)
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
         plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
+
+# Code for testing the functions
+def test():
+    headways = np.arange(2,11,1)
+    pts = []
+    for headway in headways:
+        pts.append(get_rel(get_tcr(headway), headway))
+        
+    plt.plot(headways, pts)
+    plt.xticks(headways)
+    plt.savefig(os.path.join(os.path.dirname(__file__), 'test.png'))
+    
+# test()
