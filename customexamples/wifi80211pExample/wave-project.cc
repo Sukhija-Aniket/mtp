@@ -53,7 +53,7 @@ vector<uint32_t> getGenRates(int n, string name) {
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap) {
   /*
-    Setting up WAVE devices. With PHY & MAC using default settings. 
+    Setting up WAVE devices. With PHY & MAC using default settings.
   */
   YansWifiChannelHelper waveChannel = YansWifiChannelHelper();
   waveChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
@@ -78,7 +78,7 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
               "MaxSsrc", UintegerValue(2));
   // );
   // wavePhy.EnablePcapAll("wave-project", true);
-  
+
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
 
@@ -94,21 +94,22 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     // voTxop->TraceConnect("BackoffTrace", "VOBackOffTrace/" + to_string(iNode), ns3::MakeBoundCallback(&MacTxBackOffTrace, objContainers[VOMACTXBACKOFFNUM]));
     // viTxop->TraceConnect("CwTrace", "VICwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VIMACTXCWNUM]));
     // voTxop->TraceConnect("CwTrace", "VOCwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VOMACTXCWNUM]));
-    
+
     viTxop->SetMinCw(15);
     viTxop->SetMaxCw(31);
-  
+
     voTxop->SetMinCw(7);
     voTxop->SetMaxCw(15);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
     // (Aniket Sukhija)
-    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel(); 
+    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
+
     uint16_t number = opChannel.GetNumber();
     uint16_t channel = opChannel.GetFrequency();
     uint16_t cw = opChannel.GetWidth();
     uint16_t band = nodePhy->GetPhyBand();
-    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band); 
+    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
     // (Aniket Sukhija)
     // Time sifs = Time::FromInteger(32, Time::US);
     // nodePhy->SetSifs(sifs);
@@ -240,7 +241,7 @@ vector<uint32_t> generateData3(uint32_t prioRate, uint32_t genRate)
 
   for(auto x:result) {
     std::cout<<x<<" ";
-  } 
+  }
   std::cout<<std::endl;
 
   return result;
@@ -299,7 +300,7 @@ int main (int argc, char *argv[])
   }
 
   ConnectTraceMACQueues(nodes, objContainers);
-  
+
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", ns3::MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
   Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", ns3::MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
