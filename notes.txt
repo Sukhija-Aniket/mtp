@@ -2,3 +2,33 @@ wifi-remote-station-manager.cc -->  1057 --> NeedRetransmission
 wifi-remote-station-manager.cc -->  1081 --> NeedFragmentation
 wifi-mac-header.cc -->              0933 --> GetSize
 yans-wifi-channel.cc -->            0086 --> Send --> (Edit for channel bonding)
+wifi-phy.cc -->                     1000 --> Switching Channels --> (Edit for channel bonding)
+
+
+wifi-phy-operating-channel.cc --> add channel for 802.11bd here
+
+## Files Ashutosh gone through
+1 wave-net-device.cc
+
+# Phisical Layer
+2 yans-wifi-phy.cc
+3 wifi-phy.cc
+4 ofdm-phy.cc
+5 phy-entity.cc
+6 yans-wifi-channel.cc
+
+# MAC Layer
+
+
+// Debug Statement
+
+#if DEBUG
+    #include <iostream>
+    #include <iomanip>
+    Time now = Simulator::now();
+    double t = now.GetNanoSeconds();
+    std::cout << std::setprecision(15) << "~ SendX function called: " << t << " ~" << std::endl;
+  #endif
+
+// Testing....
+- 

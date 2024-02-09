@@ -1,7 +1,7 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include<vector.h>
+#include<vector>
 #include<filesystem>
 #include <random>
 #include <bits/stdc++.h>
@@ -27,8 +27,19 @@ std::string getCustomFileName(const std::string &filePath, const std::string &na
   return fileName;
 }
 
-vector<Vector3D> getPV(int n, string name)  {
-  string fileName = getCustomFileName(__FILE__, name);
+vector<uint32_t> getRepRate(int n, string file, string name) {
+  string fileName = getCustomFileName(file, name);
+  FILE* fp = freopen(fileName.c_str(), "r", stdin);
+  vector<uint32_t> repRates(n);
+  for(int i(0);i<n;i++) {
+    cin>>repRates[i];
+  }
+  fclose(fp);
+  return repRates;
+}
+
+vector<Vector3D> getPV(int n, string file, string name)  {
+  string fileName = getCustomFileName(file, name);
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<Vector3D> pv(n);
   for(int i(0);i<n;i++) {
@@ -37,8 +48,8 @@ vector<Vector3D> getPV(int n, string name)  {
   fclose(fp);
   return pv;
 }
-vector<double> getStartTimes(int n, string name){
-  string fileName = getCustomFileName(__FILE__, name);
+vector<double> getStartTimes(int n, string file, string name){
+  string fileName = getCustomFileName(file, name);
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<double> startTimes(n);
   for(int i(0);i<n;i++) {
@@ -48,8 +59,8 @@ vector<double> getStartTimes(int n, string name){
   return startTimes;
 }
 
-vector<uint32_t> getGenRates(int n, string name) {
-  string fileName = getCustomFileName(__FILE__, name);
+vector<uint32_t> getGenRates(int n, string file, string name) {
+  string fileName = getCustomFileName(file, name);
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<uint32_t> genRates(n);
   for(int i(0);i<n;i++) {

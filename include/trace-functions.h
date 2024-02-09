@@ -59,6 +59,7 @@ DisplayObject Trace(std::string context, Ptr<const Packet> pkt, std::string colo
   double t = now.GetNanoSeconds();
   const uint64_t sz = pkt->GetSize();
   const uint64_t uid = pkt->GetUid();
+  cout<<"uid: "<<uid<<" sz: "<<sz<<endl;
   DisplayObject obj = DisplayObject(context, t, sz, RESET, uid);
   return obj;
 }

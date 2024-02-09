@@ -9,6 +9,19 @@ app_dir = os.path.join(par_dir, 'inputs')
 
 
 ############################################### Helper Functions ###########################################
+def getRepRates(distance=100, num_nodes=10, headway=25, delta=3):
+    repRates = [random.randint(0,delta) for _ in range(num_nodes)]
+
+    # Define the output file name
+    output_file = app_dir +  "/repRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
+
+    # Write the positions to the output file
+    with open(output_file, "w") as file:
+        for x in repRates:
+            file.write(f"{x:.2f}\n")
+
+    print(f"Repetition Rates have been saved to {output_file}")
+
 def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform'):
     positions = []
     if(position_model.startswith('uniform')):
@@ -124,6 +137,7 @@ if __name__ == "__main__":
             for idx, num_nodes in enumerate(nodes_array):
                 Printlines(headway=headway_array[idx], distance=distance)
                 critical_rate = getCriticalRate(headway_array[idx], json_data)
+                getRepRates(num_nodes=num_nodes, headway=headway_array[idx], distance=distance, delta=3)
                 getPositions(num_nodes=num_nodes, headway=headway_array[idx], position_model=position_model, distance=distance)
                 getStartTime(num_nodes=num_nodes, distance=distance)
                 getVelocities(num_nodes=num_nodes, distance=distance)
@@ -137,6 +151,7 @@ if __name__ == "__main__":
                 Printlines(headway=headway, nodes=nodes)
                 critical_rate = getCriticalRate(headway, json_data)
                 distance=headway*(nodes-1)
+                getRepRates(num_nodes=nodes, headway=headway, distance=distance, delta=3)
                 getPositions(num_nodes=nodes, headway=headway, position_model=position_model, distance=distance)
                 getStartTime(num_nodes=nodes, distance=distance)
                 getVelocities(num_nodes=nodes, distance=distance)
