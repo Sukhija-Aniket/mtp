@@ -40,7 +40,7 @@ get_script_dir() {
 
     echo "$found_directory"
   else
-    echo "File '$fileName' could not be found, exiting..."
+    echo "File '$fileName' could not be found, exiting..."  >&2
     exit 1
   fi
 }
@@ -105,14 +105,23 @@ shift
 touch nohup.out
 echo -n > nohup.out
 
-# Step 3: Moving to script Directory
+# Step 3: Moving to base Directory
 base_directory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 script_directory=$(get_script_dir "$fileName")
-python_script_path="${script_directory}/python-scripts"
+if [[ -n "${script_directory}" ]]; then
+    cd ${script_directory}
+else
+  exit 
+fi
+
+file_path="${script_directory}/${fileName}"
+echo $file_path 
+# exit
+python_script_path="${base_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
 python_script_process_runner="${python_script_path}/processRunner.py"
-cd ${script_directory} || exit
+
 
 # Step 4: Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
@@ -172,16 +181,17 @@ done
 json_data="${json_data%,}"
 json_data+="}"
 
-# Generating, Running and analyzing data & Processes
+# Generating, Running and analyzing data & Processes (moving to base directory)
+cd $base_directory
 if [ $plot -ne 1 ]; then 
   echo "Running File Generation Process"
-  python3 "$python_script_process_generation" "$json_data"
+  python3 "$python_script_process_generation" "$file_path" "$json_data"
 
   # testing of the script for Actual NS3 Process
   echo "Running the Actual ns3 process"
-  python3 "$python_script_process_runner" "$fileName" "$json_data"
+  python3 "$python_script_process_runner" "$file_path" "$json_data"
 
 fi
 
 echo "Running the Process for output & Plot extraction"
-python3 "$python_script_mean_delay" "$json_data"
+python3 "$python_script_mean_delay" "$file_path" "$json_data"

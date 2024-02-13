@@ -5,7 +5,7 @@ import sys
 import math
 from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array, Printlines
 par_dir = os.path.dirname((os.path.dirname(__file__)))
-app_dir = os.path.join(par_dir, 'inputs')
+script_dir = par_dir
 
 
 ############################################### Helper Functions ###########################################
@@ -13,14 +13,17 @@ def getRepRates(distance=100, num_nodes=10, headway=25, delta=3):
     repRates = [random.randint(0,delta) for _ in range(num_nodes)]
 
     # Define the output file name
-    output_file = app_dir +  "/repRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir +  "/repRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
         for x in repRates:
-            file.write(f"{x}\n")
+            file.write(f"{x:.2f}\n")
 
-    print(f"Repetition Rates have been saved to {output_file}")
+    print(f"Node Velocities have been saved to {output_file}")
+    
+    
+
 
 def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform'):
     positions = []
@@ -34,7 +37,7 @@ def getPositions(distance=100, num_nodes=10, headway=25, position_model='uniform
     # Sort the positions by X coordinate in ascending order
     positions.sort(key=lambda x: x[0])
     # Define the output file name
-    output_file = app_dir + "/positions-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir + "/positions-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -52,7 +55,7 @@ def getVelocities(distance=100, num_nodes=10, mean_velocity=60, std_deviation=10
     velocities_mps = [v * (1000 / 3600) for v in velocities]
 
     # Define the output file name
-    output_file = app_dir +  "/velocities-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir +  "/velocities-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -67,7 +70,7 @@ def getStartTime(distance=100, num_nodes=10, mean_st=0, std_deviation=0.01):
     startTimes = [abs(random.gauss(mean_st, std_deviation)) for _ in range(num_nodes)]
 
     # Define the output file name
-    output_file = app_dir + "/startTimes-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir + "/startTimes-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -92,7 +95,7 @@ def getGenRate(num_nodes, mean_packet_gen_rate, type):
 def getPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate=30, type='constant'):
     packetGenRate = getGenRate(num_nodes,mean_packet_gen_rate, type)
     # Define the output file name
-    output_file = app_dir + "/packetGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir + "/packetGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -106,7 +109,7 @@ def getPrioPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate
     packetGenRate = getGenRate(num_nodes, mean_packet_gen_rate, type)
 
     # Define the output file name
-    output_file = app_dir + "/prioPacketGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
+    output_file = script_dir + "/prioPacketGenRates-" + str(num_nodes) + '-' + str(distance) + ".txt"
 
     # Write the positions to the output file
     with open(output_file, "w") as file:
@@ -118,9 +121,11 @@ def getPrioPacketGenerationRate(distance=100, num_nodes=10, mean_packet_gen_rate
 
 # Main Script
 if __name__ == "__main__":
-    if(len(sys.argv) < 2):
+    if(len(sys.argv) < 3):
         raise Exception("Insufficient arguments!!")
-    parameters = sys.argv[1]
+    script_dir = os.path.join(os.path.dirname(sys.argv[1]), 'inputs')
+    print(script_dir)
+    parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
     position_model = json_data['position_model']
     general_type = json_data['general_type']
@@ -137,7 +142,6 @@ if __name__ == "__main__":
             for idx, num_nodes in enumerate(nodes_array):
                 Printlines(headway=headway_array[idx], distance=distance)
                 critical_rate = getCriticalRate(headway_array[idx], json_data)
-                getRepRates(num_nodes=num_nodes, headway=headway_array[idx], distance=distance, delta=3)
                 getPositions(num_nodes=num_nodes, headway=headway_array[idx], position_model=position_model, distance=distance)
                 getStartTime(num_nodes=num_nodes, distance=distance)
                 getVelocities(num_nodes=num_nodes, distance=distance)
@@ -151,7 +155,6 @@ if __name__ == "__main__":
                 Printlines(headway=headway, nodes=nodes)
                 critical_rate = getCriticalRate(headway, json_data)
                 distance=headway*(nodes-1)
-                getRepRates(num_nodes=nodes, headway=headway, distance=distance, delta=3)
                 getPositions(num_nodes=nodes, headway=headway, position_model=position_model, distance=distance)
                 getStartTime(num_nodes=nodes, distance=distance)
                 getVelocities(num_nodes=nodes, distance=distance)

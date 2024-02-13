@@ -3,6 +3,7 @@ from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes,
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ns3_directory = app_dir.split('/scratch')[0]
+script_directory = app_dir
 accepted_keys = ['t']
 
 # Functions
@@ -15,12 +16,15 @@ def run_ns3_process(fileName, paramString, nodes, distance):
         print(f"Error: {e}, exiting...")
         sys.exit(1)
 
+
+
 # Main Script
 if len(sys.argv) == 1:
     print("Usage: python script_name.py ns3_executable [parameters]")
     sys.exit(1)
 elif len(sys.argv) >= 2:
-    ns3_executable = sys.argv[1]
+    ns3_executable = os.path.basename(sys.argv[1])
+    script_directory = os.path.dirname(sys.argv[1])
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
     position_model = json_data['position_model']

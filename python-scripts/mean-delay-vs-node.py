@@ -22,10 +22,8 @@ from functions import convert_headway_to_nodes, convert_to_json, plot_figure, pl
 '''
 
 app_dir = os.path.dirname(os.path.dirname(__file__))
+script_dir = app_dir
 
-input_path = os.path.join(app_dir, "outputs")
-plot_path = os.path.join(app_dir, "plots")
-input_file_template = "testbd-n"
 
 queueMap = {
     'BE': 0,
@@ -40,7 +38,7 @@ for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
     context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
 
-def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
+def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, distance=None,):
 
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
@@ -95,10 +93,15 @@ def get_mean_std_mac_delay(fileName, nodes=None, headway=None, distance=None):
     return mean_delays, std_delays, rbl_delays
 
 def main():
-    if(len(sys.argv) < 2):
-        raise TypeError("Insufficient arguments. At least one additional argument is required.")
+    if(len(sys.argv) < 3):
+        raise TypeError("Insufficient arguments. At least two additional arguments are required.")
 
-    parameters = sys.argv[1]
+    file_path = sys.argv[1]
+    script_dir = os.path.dirname(file_path)
+    input_path = os.path.join(script_dir, "outputs")
+    plot_path = os.path.join(script_dir, "plots")
+    input_file_template = f"{os.path.basename(file_path).split('.')[0]}-n"
+    parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
     position_model = str(json_data['position_model'])
     distance_array = get_array(json_data['distance_array'])
@@ -114,7 +117,7 @@ def main():
             
             for idx, nodes in enumerate(nodes_array):
                 input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, nodes=nodes, headway=headway_array[idx])
+                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx])
                 for x in range(4):
                     mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                     std_delays[x].append(round(temparr_std[x]/1000000, 5))
@@ -144,7 +147,7 @@ def main():
             for idx, headway in enumerate(headway_array):
                 distance = headway*(nodes-1)
                 input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_file, nodes=nodes, headway=headway)
+                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway)
                 for x in range(4):
                     mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                     std_delays[x].append(round(temparr_std[x]/1000000, 5))
