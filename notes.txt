@@ -4,6 +4,7 @@ wifi-mac-header.cc -->              0933 --> GetSize
 yans-wifi-channel.cc -->            0086 --> Send --> (Edit for channel bonding)
 wifi-phy.cc -->                     1000 --> Switching Channels --> (Edit for channel bonding)
 
+ocb-wifi-mac.cc --> 166 --> Enqueue (Change SetTxopLimit as 0 txopLimit means no fragments ig line:202)
 
 wifi-phy-operating-channel.cc --> add channel for 802.11bd here
 
@@ -18,17 +19,34 @@ wifi-phy-operating-channel.cc --> add channel for 802.11bd here
 6 yans-wifi-channel.cc
 
 # MAC Layer
+7 wifi-mac-header.cc
+8
 
 
-// Debug Statement
 
-#if DEBUG
-    #include <iostream>
-    #include <iomanip>
-    Time now = Simulator::now();
-    double t = now.GetNanoSeconds();
-    std::cout << std::setprecision(15) << "~ SendX function called: " << t << " ~" << std::endl;
-  #endif
+
 
 // Testing....
-- 
+- Retransmission code in testp.cc (Fine | Reviewer:Ashutosh)
+- Fragments of pakets (in progress) [for testp.cc]
+
+
+// Packet Journey
+
+1 WaveNetDevice --> SendX
+    - Set priority tag
+    - Set HigherLayerTxVectorTag from txVector (channelWidth, txpowerLevel, preamble(LONG), dataRate)
+    - LlcSnapHeader (8 bytes) encapsulated here
+2 OcbWifiMac --> Enqueue
+    - Set MAC Type (in MAC header - **hdr**) = WIFI_MAC_QOSDATA
+    - Set Add1 (in MAC header - **hdr**) = BROADCAST
+    - Set Add2 (in MAC header - **hdr**) = self address
+    - Set Add3 (in MAC header - **hdr**) = WILDCARD_BSS (in case of VANETs)
+    - Unset DsFrom & DsTo fields (in MAC header - **hdr**)
+    - Set QoS Control fields (in MAC header - **hdr**)
+        - Unset QoSEosp
+        - Set tid {from packet}
+        - Set QoSAckPolicy = NORMAL_ACK
+        - Unset QoS AMSDU
+        - Set qos txop limit = 0
+    - get queue from tid and queue packet and hdr into it

@@ -25,7 +25,7 @@ app_dir = os.path.dirname(os.path.dirname(__file__))
 
 input_path = os.path.join(app_dir, "outputs")
 plot_path = os.path.join(app_dir, "plots")
-input_file_template = "wave-project-n"
+input_file_template = "testbd-n"
 
 queueMap = {
     'BE': 0,

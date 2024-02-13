@@ -33,6 +33,7 @@ vector<uint32_t> getRepRate(int n, string file, string name) {
   vector<uint32_t> repRates(n);
   for(int i(0);i<n;i++) {
     cin>>repRates[i];
+    cout<<"repRates: "<<repRates[i]<<endl;
   }
   fclose(fp);
   return repRates;
@@ -61,10 +62,12 @@ vector<double> getStartTimes(int n, string file, string name){
 
 vector<uint32_t> getGenRates(int n, string file, string name) {
   string fileName = getCustomFileName(file, name);
+  cout<<fileName<<endl;
   FILE* fp = freopen(fileName.c_str(), "r", stdin);
   vector<uint32_t> genRates(n);
   for(int i(0);i<n;i++) {
     cin>>genRates[i];
+    cout<<"genRates giving error here: "<<genRates[i]<<endl;
   }
 
   fclose(fp);
@@ -92,6 +95,7 @@ vector<uint32_t> generateData(uint32_t prioRate, uint32_t genRate)
 /* Method 2 */
 vector<uint32_t> generateData2(uint32_t prioRate, uint32_t genRate)
 {
+  cout<<prioRate<<" and "<<genRate<<endl;
   int genv = 5;
   int priov = 7;
   if (genRate < prioRate) {

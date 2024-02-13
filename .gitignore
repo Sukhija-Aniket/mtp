@@ -5,3 +5,4 @@ extras/
 traces/
 __pycache__/
 nohup.out
+pcaps/

@@ -18,7 +18,7 @@ def getRepRates(distance=100, num_nodes=10, headway=25, delta=3):
     # Write the positions to the output file
     with open(output_file, "w") as file:
         for x in repRates:
-            file.write(f"{x:.2f}\n")
+            file.write(f"{x}\n")
 
     print(f"Repetition Rates have been saved to {output_file}")
 

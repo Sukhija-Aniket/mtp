@@ -306,7 +306,9 @@ void CustomApplication::RemoveOldNeighbors ()
 void CustomApplication::SetData(std::vector<uint32_t> &data)
 {
     m_enabled = true;
+    std::cout<<"enabled"<<std::endl;
     m_data = data;
+    std::cout<<"size: "<<data.size()<<std::endl;
 }
 
 }//end of ns3
