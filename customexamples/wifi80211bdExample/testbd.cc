@@ -13,6 +13,7 @@ using namespace std;
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExamplebd");
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, WifiStandard wifiStandard) {
+  const uint32_t mac_header_size = 26;
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
   */
@@ -29,12 +30,12 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   WaveHelper waveHelper = WaveHelper::Default ();
 
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-  						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
+  						"DataMode", StringValue ("OfdmRate27MbpsBW10MHz"	), // Set rate as 27 Mbps
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"), // Not being used
-  						"NonUnicastMode", StringValue ("OfdmRate3MbpsBW10MHz"),
+  						"NonUnicastMode", StringValue ("OfdmRate27MbpsBW10MHz"), // Set Broadcast rate as 27Mbps
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2),
-              "FragmentationThreshold", UintegerValue(packetSize)); // (Aniket Sukhija) Added to decrease limit on fragmentation 
+              "FragmentationThreshold", UintegerValue(packetSize + mac_header_size + WIFI_MAC_FCS_LENGTH)); // (Aniket Sukhija) Added to decrease limit on fragmentation 
 
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes, wifiStandard);
 
@@ -58,13 +59,13 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
     // (Aniket Sukhija)
-    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
+    // WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
 
-    uint16_t number = opChannel.GetNumber();
-    uint16_t channel = opChannel.GetFrequency();
-    uint16_t cw = opChannel.GetWidth();
-    uint16_t band = nodePhy->GetPhyBand();
-    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
+    // uint16_t number = opChannel.GetNumber();
+    // uint16_t channel = opChannel.GetFrequency();
+    // uint16_t cw = opChannel.GetWidth();
+    // uint16_t band = nodePhy->GetPhyBand();
+    // NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
     // (Aniket Sukhija)
 
     // Set Tx Power to 500m
@@ -107,22 +108,41 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
   }
 }
 
+map<double, string> OfdmDataRate10MHzMap = {
+    {1.0, "OfdmRate1MbpsBW10MHz"},
+    {3.0, "OfdmRate3MbpsBW10MHz"},
+    {4.5, "OfdmRate4_5MbpsBW10MHz"},
+    {6.0, "OfdmRate6MbpsBW10MHz"},
+    {9.0, "OfdmRate9MbpsBW10MHz"},
+    {12.0, "OfdmRate12MbpsBW10MHz"},
+    {18.0, "OfdmRate18MbpsBW10MHz"},
+    {24.0, "OfdmRate24MbpsBW10MHz"},
+    {27.0, "OfdmRate27MbpsBW10MHz"}
+};
+
 int main (int argc, char *argv[])
 {
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
-  uint32_t nNodes = 11;
-  double simTime = 1;
-  int distance = 100;
-  uint32_t packetSize = 200;
+  uint32_t nNodes = 250;
+  double simTime = 2;
+  int distance = 700;
+  uint32_t packetSize = 500;
+  uint32_t lamda0 = 30, lamda1 = 30;
+  
+  double datarate = 27.0;
+
   bool enablePcap = false;
-  WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211bd;
+  WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211p;
 
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
   cmd.AddValue("d", "total Distance", distance);
   cmd.AddValue("p", "packet Size", packetSize);
+  cmd.AddValue("lamda0", "Rate of pkt generation of AC0", lamda0);
+  cmd.AddValue("lamda1", "Rate of pkt generation of AC0" ,lamda1);
+  cmd.AddValue("datarate", "Data Rate", datarate);
   cmd.AddValue("pcap", "Enable Pcap", enablePcap);
   cmd.Parse (argc, argv);
 
@@ -161,8 +181,9 @@ int main (int argc, char *argv[])
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
-    app_i->SetPacketSize(packetSize * (1 + repetitions[i])); // Each node sends a packet of fixed size
-    // better approach would be this sendX size should be randomized for each packet.
+    app_i->SetPacketSize(packetSize);
+    app_i->SetRetransmissionProb80211bd(0.53);
+    app_i->SetMaxRetransmissionLimit(3);
     vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
@@ -170,17 +191,17 @@ int main (int argc, char *argv[])
 
   ConnectTraceMACQueues(nodes, objContainers);
 
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", ns3::MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", ns3::MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTx", ns3::MakeBoundCallback(&MacTxTrace, objContainers[MACTXNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacTxDrop", ns3::MakeBoundCallback(&MacTxDropTrace, objContainers[MACTXDROPNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxBegin", MakeBoundCallback(&PhyTxBeginTrace, objContainers[PHYTXBEGINNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxEnd", MakeBoundCallback(&PhyTxEndTrace,objContainers[PHYTXENDNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyTxDrop", MakeBoundCallback(&PhyTxDropTrace, objContainers[PHYTXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxBegin", MakeBoundCallback(&PhyRxBeginTrace,objContainers[PHYRXBEGINNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxEnd", MakeBoundCallback(&PhyRxEndTrace,objContainers[PHYRXENDNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
-  Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
-  string fileN = "outputs/testp-n" + to_string(nNodes) + "-d" + to_string(distance);
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
+  // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
+  string fileN = "outputs/testbd-n" + to_string(nNodes) + "-d" + to_string(distance);
 
   Simulator::Stop(Seconds(simTime+1));
   Simulator::Run();

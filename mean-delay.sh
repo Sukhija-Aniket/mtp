@@ -2,14 +2,21 @@
 
 # Declarations and variables
 declare -A params
-num_nodes_array=(10 20) # Number of nodes to simulate on
+num_nodes_array=(50 100 150 200 250 300 350 400 450 500) # Number of nodes to simulate on
+data_rate_array=(3 4.5 6 9 12 18 24 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
+pkt_size_array=(10 50 100 150 200 250 300 350 400 450 500) # Packet Size in bytes
+lamda0_array=(10 15 20 25 30 35 40 45 50)
+lamda1_array=(10 15 20 25 30 35 40 45 50)
+
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
-distance_array=(100) # Total Distance to consider
-position_model='platoon-distance' 
+distance_array=(700) # Total Distance to consider
+position_model='uniform' 
 general_type='constant'
-critical_type='poisson'
+critical_type='constant'
 general_rate=30
+critical_rate=30
 velocity_lead_node=25
+bd=0
 plot=0
 
 # Functions
@@ -18,11 +25,13 @@ print_usage() {
   echo "Options:"
   echo -e "\t--help                                                  Displays this help message"
   echo -e "\t--plot                                                  Runs only code for obtaining plots"
-  echo -e "\t--general_rate=VALUE (default=30)                       Specify the rate of routine/general packets"
+  echo -e "\t--general_rate=VALUE (default=30)                       Specify rate of routine/general packets"
   echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
-  echo -e "\t--general_type={poisson, constant, gaussian, default=constant}    Specify the distribution for generating general packets"
-  echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify the distribution for generating critical packets"
-  echo -e "\t--position_model={platoon-nodes, platoon-distance, nodes-distance, default=platoon-nodes}    Specify the position model used during simulation"
+  echo -e "\t--general_type={poisson, constant, gaussian, default=constant}    Specify  distribution for generating general packets"
+  echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify distribution for generating critical packets"
+  echo -e "\t--general_rate={poisson, constant, gaussian, default=30}"
+  echo -e "\t--critical_rate={poisson, constant, gaussian, default=30}"
+  echo -e "\t--position_model={platoon-nodes, platoon-distance, nodes-distance, default=platoon-nodes}    Specify position model used during simulation"
   echo -e "\t--headway_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--distance_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--num_nodes_array=(start,stop,step) start and stop both are inclusive."
@@ -44,6 +53,7 @@ get_script_dir() {
     exit 1
   fi
 }
+
 
 handle_argument() {
   local arg="$1"
@@ -87,6 +97,7 @@ handle_array() {
 fileName="$1"
 if [ -z "$fileName" ]; then
   echo "Error, Please provide a .cc file as input, exiting..."
+  print_usage
   exit 1
 fi
 
@@ -126,14 +137,26 @@ python_script_process_runner="${python_script_path}/processRunner.py"
 # Step 4: Setting input Parameters
 params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
 params["headway_array"]=${headway_array[@]}
+params["data_rate_array"]=${data_rate_array[@]}
+params["pkt_size_array"]=${pkt_size_array[@]}
+params["lamda0_array"]=${lamda0_array[@]}
+params["lamda1_array"]=${lamda1_array[@]}
+
 params["position_model"]=$position_model
 params["general_type"]=$general_type
 params["general_rate"]=$general_rate
 params["critical_type"]=$critical_type
+params["critical_rate"]=$critical_rate
+params["data_rate"]=$data_rate
+
 params["distance_array"]=${distance_array[@]} # Fishy
+
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
+      --bd)
+      bd=1
+      ;;
       --plot)
       plot=1
       ;;
@@ -150,29 +173,30 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+params["bd"]=${bd}
 # deleting the previously created inputs, outputs and plots
 
-base_fileName="${fileName%.*}"
-if [ $plot -ne 1 ]; then
-  mkdir -p inputs
-  cd inputs/
-  rm -rf *
-  cd ../
+# base_fileName="${fileName%.*}"
+# if [ $plot -ne 1 ]; then
+#   mkdir -p inputs
+#   cd inputs/
+#   rm -rf *
+#   cd ../
 
-  mkdir -p outputs
-  cd outputs/
-  rm -rf enqueue_dequeue_trace*
-  rm -rf "${base_fileName}"*
-  cd ../
+#   mkdir -p outputs
+#   cd outputs/
+#   rm -rf enqueue_dequeue_trace*
+#   rm -rf "${base_fileName}"*
+#   cd ../
 
-  mkdir -p plots
-  cd plots/
-  files_to_delete=$(find -type f -not -name "*save*")
-  if [ -n "$files_to_delete" ]; then
-    rm -rf $files_to_delete
-  fi
-  cd ../
-fi
+#   mkdir -p plots
+#   cd plots/
+#   files_to_delete=$(find -type f -not -name "*save*")
+#   if [ -n "$files_to_delete" ]; then
+#     rm -rf $files_to_delete
+#   fi
+#   cd ../
+# fi
 
 json_data="{"
 for key in "${!params[@]}"; do
@@ -180,6 +204,8 @@ for key in "${!params[@]}"; do
 done
 json_data="${json_data%,}"
 json_data+="}"
+
+echo ${json_data}
 
 # Generating, Running and analyzing data & Processes (moving to base directory)
 cd $base_directory
@@ -193,5 +219,5 @@ if [ $plot -ne 1 ]; then
 
 fi
 
-echo "Running the Process for output & Plot extraction"
-python3 "$python_script_mean_delay" "$file_path" "$json_data"
+# echo "Running the Process for output & Plot extraction"
+# python3 "$python_script_mean_delay" "$file_path" "$json_data"

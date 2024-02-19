@@ -87,6 +87,7 @@ public:
     void Retransmissionbd(uint32_t &totalPktSize);
 
     // (Aniket Sukhija)
+
     //You can create more functions like getters, setters, and others
 
     private:
@@ -107,10 +108,11 @@ public:
         Time m_time_limit; /**< Time limit to keep neighbors in a list */
 
         WifiMode m_mode; /**< data rate used for broadcasts */
+        
+        //You can define more stuff to record statistics, etc.
         double m_retransmissionProb80211bd; // (Aniket Sukhija)
         int m_maxRetranssionLimit; // (Aniket Sukhija)
         Ptr<UniformRandomVariable> m_random; //!< Provides uniform random variables. (Aniket Sukhija)
-        //You can define more stuff to record statistics, etc.
 };
 
 } // namespace ns3

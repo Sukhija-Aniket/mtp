@@ -50,3 +50,45 @@ wifi-phy-operating-channel.cc --> add channel for 802.11bd here
         - Unset QoS AMSDU
         - Set qos txop limit = 0
     - get queue from tid and queue packet and hdr into it
+
+// 802.11bd is failing
+
+    - isModeSupported --> wave-net-device.cc (406)
+
+m_modeList = std::__cxx11::list = {[0] = {m_uid = 67}, [1] = {m_uid = 68}, [2] = {m_uid = 69}, [3] = {
+    m_uid = 70}, [4] = {m_uid = 71}, [5] = {m_uid = 72}, [6] = {m_uid = 73}, [7] = {m_uid = 74}, [8] = {
+    m_uid = 75}}
+(gdb) 
+when using 802.11p, 68 is present, but when using 802.11bd 68 is not present, need to see why this is the case.
+
+// fragmentation will occur, if groupbit is not Set
+
+mpdu = (const ns3::WifiMacQueueItem &) @0x5555557da330: {
+    <ns3::SimpleRefCount<ns3::WifiMacQueueItem, ns3::empty, ns3::DefaultDeleter<ns3::WifiMacQueueItem> >> = {<ns3::empty> = {<No data fields>}, m_count = 4},
+    _vptr.WifiMacQueueItem = 0x7ffff7e304d8 <vtable for ns3::WifiMacQueueItem+16>, 
+    m_packet = {m_ptr = 0x5555556d92f0},
+    m_header = {
+        <ns3::Header> = {<ns3::Chunk> = {<ns3::ObjectBase> = {_vptr.ObjectBase = 0x7ffff7e30468 <vtable for ns3::WifiMacHeader+16>}, <No data fields>}, <No data fields>},
+        m_ctrlType = 2 '\002', m_ctrlSubtype = 8 '\b', m_ctrlToDs = 0 '\000', m_ctrlFromDs = 0 '\000',
+        m_ctrlMoreFrag = 0 '\000', m_ctrlRetry = 0 '\000', m_ctrlMoreData = 0 '\000', m_ctrlWep = 0 '\000',
+        m_ctrlOrder = 0 '\000', m_duration = 0, m_addr1 = {m_address = "\377\377\377\377\377\377"}, 
+        m_addr2 = {m_address = "\000\000\000\000\000\070"}, m_addr3 = {m_address = "\377\377\377\377\377\377"},
+        m_seqFrag = 0 '\000', m_seqSeq = 0, m_addr4 = {m_address = "\000\000\000\000\000"}, m_qosTid = 5 '\005',
+        m_qosEosp = 0 '\000', m_qosAckPolicy = 0 '\000', m_amsduPresent = 0 '\000', m_qosStuff = 0 '\000'
+    },
+    m_tstamp = {static g_markingTimes = 0x0, m_data = 9464259}, m_msduList = empty std::__cxx11::list,
+    m_queueIt = {m_ptr = 0x5555557da330}, m_queueAc = ns3::AC_VI, m_inFlight = false
+}
+
+frame-exchange-maanger.cc 403, change code to send more fragments.
+
+
+// Plot code details
+
+variables to vary :-
+
+- Number of cars (Uniform distribution) --> (0 to 500)
+- Data Rate --> As per 10MHz --> (3, 4.5, 6, 9, 12, 18, 24, 27)
+- Packet Size --> (10 to 10000)
+- AC0 packet generation Rate --> (10 to 60)
+- AC1 packet generation Rate --> (10 to 60)

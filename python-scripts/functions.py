@@ -108,6 +108,10 @@ def get_array(str):
     arr = list(map(int, str.split(' ')))
     return arr
 
+def get_float_array(str):
+    arr = list(map(float, str.split(' ')))
+    return arr
+
 def Printlines(headway=None, nodes=None, distance=None):
     if headway and nodes:
         distance = (nodes-1)*headway
@@ -118,6 +122,12 @@ def Printlines(headway=None, nodes=None, distance=None):
         print(f'Running for headway={headway}, nodes={nodes}, distance={distance}')
     else:
         print(f'Running for nodes={nodes}, distance={distance}')
+
+def PrintlinesBD(arr):
+    if(len(arr)==5):
+        print(f'Running for nodes={arr[0]}, dataRate={arr[1]}Mbps, pktSize={arr[2]}bytes, lamda0={arr[3]}pkt/seconds, lamda1={arr[4]}pkt/seconds')
+    else:
+        print(f'Insufficient Arguments')
 
 
 def convert_headway_to_nodes(json_data, distance=100):
@@ -188,6 +198,7 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
                 plt.xlabel(xlabel)
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
         plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
+
 
 # Code for testing the functions
 def test():

@@ -189,12 +189,11 @@ void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t>
     tx.txPowerLevel = 1;
     tx.dataRate = m_mode;
 
-    // TODO: Change (Aniket Sukhija)
     uint32_t totalPktSize = 0;
     Retransmissionbd(totalPktSize);
 
     Ptr<Packet> packet = Create <Packet> (totalPktSize);
-    // (Aniket Sukhija)
+    
     //let's attach our custom data tag to it
     CustomDataTag tag;
     tag.SetNodeId ( GetNode()->GetId() );

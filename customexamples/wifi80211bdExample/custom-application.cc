@@ -35,9 +35,10 @@ CustomApplication::CustomApplication()
 {
     m_enabled = false;
     m_broadcast_time = MilliSeconds (100); //every 100ms
-    m_packetSize = 500; // 500 bytes
+    m_packetSize = 200; // 200 bytes
     m_time_limit = Seconds (5);
-    m_mode = WifiMode("OfdmRate3MbpsBW10MHz");
+    m_mode = WifiMode("OfdmRate27MbpsBW10MHz");
+    m_random = CreateObject<UniformRandomVariable> ();
 }
 CustomApplication::~CustomApplication() {}
 
@@ -132,6 +133,49 @@ CustomApplication::SetWifiMode (WifiMode mode)
     m_mode = mode;
 }
 
+// (Aniket Sukhija)
+void
+CustomApplication::SetRetransmissionProb80211bd(double p){
+    m_retransmissionProb80211bd = p;
+}
+
+double
+CustomApplication::GetRetransmissionProb80211bd(){
+    return m_retransmissionProb80211bd;
+}
+
+uint32_t
+CustomApplication::GetMaxRetransmissionLimit(){
+    return m_maxRetranssionLimit;
+}
+
+void
+CustomApplication::SetMaxRetransmissionLimit(uint32_t maxLimit){
+    m_maxRetranssionLimit = maxLimit;
+}
+
+void
+CustomApplication::DoRetransmissionbd(uint32_t &totalPacketSize, uint32_t maxRetranssionLimit) {
+    if (maxRetranssionLimit == 0) return;
+    double prob = CustomApplication::m_random->GetValue(0.0, 1.0);
+    if(prob > m_retransmissionProb80211bd) { // if previous pkt transmitted successfully
+        maxRetranssionLimit = 0;
+    } else {
+        totalPacketSize+=(m_packetSize);
+        maxRetranssionLimit--;
+    }
+    DoRetransmissionbd(totalPacketSize, maxRetranssionLimit);
+}
+
+void
+CustomApplication::Retransmissionbd(uint32_t &totalPktSize) {
+    totalPktSize = m_packetSize;
+    uint32_t maxLimit = m_maxRetranssionLimit;
+    DoRetransmissionbd(totalPktSize, maxLimit);
+}
+
+// (Aniket Sukhija)
+
 void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t> &data, uint32_t index) {
     if (index >= data.size())
     {
@@ -147,7 +191,10 @@ void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t>
     tx.txPowerLevel = 1;
     tx.dataRate = m_mode;
 
-    Ptr<Packet> packet = Create <Packet> (m_packetSize);
+
+    uint32_t totalPktSize = 0;
+    Retransmissionbd(totalPktSize);
+    Ptr<Packet> packet = Create <Packet> (totalPktSize);
 
     //let's attach our custom data tag to it
     CustomDataTag tag;
@@ -306,9 +353,7 @@ void CustomApplication::RemoveOldNeighbors ()
 void CustomApplication::SetData(std::vector<uint32_t> &data)
 {
     m_enabled = true;
-    std::cout<<"enabled"<<std::endl;
     m_data = data;
-    std::cout<<"size: "<<data.size()<<std::endl;
 }
 
 }//end of ns3
