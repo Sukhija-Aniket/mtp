@@ -6,13 +6,27 @@
 #include "custom-mobility-model.h"
 #include "ns3/trace-functions.h"
 #include "ns3/functions.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace ns3;
 using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExamplebd");
 
-NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, WifiStandard wifiStandard) {
+map<double, string> OfdmDataRate10MHzMap = {
+    {1.0, "OfdmRate1MbpsBW10MHz"},
+    {3.0, "OfdmRate3MbpsBW10MHz"},
+    {4.5, "OfdmRate4_5MbpsBW10MHz"},
+    {6.0, "OfdmRate6MbpsBW10MHz"},
+    {9.0, "OfdmRate9MbpsBW10MHz"},
+    {12.0, "OfdmRate12MbpsBW10MHz"},
+    {18.0, "OfdmRate18MbpsBW10MHz"},
+    {24.0, "OfdmRate24MbpsBW10MHz"},
+    {27.0, "OfdmRate27MbpsBW10MHz"}
+};
+
+NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, double dataRate,  WifiStandard wifiStandard) {
   const uint32_t mac_header_size = 26;
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
@@ -30,9 +44,9 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   WaveHelper waveHelper = WaveHelper::Default ();
 
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-  						"DataMode", StringValue ("OfdmRate27MbpsBW10MHz"	), // Set rate as 27 Mbps
+  						"DataMode", StringValue (OfdmDataRate10MHzMap[dataRate]), // Set rate as 27 Mbps
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"), // Not being used
-  						"NonUnicastMode", StringValue ("OfdmRate27MbpsBW10MHz"), // Set Broadcast rate as 27Mbps
+  						"NonUnicastMode", StringValue (OfdmDataRate10MHzMap[dataRate]), // Set Broadcast rate as 27Mbps
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2),
               "FragmentationThreshold", UintegerValue(packetSize + mac_header_size + WIFI_MAC_FCS_LENGTH)); // (Aniket Sukhija) Added to decrease limit on fragmentation 
@@ -108,17 +122,7 @@ void ConnectTraceMACQueues(NodeContainer &nodes, vector<vector<DisplayObject>*> 
   }
 }
 
-map<double, string> OfdmDataRate10MHzMap = {
-    {1.0, "OfdmRate1MbpsBW10MHz"},
-    {3.0, "OfdmRate3MbpsBW10MHz"},
-    {4.5, "OfdmRate4_5MbpsBW10MHz"},
-    {6.0, "OfdmRate6MbpsBW10MHz"},
-    {9.0, "OfdmRate9MbpsBW10MHz"},
-    {12.0, "OfdmRate12MbpsBW10MHz"},
-    {18.0, "OfdmRate18MbpsBW10MHz"},
-    {24.0, "OfdmRate24MbpsBW10MHz"},
-    {27.0, "OfdmRate27MbpsBW10MHz"}
-};
+
 
 int main (int argc, char *argv[])
 {
@@ -132,17 +136,21 @@ int main (int argc, char *argv[])
   uint32_t lamda0 = 30, lamda1 = 30;
   
   double datarate = 27.0;
+  string folder = "";
+  string file = "testbd";
 
   bool enablePcap = false;
   WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211p;
 
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
-  cmd.AddValue("d", "total Distance", distance);
+  cmd.AddValue("distance", "total Distance", distance);
   cmd.AddValue("p", "packet Size", packetSize);
-  cmd.AddValue("lamda0", "Rate of pkt generation of AC0", lamda0);
-  cmd.AddValue("lamda1", "Rate of pkt generation of AC0" ,lamda1);
-  cmd.AddValue("datarate", "Data Rate", datarate);
+  cmd.AddValue("l0", "Rate of pkt generation of AC0", lamda0);
+  cmd.AddValue("l1", "Rate of pkt generation of AC0" ,lamda1);
+  cmd.AddValue("d", "Data Rate", datarate);
+  cmd.AddValue("folder", "Sub Folder", folder);
+  cmd.AddValue("file", "File of the output", file);
   cmd.AddValue("pcap", "Enable Pcap", enablePcap);
   cmd.Parse (argc, argv);
 
@@ -157,9 +165,9 @@ int main (int argc, char *argv[])
   vector<Vector3D> positions = getPV(nodes.GetN(), __FILE__, "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), __FILE__, "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), __FILE__, "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  vector<uint32_t> repetitions = getRepRate(nodes.GetN(), __FILE__, "inputs/repRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  // vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  // vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  // vector<uint32_t> repetitions = getRepRate(nodes.GetN(), __FILE__, "inputs/repRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   
   // Set dynamics of the node
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
@@ -171,20 +179,21 @@ int main (int argc, char *argv[])
   }
 
   // Wifi Phy and Mac Layer
-  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, enablePcap, packetSize, wifiStandard);
+  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, enablePcap, packetSize, datarate, wifiStandard);
 
   //Create Application in nodes
   for (uint32_t i=0; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
-    double interval = 1.0/(prioPacketGenRates[i] + packetGenRates[i]);
+    double interval = 1.0/(lamda0 + lamda1);
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
     app_i->SetPacketSize(packetSize);
+    app_i->SetWifiMode (OfdmDataRate10MHzMap[datarate]);
     app_i->SetRetransmissionProb80211bd(0.53);
     app_i->SetMaxRetransmissionLimit(3);
-    vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
+    vector<uint32_t> data = generateData2(lamda0, lamda1);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
@@ -201,7 +210,15 @@ int main (int argc, char *argv[])
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/PhyEntities/*/PhyRxDrop", MakeBoundCallback(&PhyRxDropTrace, objContainers[PHYRXDROPNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
-  string fileN = "outputs/testbd-n" + to_string(nNodes) + "-d" + to_string(distance);
+
+  string fileN = "outputs/";
+  if (folder=="") {
+    fileN = fileN + file;
+  }else{
+    string folderName = getCustomFileName (__FILE__, fileN+folder);
+    mkdir(folderName.c_str(), 0777);
+    fileN = fileN + folder + "/" + file;
+  }
 
   Simulator::Stop(Seconds(simTime+1));
   Simulator::Run();

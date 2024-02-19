@@ -8,7 +8,7 @@ accepted_keys = ['t']
 
 # Functions
 def run_ns3_process(fileName, paramString, nodes, distance):
-    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes} --d={distance}"'
+    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes} --distance={distance}"'
 
     try:
         subprocess.run(command, shell=True, check=True)
@@ -16,11 +16,15 @@ def run_ns3_process(fileName, paramString, nodes, distance):
         print(f"Error: {e}, exiting...")
         sys.exit(1)
 
-def run_ns3_process_bd(fileName, paramString, arr):
+def run_ns3_process_bd(fileName, paramString, arr, dir):
     command = ns3_directory + '/ns3 run "' + fileName + paramString
+    [folder, file] = dir
 
     if(len(arr) == 5):
-        command = command + f' --n={arr[0]} --datarate={arr[1]} --p={arr[2]} --lamda0={arr[3]} --lamda={arr[4]}'
+        if(folder and file):
+            command = command + f' --n={arr[0]} --d={arr[1]} --p={arr[2]} --l0={arr[3]} --l1={arr[4]} --folder={folder} --file={file}"'
+        else:
+            command = command + f' --n={arr[0]} --d={arr[1]} --p={arr[2]} --l0={arr[3]} --l1={arr[4]}"'
     else:
         raise Exception("command is invalid, less number of arguments to run_ns3_process_bd")
 
@@ -71,14 +75,17 @@ elif len(sys.argv) >= 2:
         variable_array = [nodes_array, data_rate_array, pkt_size_array, lamda0_array, lamda1_array]
         fixed_values = [fixed_nodes, fixed_data_rate, fixed_pkt_size, fixed_lamda0, fixed_lamda1]
         parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
+        folder_names = ["variable_nodes", "variable_data_rate", "variable_pkt_size", "variable_lamda0", "variable_lamda1"]
+
         
         for idx, variable in enumerate(variable_array):
             print(f"Varying {parameter_labels[idx]} from {variable[0]} to {variable[len(variable)-1]} while keeping all other things constant")
             for jdx, var in enumerate(variable):
                 temp_fixed_values = fixed_values.copy()
                 temp_fixed_values[idx] = var
+                file = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}"
                 PrintlinesBD(temp_fixed_values)
-                run_ns3_process_bd(ns3_executable, cli_args, temp_fixed_values)
+                run_ns3_process_bd(ns3_executable, cli_args, temp_fixed_values, [folder_names[idx], file])
 
 
     else:
