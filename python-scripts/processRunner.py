@@ -62,21 +62,20 @@ elif len(sys.argv) >= 2:
     if bd:
         distance = distance_array[0]
         fixed_nodes = 250
-        data_rate_array = get_float_array(json_data["data_rate_array"])
+        data_rate_array = get_array(json_data["data_rate_array"])
         fixed_data_rate = 27
         pkt_size_array = get_array(json_data["pkt_size_array"])
         fixed_pkt_size = 500
 
-        lamda0_array = get_float_array(json_data["lamda0_array"])
+        lamda0_array = get_array(json_data["lamda0_array"])
         fixed_lamda0 = int(json_data["critical_rate"])
-        lamda1_array = get_float_array(json_data["lamda1_array"])
+        lamda1_array = get_array(json_data["lamda1_array"])
         fixed_lamda1 = int(json_data["general_rate"])
 
         variable_array = [nodes_array, data_rate_array, pkt_size_array, lamda0_array, lamda1_array]
         fixed_values = [fixed_nodes, fixed_data_rate, fixed_pkt_size, fixed_lamda0, fixed_lamda1]
         parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
         folder_names = ["variable_nodes", "variable_data_rate", "variable_pkt_size", "variable_lamda0", "variable_lamda1"]
-
         
         for idx, variable in enumerate(variable_array):
             print(f"Varying {parameter_labels[idx]} from {variable[0]} to {variable[len(variable)-1]} while keeping all other things constant")

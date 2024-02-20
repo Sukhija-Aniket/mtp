@@ -2,11 +2,11 @@
 
 # Declarations and variables
 declare -A params
-num_nodes_array=(50 100 150 200 250 300 350 400 450 500) # Number of nodes to simulate on
-data_rate_array=(3 4.5 6 9 12 18 24 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
-pkt_size_array=(10 50 100 150 200 250 300 350 400 450 500) # Packet Size in bytes
-lamda0_array=(10 15 20 25 30 35 40 45 50)
-lamda1_array=(10 15 20 25 30 35 40 45 50)
+num_nodes_array=(2) # Number of nodes to simulate on
+data_rate_array=(3 6 12 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
+pkt_size_array=(100 300 500) # Packet Size in bytes
+lamda0_array=(10 30 50)
+lamda1_array=(10 30 50)
 
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
 distance_array=(700) # Total Distance to consider
@@ -132,6 +132,7 @@ python_script_path="${base_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
 python_script_process_runner="${python_script_path}/processRunner.py"
+python_script_analysis="${python_script_path}/analysis.py"
 
 
 # Step 4: Setting input Parameters
@@ -220,4 +221,8 @@ if [ $plot -ne 1 ]; then
 fi
 
 # echo "Running the Process for output & Plot extraction"
-# python3 "$python_script_mean_delay" "$file_path" "$json_data"
+if [ $bd -ne 1 ]
+  python3 "$python_script_mean_delay" "$file_path" "$json_data"
+else
+  python3 "$python_script_analysis" "$file_path" "$json_data"
+fi
