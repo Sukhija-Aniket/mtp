@@ -105,46 +105,50 @@ def convert_to_cli(json_data, accepted_keys):
     return cli_arguments
 
 def get_array(str):
-    arr = list(map(int, str.split(' ')))
-    return arr
+    try:
+        arr = list(map(int, str.split(' ')))
+        return arr
+    except Exception as _:
+        return get_float_array(str)
 
 def get_float_array(str):
     arr = list(map(float, str.split(' ')))
     return arr
 
-def Printlines(headway=None, nodes=None, distance=None):
-    if headway and nodes:
-        distance = (nodes-1)*headway
+def Printlines(headway=None, num_nodes=None, distance=None):
+    if headway and num_nodes:
+        distance = (num_nodes-1)*headway
     elif headway and distance:
-        nodes = int(distance/headway + 1)
+        num_nodes = int(distance/headway + 1)
     
     if headway:
-        print(f'Running for headway={headway}, nodes={nodes}, distance={distance}')
+        print(f'Running for headway={headway}, num_nodes={num_nodes}, distance={distance}')
     else:
-        print(f'Running for nodes={nodes}, distance={distance}')
+        print(f'Running for num_nodes={num_nodes}, distance={distance}')
 
 def PrintlinesBD(arr):
     if(len(arr)==5):
-        print(f'Running for nodes={arr[0]}, dataRate={arr[1]}Mbps, pktSize={arr[2]}bytes, lamda0={arr[3]}pkt/seconds, lamda1={arr[4]}pkt/seconds')
+        print(f'Running for num_nodes={arr[0]}, dataRate={arr[1]}Mbps, pktSize={arr[2]}bytes, lamda0={arr[3]}pkt/seconds, lamda1={arr[4]}pkt/seconds')
     else:
         print(f'Insufficient Arguments')
 
 
 def convert_headway_to_nodes(json_data, distance=100):
     position_model =  str(json_data['position_model'])
-    num_nodes = []
-    headway = None
+    num_nodes_array = []
+    headway_array = None
     dist = int(distance)
-    position_model = str(json_data['position_model'])
-    if position_model.startswith('platoon'):
-        headway = list(map(int, json_data['headway_array'].split(' ')))
-        for x in headway:
-            nodes = int(dist/x + 1)
-            num_nodes.append(nodes)
+    if position_model.startswith('platoon'): # makes use of platoon-distance
+        headway_array = list(map(int, json_data['headway_array'].split(' ')))
+        for x in headway_array:
+            num_nodes = int(dist/x + 1)
+            num_nodes_array.append(num_nodes)
     else:
-        num_nodes = list(map(int, json_data['num_nodes_array'].split(' ')))
+        num_nodes_array = list(map(int, json_data['num_nodes_array'].split(' '))) # makes use of headway-distance
+        
+        
 
-    return num_nodes, headway
+    return num_nodes_array, headway_array
 
 def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100):
     fontsize = 6
@@ -175,6 +179,27 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100
             ax[i][j].tick_params(axis='y', labelsize=fontsize)
 
     plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{distance}.png"))
+
+def write_content(headways, vo, vi):
+    content = ''
+    for i in range(len(headways)):
+        content += f'{headways[i]:.6f} {vo[i]:.6f} {vi[i]:.6f}\n'
+    return content
+
+def create_file(data_map, row, headways, path):
+    for x in row:
+        baseName = x
+        vo, vi = None, None
+        for key, values in data_map.items():
+            key = str(key)
+            if key.startswith(x):
+                if key.endswith('VI'):
+                    vi = values
+                elif key.endswith('VO'):
+                    vo = values
+
+        with open(os.path.join(path, baseName + '.txt'), 'w') as file:
+            file.write(write_content(headways, vo, vi))                
 
 def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100, fileName=None):
     fontsize = 6

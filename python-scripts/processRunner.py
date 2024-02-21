@@ -1,14 +1,14 @@
 import os, subprocess, sys
-from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes, get_array, get_float_array, Printlines, PrintlinesBD
+from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes, get_array, Printlines, PrintlinesBD
 
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ns3_directory = app_dir.split('/scratch')[0]
 script_directory = app_dir
-accepted_keys = ['time', 'dataRate' ,'nodes', 'distance', 'packetSize', 'folder']
+accepted_keys = ['time', 'pcap']
 
 # Functions
-def run_ns3_process(fileName, paramString, nodes, distance):
-    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --n={nodes} --distance={distance}"'
+def run_ns3_process(fileName, paramString, num_nodes, distance):
+    command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --num_nodes={num_nodes} --distance={distance}"'
 
     try:
         subprocess.run(command, shell=True, check=True)
@@ -22,9 +22,9 @@ def run_ns3_process_bd(fileName, paramString, arr, dir):
 
     if(len(arr) == 5):
         if(folder and file):
-            command = command + f' --n={arr[0]} --d={arr[1]} --p={arr[2]} --l0={arr[3]} --l1={arr[4]} --folder={folder} --file={file}"'
+            command = command + f' --num_nodes={arr[0]} --data_rate={arr[1]} --packet_size={arr[2]} --critical_rate={arr[3]} --general_rate={arr[4]} --folder={folder} --file={file}"'
         else:
-            command = command + f' --n={arr[0]} --d={arr[1]} --p={arr[2]} --l0={arr[3]} --l1={arr[4]}"'
+            command = command + f' --num_nodes={arr[0]} --data_rate={arr[1]} --packet_size={arr[2]} --critical_rate={arr[3]} --general_rate={arr[4]}"'
     else:
         raise Exception("command is invalid, less number of arguments to run_ns3_process_bd")
 
@@ -56,60 +56,60 @@ elif len(sys.argv) >= 2:
     cli_args = convert_to_cli(json_data, accepted_keys)
     distance_array = get_array(json_data['distance_array'])
 
-    nodes_array = get_array(json_data['num_nodes_array'])
+    num_nodes_array = get_array(json_data['num_nodes_array'])
     headway_array = get_array(json_data['headway_array'])
     bd = int(json_data["bd"])
 
 
     if bd:
-        distance = distance_array[0]
-        fixed_nodes = 250
-        data_rate_array = get_array(json_data["data_rate_array"])
-        fixed_data_rate = 27
-        pkt_size_array = get_array(json_data["pkt_size_array"])
-        fixed_pkt_size = 500
+        for distance in distance_array:
+            fixed_num_nodes = json_data['num_nodes']
+            data_rate_array = get_array(json_data["data_rate_array"])
+            fixed_data_rate = json_data['data_rate']
+            pkt_size_array = get_array(json_data["packet_size_array"])
+            fixed_pkt_size = json_data['packet_size']
 
-        lamda0_array = get_array(json_data["lamda0_array"])
-        fixed_lamda0 = int(json_data["critical_rate"])
-        lamda1_array = get_array(json_data["lamda1_array"])
-        fixed_lamda1 = int(json_data["general_rate"])
+            critical_rate_array = get_array(json_data["critical_rate_array"])
+            fixed_critical_rate = int(json_data["critical_rate"])
+            general_rate_array = get_array(json_data["general_rate_array"])
+            fixed_general_rate = int(json_data["general_rate"])
 
-        variable_array = [nodes_array, data_rate_array, pkt_size_array, lamda0_array, lamda1_array]
-        fixed_values = [fixed_nodes, fixed_data_rate, fixed_pkt_size, fixed_lamda0, fixed_lamda1]
-        parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
-        folder_names = ["variable_nodes", "variable_data_rate", "variable_pkt_size", "variable_lamda0", "variable_lamda1"]
-        
-
-        for idx, variable in enumerate(variable_array):
-            # Create subdirectories for the outputs
-            dir_path = os.path.join(outpath_path, folder_names[idx])
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
-
-            print(f"Varying {parameter_labels[idx]} from {variable[0]} to {variable[len(variable)-1]} while keeping all other things constant")
-            for jdx, var in enumerate(variable):
-                temp_fixed_values = fixed_values.copy()
-                temp_fixed_values[idx] = var
-                file = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}"
-                PrintlinesBD(temp_fixed_values)
-                run_ns3_process_bd(ns3_executable, cli_args, temp_fixed_values, [folder_names[idx], file])
+            variable_array = [num_nodes_array, data_rate_array, pkt_size_array, critical_rate_array, general_rate_array]
+            fixed_values = [fixed_num_nodes, fixed_data_rate, fixed_pkt_size, fixed_critical_rate, fixed_general_rate]
+            parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
+            folder_names = ["variable_nodes", "variable_data_rate", "variable_pkt_size", "variable_critical_rate", "variable_general_rate"]
             
-            # Remove this break statement once OK
-            break
+
+            for idx, variable in enumerate(variable_array):
+                # Create subdirectories for the outputs
+                dir_path = os.path.join(outpath_path, folder_names[idx])
+                if not os.path.exists(dir_path):
+                    os.makedirs(dir_path)
+
+                print(f"\n\nVarying {parameter_labels[idx]} from {variable[0]} to {variable[len(variable)-1]} while keeping all other things constant")
+                for jdx, var in enumerate(variable):
+                    temp_fixed_values = fixed_values.copy()
+                    temp_fixed_values[idx] = var
+                    file = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}"
+                    PrintlinesBD(temp_fixed_values)
+                    run_ns3_process_bd(ns3_executable, cli_args, temp_fixed_values, [folder_names[idx], file])
+                
+                # Remove this break statement once OK
+                # break (TODO: yet to see the effect)
 
     else:
-        if str(position_model).endswith('distance'):
+        if str(position_model).endswith('platoon-distance'):
             for distance in distance_array:
-                nodes_array, headway_aray = convert_headway_to_nodes(json_data, distance)
-                for idx, nodes in enumerate(nodes_array):
-                    Printlines(headway=headway_array[idx], nodes=nodes, distance=distance)
-                    run_ns3_process(ns3_executable, cli_args, nodes, distance)
+                num_nodes_array, headway_aray = convert_headway_to_nodes(json_data, distance)
+                for idx, num_nodes in enumerate(num_nodes_array):
+                    Printlines(headway=headway_array[idx], num_nodes=num_nodes, distance=distance)
+                    run_ns3_process(ns3_executable, cli_args, num_nodes, distance)
             
-        elif str(position_model).endswith('nodes'):
-            for nodes in nodes_array:
+        elif str(position_model).endswith('platoon-nodes'):
+            for num_nodes in num_nodes_array:
                 for headway in headway_array:
-                    Printlines(headway=headway, nodes=nodes)
-                    distance=headway*(nodes-1)
-                    run_ns3_process(ns3_executable, cli_args, nodes, distance)
+                    Printlines(headway=headway, num_nodes=num_nodes)
+                    distance=headway*(num_nodes-1)
+                    run_ns3_process(ns3_executable, cli_args, num_nodes, distance)
                 
     

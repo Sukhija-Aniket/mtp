@@ -13,6 +13,7 @@ using namespace std;
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExamplep");
 
 NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, WifiStandard wifiStandard) {
+  const uint32_t mac_header_size = 26;
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
   */
@@ -31,10 +32,10 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   waveHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
   						"DataMode", StringValue ("OfdmRate3MbpsBW10MHz"	),
   						"ControlMode",StringValue ("OfdmRate1MbpsBW10MHz"),
-  						"NonUnicastMode", StringValue ("OfdmRate3MbpsBW10MHz"),
+  						"NonUnicastMode", StringValue ("OfdmRate3MbpsBW10MHz"), // working with 3Mbps, initial plots saved are of 6Mbps ignore them
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2),
-              "FragmentationThreshold", UintegerValue(packetSize)); // (Aniket Sukhija)
+              "FragmentationThreshold", UintegerValue(packetSize + mac_header_size + WIFI_MAC_FCS_LENGTH)); // (Aniket Sukhija)
 
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes);
 
@@ -50,21 +51,21 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
     // viTxop->TraceConnect("CwTrace", "VICwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VIMACTXCWNUM]));
     // voTxop->TraceConnect("CwTrace", "VOCwTrace/" +to_string(iNode), ns3::MakeBoundCallback(&MacTxCwTrace, objContainers[VOMACTXCWNUM]));
 
-    viTxop->SetMinCw(15);
-    viTxop->SetMaxCw(31);
+    // viTxop->SetMinCw(15);
+    // viTxop->SetMaxCw(31);
 
-    voTxop->SetMinCw(7);
-    voTxop->SetMaxCw(15);
+    // voTxop->SetMinCw(7);
+    // voTxop->SetMaxCw(15);
 
     Ptr<WifiPhy> nodePhy = node->GetPhy(0);
     // (Aniket Sukhija)
-    WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
+    // WifiPhyOperatingChannel opChannel = nodePhy->GetOperatingChannel();
 
-    uint16_t number = opChannel.GetNumber();
-    uint16_t channel = opChannel.GetFrequency();
-    uint16_t cw = opChannel.GetWidth();
-    uint16_t band = nodePhy->GetPhyBand();
-    NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
+    // uint16_t number = opChannel.GetNumber();
+    // uint16_t channel = opChannel.GetFrequency();
+    // uint16_t cw = opChannel.GetWidth();
+    // uint16_t band = nodePhy->GetPhyBand();
+    // NS_LOG_UNCOND("number: "<<number<<", channel: "<<channel<<", cw: "<<cw<<", band: "<<band);
     // (Aniket Sukhija)
 
     // Set Tx Power to 500m
@@ -120,9 +121,9 @@ int main (int argc, char *argv[])
   WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211p;
 
   cmd.AddValue ("time","Simulation Time", simTime);
-  cmd.AddValue ("nodes", "Number of nodes", nNodes);
+  cmd.AddValue ("num_nodes", "Number of nodes", nNodes);
   cmd.AddValue("distance", "total Distance", distance);
-  cmd.AddValue("packetSize", "packet Size", packetSize);
+  cmd.AddValue("packet_size", "packet Size", packetSize);
   cmd.AddValue("pcap", "Enable Pcap", enablePcap);
   cmd.Parse (argc, argv);
 
@@ -162,8 +163,6 @@ int main (int argc, char *argv[])
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
     app_i->SetPacketSize(packetSize);
-    app_i->SetRetransmissionProb80211bd(0.53);
-    app_i->SetMaxRetransmissionLimit(3);
     vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);

@@ -26,7 +26,7 @@ map<double, string> OfdmDataRate10MHzMap = {
     {27.0, "OfdmRate27MbpsBW10MHz"}
 };
 
-NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, double dataRate,  WifiStandard wifiStandard) {
+NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayObject>*> objContainers, bool enablePcap, uint32_t packetSize, double dataRate,  WifiStandard wifiStandard, string file) {
   const uint32_t mac_header_size = 26;
   /*
     Setting up WAVE devices. With PHY & MAC using default settings.
@@ -93,7 +93,7 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
 
   if(enablePcap) {
     uint32_t numNodes = devices.GetN();
-    string name = "pcaps/testbd-n" + std::to_string(numNodes);
+    string name = "pcaps/" + file + "-n" + std::to_string(numNodes);
     string fileName = getCustomFileName(__FILE__, name);
     wavePhy.EnablePcap(fileName, devices);
   }
@@ -129,32 +129,30 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
-  uint32_t nNodes = 250;
+  uint32_t nNodes = 100;
   double simTime = 1;
-  int distance = 700;
+  int distance = 500;
   uint32_t packetSize = 500;
-  uint32_t lamda0 = 30, lamda1 = 30;
+  uint32_t prioPacketGenRate = 30, packetGenRate = 30;
   
-  double datarate = 27;
+  double datarate = 3;
   string folder = "";
-  string file = "testbd";
+  string baseName = getBaseName(__FILE__);
 
   bool enablePcap = false;
   WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211p;
 
-  cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("n", "Number of nodes", nNodes);
+  cmd.AddValue ("time","Simulation Time", simTime);
+  cmd.AddValue ("num_nodes", "Number of nodes", nNodes);
   cmd.AddValue("distance", "total Distance", distance);
-  cmd.AddValue("p", "packet Size", packetSize);
-  cmd.AddValue("l0", "Rate of pkt generation of AC0", lamda0);
-  cmd.AddValue("l1", "Rate of pkt generation of AC0" ,lamda1);
-  cmd.AddValue("d", "Data Rate", datarate);
-  cmd.AddValue("folder", "Sub Folder", folder);
-  cmd.AddValue("file", "File of the output", file);
+  cmd.AddValue("packet_size", "packet Size", packetSize);
   cmd.AddValue("pcap", "Enable Pcap", enablePcap);
+  cmd.AddValue("data_rate", "Data Rate", datarate);
+  cmd.AddValue("critical_rate", "critical packet generation rate", prioPacketGenRate);
+  cmd.AddValue("general_rate", "general packet generation rate", packetGenRate);
+  cmd.AddValue("folder", "Sub Folder", folder);
+  cmd.AddValue("file", "file", baseName);
   cmd.Parse (argc, argv);
-
-  cout << "n: " << nNodes << ", d: " << datarate << ", p: " << packetSize << ", l0: " << lamda0 << ", l1: " << lamda1 << endl;
 
   NodeContainer nodes;
   nodes.Create(nNodes);
@@ -167,10 +165,8 @@ int main (int argc, char *argv[])
   vector<Vector3D> positions = getPV(nodes.GetN(), __FILE__, "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), __FILE__, "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), __FILE__, "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  // vector<uint32_t> packetGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  // vector<uint32_t> prioPacketGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  // vector<uint32_t> repetitions = getRepRate(nodes.GetN(), __FILE__, "inputs/repRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   
+
   // Set dynamics of the node
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
   {
@@ -180,14 +176,15 @@ int main (int argc, char *argv[])
     cmm->SetVelocityAndAcceleration (Vector3D(0, 0, 0), Vector3D(0, 0, 0)); // setting velocity as 0
   }
 
+
   // Wifi Phy and Mac Layer
-  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, enablePcap, packetSize, datarate, wifiStandard);
+  NetDeviceContainer devices = ConfigureDevices(nodes, objContainers, enablePcap, packetSize, datarate, wifiStandard, baseName);
 
   //Create Application in nodes
   for (uint32_t i=0; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
-    double interval = 1.0/(lamda0 + lamda1);
+    double interval = 1.0/(packetGenRate + prioPacketGenRate);
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
@@ -195,7 +192,7 @@ int main (int argc, char *argv[])
     app_i->SetWifiMode (OfdmDataRate10MHzMap[datarate]);
     app_i->SetRetransmissionProb80211bd(0.53);
     app_i->SetMaxRetransmissionLimit(3);
-    vector<uint32_t> data = generateData2(lamda0, lamda1);
+    vector<uint32_t> data = generateData2(prioPacketGenRate, packetGenRate);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
@@ -213,21 +210,21 @@ int main (int argc, char *argv[])
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRx", MakeBoundCallback(&MacRxTrace, objContainers[MACRXNUM]));
   // Config::Connect("NodeList/*/DeviceList/*/$ns3::WaveNetDevice/MacEntities/*/MacRxDrop", MakeBoundCallback(&MacRxDropTrace, objContainers[MACRXDROPNUM]));
 
-  string fileN = "outputs/";
+  string fileName = "outputs/";
   if (folder=="") {
-    fileN = fileN + file;
-  }else{
+    fileName = fileName + baseName;
+  } else {
     // string folderName = getCustomFileName (__FILE__, fileN+folder);
     // mkdir(folderName.c_str(), 0777); # Shifted to python
-    fileN = fileN + folder + "/" + file;
+    fileName = fileName + folder + "/" + baseName;
   }
 
   Simulator::Stop(Seconds(simTime+1));
   Simulator::Run();
   Simulator::Destroy();
 
-  string fileName = getCustomFileName (__FILE__, fileN + ".log");
-  FILE* fp = freopen(fileName.c_str (), "w", stdout);
+  string logFileName = getCustomFileName (__FILE__, fileName + ".log");
+  FILE* fp = freopen(logFileName.c_str (), "w", stdout);
   getObjTrace(objContainers, MACENQUEUENUM, fp);
 
   fclose(fp);

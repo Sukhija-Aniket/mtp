@@ -97,3 +97,5 @@ variables to vary :-
 // create position models that satisfy everything.
 // packet generation using packetGenRates, instead of lamda values
 // 
+
+# There is some error with some kind of buffer with fragmentation most probably, that I need to fix :(

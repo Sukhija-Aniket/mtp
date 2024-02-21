@@ -20,6 +20,12 @@ std::string getFileName (const std::string& filePath) {
   return fileName;
 }
 
+std::string getBaseName(const std::string& filePath) {
+  std::string fileName = getFileName(filePath);
+  std::string baseName = fileName.substr(fileName.find_last_of('/'));
+  return baseName;
+}
+
 std::string getCustomFileName(const std::string &filePath, const std::string &name) {
   std::string fileName = getFileName(filePath);
   fileName = fileName.substr(0, fileName.find_last_of('/'));

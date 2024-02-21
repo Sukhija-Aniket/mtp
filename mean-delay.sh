@@ -3,18 +3,21 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 15 25) # Number of nodes to simulate on
-data_rate_array=(3 6 12 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
-pkt_size_array=(100 300 500) # Packet Size in bytes
-lamda0_array=(10 30 50)
-lamda1_array=(10 30 50)
-
+data_rate_array=(27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
+packet_size_array=(100 300 500) # Packet Size in bytes
+critical_rate_array=(10 30 50)
+general_rate_array=(10 30 50)
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
-distance_array=(700) # Total Distance to consider
-position_model='uniform' 
+distance_array=(100) # Total Distance to consider
+
+position_model='platoon-distance' 
+num_nodes=100
 general_type='constant'
-critical_type='constant'
+critical_type='poisson'
 general_rate=30
 critical_rate=30
+data_rate=27
+packet_size=500
 velocity_lead_node=25
 bd=0
 plot=0
@@ -31,7 +34,7 @@ print_usage() {
   echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify distribution for generating critical packets"
   echo -e "\t--general_rate={poisson, constant, gaussian, default=30}"
   echo -e "\t--critical_rate={poisson, constant, gaussian, default=30}"
-  echo -e "\t--position_model={platoon-nodes, platoon-distance, nodes-distance, default=platoon-nodes}    Specify position model used during simulation"
+  echo -e "\t--position_model={platoon-nodes, platoon-distance, uniform-distance, default=platoon-distance}    Specify position model used during simulation"
   echo -e "\t--headway_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--distance_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--num_nodes_array=(start,stop,step) start and stop both are inclusive."
@@ -109,8 +112,56 @@ fi
 if [[ ! "$fileName" =~ \.cc$ ]]; then
   echo "File name must have a .cc extension, exiting..."
   exit 1
+else
+  BASENAME=${fileName%.cc}
+  echo $BASENAME
+  if [[ $BASENAME == *bd ]]; then
+    position_model='uniform-distance'
+    distance_array=(500)
+    critical_type='constant'
+    bd=1
+    echo "bd file provided so changing default values"
+  fi
 fi
 shift
+
+# Step 2: Setting input Parameters
+params["distance_array"]=${distance_array[@]} # Fishy
+params["headway_array"]=${headway_array[@]}
+params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
+params["critical_rate_array"]=${critical_rate_array[@]}
+params["general_rate_array"]=${general_rate_array[@]}
+params["data_rate_array"]=${data_rate_array[@]}
+params["packet_size_array"]=${packet_size_array[@]}
+
+params["position_model"]=$position_model
+params["num_nodes"]=$num_nodes
+params["critical_type"]=$critical_type
+params["general_type"]=$general_type
+params["critical_rate"]=$critical_rate
+params["general_rate"]=$general_rate
+params["data_rate"]=$data_rate
+params["packet_size"]=$packet_size
+params["bd"]=$bd
+
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+      --plot)
+      plot=1
+      ;;
+      --*=*,*,*)
+      handle_array "$1"
+      ;;
+    --*=*)
+      handle_argument "$1"
+      ;;
+      *)
+      echo "Invalid Param format: $1, exiting..."
+      exit 1
+  esac
+  shift
+done
 
 # Step 2: Clearing old outputs
 touch nohup.out
@@ -132,47 +183,6 @@ python_script_process_generation="${python_script_path}/randomProcessGeneration.
 python_script_process_runner="${python_script_path}/processRunner.py"
 python_script_analysis="${python_script_path}/analysis.py"
 
-
-# Step 4: Setting input Parameters
-params["num_nodes_array"]=${num_nodes_array[@]} # These are default params
-params["headway_array"]=${headway_array[@]}
-params["data_rate_array"]=${data_rate_array[@]}
-params["pkt_size_array"]=${pkt_size_array[@]}
-params["lamda0_array"]=${lamda0_array[@]}
-params["lamda1_array"]=${lamda1_array[@]}
-
-params["position_model"]=$position_model
-params["general_type"]=$general_type
-params["general_rate"]=$general_rate
-params["critical_type"]=$critical_type
-params["critical_rate"]=$critical_rate
-params["data_rate"]=$data_rate
-
-params["distance_array"]=${distance_array[@]} # Fishy
-
-
-while [[ "$#" -gt 0 ]]; do
-  case "$1" in
-      --bd)
-      bd=1
-      ;;
-      --plot)
-      plot=1
-      ;;
-      --*=*,*,*)
-      handle_array "$1"
-      ;;
-    --*=*)
-      handle_argument "$1"
-      ;;
-      *)
-      echo "Invalid Param format: $1, exiting..."
-      exit 1
-  esac
-  shift
-done
-
-params["bd"]=${bd}
 # deleting the previously created inputs, outputs and plots
 
 base_fileName="${fileName%.*}"
@@ -195,6 +205,11 @@ if [ $plot -ne 1 ]; then
     rm -rf $files_to_delete
   fi
   cd ../
+
+  mkdir -p pcaps
+  cd pcaps/
+  rm -rf *
+  cd ../
 fi
 
 json_data="{"
@@ -204,7 +219,7 @@ done
 json_data="${json_data%,}"
 json_data+="}"
 
-echo ${json_data}
+# echo ${json_data}
 
 # Generating, Running and analyzing data & Processes (moving to base directory)
 cd $base_directory

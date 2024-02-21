@@ -131,49 +131,6 @@ CustomApplication::SetWifiMode (WifiMode mode)
     m_mode = mode;
 }
 
-// (Aniket Sukhija)
-void
-CustomApplication::SetRetransmissionProb80211bd(double p){
-    m_retransmissionProb80211bd = p;
-}
-
-double
-CustomApplication::GetRetransmissionProb80211bd(){
-    return m_retransmissionProb80211bd;
-}
-
-uint32_t
-CustomApplication::GetMaxRetransmissionLimit(){
-    return m_maxRetranssionLimit;
-}
-
-void
-CustomApplication::SetMaxRetransmissionLimit(uint32_t maxLimit){
-    m_maxRetranssionLimit = maxLimit;
-}
-
-void
-CustomApplication::DoRetransmissionbd(uint32_t &totalPacketSize, uint32_t maxRetranssionLimit) {
-    if (maxRetranssionLimit == 0) return;
-    double prob = CustomApplication::m_random->GetValue(0.0, 1.0);
-    if(prob > m_retransmissionProb80211bd){ // if previous pkt transmitted successfully
-        maxRetranssionLimit = 0;
-    }else{
-        totalPacketSize+=(m_packetSize);
-        maxRetranssionLimit--;
-    }
-    DoRetransmissionbd(totalPacketSize, maxRetranssionLimit);
-}
-
-void
-CustomApplication::Retransmissionbd(uint32_t &totalPktSize) {
-    totalPktSize = m_packetSize;
-    uint32_t maxLimit = m_maxRetranssionLimit;
-    DoRetransmissionbd(totalPktSize, maxLimit);
-}
-
-// (Aniket Sukhija)
-
 void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t> &data, uint32_t index) {
     if (index >= data.size())
     {
@@ -189,10 +146,7 @@ void CustomApplication::BroadcastInformationWithParameters(std::vector<uint32_t>
     tx.txPowerLevel = 1;
     tx.dataRate = m_mode;
 
-    uint32_t totalPktSize = 0;
-    Retransmissionbd(totalPktSize);
-
-    Ptr<Packet> packet = Create <Packet> (totalPktSize);
+    Ptr<Packet> packet = Create <Packet> (m_packetSize);
     
     //let's attach our custom data tag to it
     CustomDataTag tag;

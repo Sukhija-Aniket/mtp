@@ -4,7 +4,7 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, get_array, get_tcr
+from functions import convert_headway_to_nodes, convert_to_json, plot_figure, plot_figure_solo, get_array, get_tcr, create_file
 '''
     --------------------------------------------README--------------------------------------------
 
@@ -100,6 +100,7 @@ def main():
     script_dir = os.path.dirname(file_path)
     input_path = os.path.join(script_dir, "outputs")
     plot_path = os.path.join(script_dir, "plots")
+    data_path = os.path.join(script_dir, "practical")
     input_file_template = f"{os.path.basename(file_path).split('.')[0]}-n"
     parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
@@ -108,7 +109,7 @@ def main():
     nodes_array = get_array(json_data['num_nodes_array'])
     headway_array = get_array(json_data['headway_array'])
 
-    if str(position_model).endswith('distance'):
+    if str(position_model).endswith('platoon-distance'):
         for distance in distance_array:
             nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
             mean_delays = [[], [], [], []]
@@ -136,9 +137,10 @@ def main():
                 data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
             row = ['mean', 'std', 'rbl']
             col = len(data_map)/len(row) + 1
+            create_file(data_map, row, plt_data, data_path)
             plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
     
-    elif str(position_model).endswith('nodes'):
+    elif str(position_model).endswith('platoon-nodes'):
         for nodes in nodes_array:
             mean_delays = [[], [], [], []]
             std_delays = [[], [], [], []]
@@ -163,11 +165,8 @@ def main():
                 data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
             row = ['mean', 'std', 'rbl']
             col = len(data_map)/len(row) + 1
+            create_file(data_map, row, plt_data, data_path)
             plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
-                
-
-
-
 
 if __name__ == "__main__":
     try:

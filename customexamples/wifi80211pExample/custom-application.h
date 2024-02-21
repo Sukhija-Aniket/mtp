@@ -69,25 +69,6 @@ public:
      */
     void SetData (std::vector<uint32_t> &data);
 
-    // (Aniket Sukhija)
-    /** \brief Get the retransmission probability for 802.11bd
-     */
-    double GetRetransmissionProb80211bd();
-    
-    /** \brief Set the retransmission probability for 802.11bd
-     */
-    void SetRetransmissionProb80211bd(double p);
-    
-    uint32_t GetMaxRetransmissionLimit();
-
-    void SetMaxRetransmissionLimit(uint32_t maxLimit);
-
-    void DoRetransmissionbd(uint32_t &totalPktSize, uint32_t maxLimit);
-
-    void Retransmissionbd(uint32_t &totalPktSize);
-
-    // (Aniket Sukhija)
-
     //You can create more functions like getters, setters, and others
 
     private:
@@ -109,9 +90,6 @@ public:
 
         WifiMode m_mode; /**< data rate used for broadcasts */
         
-        //You can define more stuff to record statistics, etc.
-        double m_retransmissionProb80211bd; // (Aniket Sukhija)
-        int m_maxRetranssionLimit; // (Aniket Sukhija)
         Ptr<UniformRandomVariable> m_random; //!< Provides uniform random variables. (Aniket Sukhija)
 };
 
