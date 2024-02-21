@@ -92,3 +92,8 @@ variables to vary :-
 - Packet Size --> (10 to 10000)
 - AC0 packet generation Rate --> (10 to 60)
 - AC1 packet generation Rate --> (10 to 60)
+
+
+// create position models that satisfy everything.
+// packet generation using packetGenRates, instead of lamda values
+// 

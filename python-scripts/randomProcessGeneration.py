@@ -138,13 +138,13 @@ if __name__ == "__main__":
     if bd:
         distance = distance_array[0] # Only one distance parameter
         for idx, num_nodes in enumerate(nodes_array):
-            # Printlines(headway=headway_array[idx], distance=distance)
-            # critical_rate = getCriticalRate(headway_array[idx], json_data)
+            Printlines(headway=headway_array[idx], distance=distance)
+            critical_rate = getCriticalRate(headway_array[idx], json_data)
             getPositions(num_nodes=num_nodes, headway=0, position_model=position_model, distance=distance)
             getStartTime(num_nodes=num_nodes, distance=distance)
             getVelocities(num_nodes=num_nodes, distance=distance)
-            # getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
-            # getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+            getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+            getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
             # getRepRates(num_nodes=num_nodes, distance=distance, headway=headway_array[idx], delta=3)
             print("\n\n")
         

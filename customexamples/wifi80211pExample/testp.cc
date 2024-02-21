@@ -119,10 +119,10 @@ int main (int argc, char *argv[])
   bool enablePcap = false;
   WifiStandard wifiStandard = WifiStandard::WIFI_STANDARD_80211p;
 
-  cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("n", "Number of nodes", nNodes);
-  cmd.AddValue("d", "total Distance", distance);
-  cmd.AddValue("p", "packet Size", packetSize);
+  cmd.AddValue ("time","Simulation Time", simTime);
+  cmd.AddValue ("nodes", "Number of nodes", nNodes);
+  cmd.AddValue("distance", "total Distance", distance);
+  cmd.AddValue("packetSize", "packet Size", packetSize);
   cmd.AddValue("pcap", "Enable Pcap", enablePcap);
   cmd.Parse (argc, argv);
 

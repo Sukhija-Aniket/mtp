@@ -125,89 +125,51 @@ def main():
     bd = int(json_data["bd"])
     
     distance = distance_array[0]
-
+    parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
     variable_array = [nodes_array, data_rate_array, pkt_size_array, lamda0_array, lamda1_array]
     fixed_values = [fixed_nodes, fixed_data_rate, fixed_pkt_size, fixed_lamda0, fixed_lamda1]    
 
     for idx, variable in enumerate(variable_array):
-            mean_delays = [[], [], [], []]
-            std_delays = [[], [], [], []]
-            rbl_delays = [[], [], [], []]
+        mean_delays = [[], [], [], []]
+        std_delays = [[], [], [], []]
+        rbl_delays = [[], [], [], []]
 
-            for jdx, var in enumerate(variable):
-                temp_fixed_values = fixed_values.copy()
-                temp_fixed_values[idx] = var
-                input_file_template = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}.log"
-                input_path_temp = input_path + f"/{folder_names[idx]}"
-                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path_temp, input_file_template)
-                for x in range(4):
-                    mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
-                    std_delays[x].append(round(temparr_std[x]/1000000, 5))
-                    rbl_delays[x].append(temparr_rbl[x])
+        ##### Calculations #####
 
-            # Remove this break after everything is in line
-            break 
+        for jdx, var in enumerate(variable):
+            temp_fixed_values = fixed_values.copy()
+            temp_fixed_values[idx] = var
+            input_file_template = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}.log"
+            input_path_temp = input_path + f"/{folder_names[idx]}"
+            temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path_temp, input_file_template)
+            for x in range(4):
+                mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
+                std_delays[x].append(round(temparr_std[x]/1000000, 5))
+                rbl_delays[x].append(temparr_rbl[x])
 
+        ##### Plotting #####
+        xlabel, plt_data = parameter_labels[idx], variable_array[idx]
+        data_map = {}
+        for x in range(4):
+            if sum(mean_delays[x]) == 0:
+                continue
+            data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
+            data_map[f'std_{inverse_map[x]}'] = std_delays[x]
+            data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
+        row = ['mean', 'std', 'rbl']
+        col = len(data_map)/len(row) + 1
+        plot_path = os.path.join(plot_path, folder_names[idx])
 
-#### Plotting #####
+        # Create subdirectories for the plots
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
 
+        # Generate Plots
+        plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
 
-    # if str(position_model).endswith('distance'):
-    #     for distance in distance_array:
-    #         nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
-    #         mean_delays = [[], [], [], []]
-    #         std_delays = [[], [], [], []]
-    #         rbl_delays = [[], [], [], []]
-            
-    #         for idx, nodes in enumerate(nodes_array):
-    #             input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-    #             temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
-    #             for x in range(4):
-    #                 mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
-    #                 std_delays[x].append(round(temparr_std[x]/1000000, 5))
-    #                 rbl_delays[x].append(temparr_rbl[x])
-    #         xlabel, plt_data = 'Number of Nodes', nodes
-    #         if position_model.startswith('platoon'):
-    #             xlabel = 'Headway'
-    #             plt_data = headway_array
-            
-    #         data_map = {}
-    #         for x in range(4):
-    #             if sum(mean_delays[x]) == 0:
-    #                 continue
-    #             data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
-    #             data_map[f'std_{inverse_map[x]}'] = std_delays[x]
-    #             data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
-    #         row = ['mean', 'std', 'rbl']
-    #         col = len(data_map)/len(row) + 1
-    #         plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
-    
-    # elif str(position_model).endswith('nodes'):
-    #     for nodes in nodes_array:
-    #         mean_delays = [[], [], [], []]
-    #         std_delays = [[], [], [], []]
-    #         rbl_delays = [[], [], [], []]
-            
-    #         for idx, headway in enumerate(headway_array):
-    #             distance = headway*(nodes-1)
-    #             input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-    #             temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway, distance=distance)
-    #             for x in range(4):
-    #                 mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
-    #                 std_delays[x].append(round(temparr_std[x]/1000000, 5))
-    #                 rbl_delays[x].append(temparr_rbl[x])
-    #         xlabel, plt_data = 'Headway', headway_array
-            
-    #         data_map = {}
-    #         for x in range(4):
-    #             if sum(mean_delays[x]) == 0:
-    #                 continue
-    #             data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
-    #             data_map[f'std_{inverse_map[x]}'] = std_delays[x]
-    #             data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
-    #         row = ['mean', 'std', 'rbl']
-    #         col = len(data_map)/len(row) + 1
-    #         plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
+        # Remove this break statement once OK
+        break 
+
                 
 if __name__ == "__main__":
     try:

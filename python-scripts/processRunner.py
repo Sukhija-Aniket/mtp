@@ -4,7 +4,7 @@ from functions import convert_to_json, convert_to_cli, convert_headway_to_nodes,
 app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ns3_directory = app_dir.split('/scratch')[0]
 script_directory = app_dir
-accepted_keys = ['t']
+accepted_keys = ['time', 'dataRate' ,'nodes', 'distance', 'packetSize', 'folder']
 
 # Functions
 def run_ns3_process(fileName, paramString, nodes, distance):
@@ -46,8 +46,10 @@ if len(sys.argv) == 1:
     print("Usage: python script_name.py ns3_executable [parameters]")
     sys.exit(1)
 elif len(sys.argv) >= 2:
+
     ns3_executable = os.path.basename(sys.argv[1])
     script_directory = os.path.dirname(sys.argv[1])
+    outpath_path = os.path.join(script_directory, "outputs")
     parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
     json_data = convert_to_json(parameters)
     position_model = json_data['position_model']
@@ -77,7 +79,13 @@ elif len(sys.argv) >= 2:
         parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
         folder_names = ["variable_nodes", "variable_data_rate", "variable_pkt_size", "variable_lamda0", "variable_lamda1"]
         
+
         for idx, variable in enumerate(variable_array):
+            # Create subdirectories for the outputs
+            dir_path = os.path.join(outpath_path, folder_names[idx])
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+
             print(f"Varying {parameter_labels[idx]} from {variable[0]} to {variable[len(variable)-1]} while keeping all other things constant")
             for jdx, var in enumerate(variable):
                 temp_fixed_values = fixed_values.copy()
@@ -85,7 +93,9 @@ elif len(sys.argv) >= 2:
                 file = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}"
                 PrintlinesBD(temp_fixed_values)
                 run_ns3_process_bd(ns3_executable, cli_args, temp_fixed_values, [folder_names[idx], file])
-
+            
+            # Remove this break statement once OK
+            break
 
     else:
         if str(position_model).endswith('distance'):

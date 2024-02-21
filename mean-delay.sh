@@ -2,7 +2,7 @@
 
 # Declarations and variables
 declare -A params
-num_nodes_array=(2) # Number of nodes to simulate on
+num_nodes_array=(10 15 25) # Number of nodes to simulate on
 data_rate_array=(3 6 12 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
 pkt_size_array=(100 300 500) # Packet Size in bytes
 lamda0_array=(10 30 50)
@@ -26,7 +26,7 @@ print_usage() {
   echo -e "\t--help                                                  Displays this help message"
   echo -e "\t--plot                                                  Runs only code for obtaining plots"
   echo -e "\t--general_rate=VALUE (default=30)                       Specify rate of routine/general packets"
-  echo -e "\t--t=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
+  echo -e "\t--time=VALUE (default=10)                                  Specify time in seconds for simulation to  run"
   echo -e "\t--general_type={poisson, constant, gaussian, default=constant}    Specify  distribution for generating general packets"
   echo -e "\t--critical_type={poisson, constant, gaussian, default=poisson}    Specify distribution for generating critical packets"
   echo -e "\t--general_rate={poisson, constant, gaussian, default=30}"
@@ -126,8 +126,6 @@ else
 fi
 
 file_path="${script_directory}/${fileName}"
-echo $file_path 
-# exit
 python_script_path="${base_directory}/python-scripts"
 python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
@@ -177,27 +175,27 @@ done
 params["bd"]=${bd}
 # deleting the previously created inputs, outputs and plots
 
-# base_fileName="${fileName%.*}"
-# if [ $plot -ne 1 ]; then
-#   mkdir -p inputs
-#   cd inputs/
-#   rm -rf *
-#   cd ../
+base_fileName="${fileName%.*}"
+if [ $plot -ne 1 ]; then
+  mkdir -p inputs
+  cd inputs/
+  rm -rf *
+  cd ../
 
-#   mkdir -p outputs
-#   cd outputs/
-#   rm -rf enqueue_dequeue_trace*
-#   rm -rf "${base_fileName}"*
-#   cd ../
+  mkdir -p outputs
+  cd outputs/
+  rm -rf enqueue_dequeue_trace*
+  rm -rf "${base_fileName}"*
+  cd ../
 
-#   mkdir -p plots
-#   cd plots/
-#   files_to_delete=$(find -type f -not -name "*save*")
-#   if [ -n "$files_to_delete" ]; then
-#     rm -rf $files_to_delete
-#   fi
-#   cd ../
-# fi
+  mkdir -p plots
+  cd plots/
+  files_to_delete=$(find -type f -not -name "*save*")
+  if [ -n "$files_to_delete" ]; then
+    rm -rf $files_to_delete
+  fi
+  cd ../
+fi
 
 json_data="{"
 for key in "${!params[@]}"; do
@@ -220,8 +218,8 @@ if [ $plot -ne 1 ]; then
 
 fi
 
-# echo "Running the Process for output & Plot extraction"
-if [ $bd -ne 1 ]
+echo "Running the Process for output & Plot extraction"
+if [ $bd -ne 1 ]; then
   python3 "$python_script_mean_delay" "$file_path" "$json_data"
 else
   python3 "$python_script_analysis" "$file_path" "$json_data"

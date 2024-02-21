@@ -176,7 +176,7 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100
 
     plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{distance}.png"))
 
-def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100):
+def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100, fileName=None):
     fontsize = 6
     for key, values in data_map.items():      
         plt.figure()      
@@ -185,7 +185,10 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
         plt.legend(fontsize = fontsize)
         plt.xlabel(xlabel)
         plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
-        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}-{distance}"))
+        if fileName:
+            plt.savefig(os.path.join(plot_path, fileName))
+        else:
+            plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}-{distance}"))
 
     for x in row:
         plt.figure()
@@ -197,7 +200,10 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
                 plt.legend(fontsize = fontsize)
                 plt.xlabel(xlabel)
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
-        plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
+        if fileName:
+            plt.savefig(os.path.join(plot_path, fileName))
+        else:
+            plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
 
 
 # Code for testing the functions
