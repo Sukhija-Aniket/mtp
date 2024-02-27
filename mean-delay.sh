@@ -2,15 +2,23 @@
 
 # Declarations and variables
 declare -A params
+<<<<<<< HEAD
 num_nodes_array=(10 15 25) # Number of nodes to simulate on
 data_rate_array=(3 6 12 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
 packet_size_array=(100 300 500) # Packet Size in bytes
 critical_rate_array=(10 30 50)
 general_rate_array=(10 30 50)
+=======
+num_nodes_array=(50 100 150 200 250 300 350 400 450 500) # Number of nodes to simulate on
+data_rate_array=(0.0625 0.125 0.25 0.5 1 2 4 8 16 32)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
+packet_size_array=(12.5 25 50 100 200 400 800 1600 3200 6400) # Packet Size in bytes
+critical_rate_array=(10 15 20 25 30 35 40 45 50 55)
+general_rate_array=(10 15 20 25 30 35 40 45 50 55)
+>>>>>>> c207c98e59a3ae6f0adc454230d8541423872652
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
 distance_array=(100) # Total Distance to consider
 
-position_model='platoon-distance' 
+position_model='platoon-distance'
 num_nodes=100
 general_type='constant'
 critical_type='poisson'
@@ -38,7 +46,7 @@ print_usage() {
   echo -e "\t--headway_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--distance_array=(start,stop,step) start and stop both are inclusive."
   echo -e "\t--num_nodes_array=(start,stop,step) start and stop both are inclusive."
-  
+
   #TODO: Add a lot of echo options that will help the user to understand how to use the script.
   echo -e "\nExample:"
   echo -e "\t$(basename "$0") wave-project.cc --general_type=constant --critical_type=poisson --general_rate=5"
@@ -61,7 +69,7 @@ get_script_dir() {
 handle_argument() {
   local arg="$1"
   local key="${arg%=*}"
-  local value="${arg#*=}" 
+  local value="${arg#*=}"
 
   # Remove leading "--" from the key
   key="${key#--}"
@@ -173,7 +181,7 @@ script_directory=$(get_script_dir "$fileName")
 if [[ -n "${script_directory}" ]]; then
     cd ${script_directory}
 else
-  exit 
+  exit
 fi
 
 file_path="${script_directory}/${fileName}"
@@ -227,7 +235,7 @@ json_data+="}"
 
 # Generating, Running and analyzing data & Processes (moving to base directory)
 cd $base_directory
-if [ $plot -ne 1 ]; then 
+if [ $plot -ne 1 ]; then
   echo "Running File Generation Process"
   python3 "$python_script_process_generation" "$file_path" "$json_data"
 
