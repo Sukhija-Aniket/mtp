@@ -14,6 +14,7 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("CustomApplicationExamplebd");
 
+
 map<double, string> OfdmDataRate10MHzMap = {
     {1.0, "OfdmRate1MbpsBW10MHz"},
     {3.0, "OfdmRate3MbpsBW10MHz"},
@@ -49,7 +50,7 @@ NetDeviceContainer ConfigureDevices(NodeContainer &nodes, vector<vector<DisplayO
   						"NonUnicastMode", StringValue (OfdmDataRate10MHzMap[dataRate]), // Set Broadcast rate as 27Mbps
               "MaxSlrc", UintegerValue(2),
               "MaxSsrc", UintegerValue(2),
-              "FragmentationThreshold", UintegerValue(packetSize + mac_header_size + WIFI_MAC_FCS_LENGTH)); // (Aniket Sukhija) Added to decrease limit on fragmentation 
+              "FragmentationThreshold", UintegerValue(packetSize + mac_header_size + WIFI_MAC_FCS_LENGTH)); // (Aniket Sukhija) Added to decrease limit on fragmentation
 
   NetDeviceContainer devices = waveHelper.Install (wavePhy, waveMac, nodes, wifiStandard);
 
@@ -129,12 +130,12 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
-  uint32_t nNodes = 100;
+  uint32_t nNodes = 2;
   double simTime = 1;
-  int distance = 500;
-  uint32_t packetSize = 500;
+  int distance = 100;
+  uint32_t packetSize = 5;
   uint32_t prioPacketGenRate = 30, packetGenRate = 30;
-  
+
   double datarate = 3;
   string folder = "";
   string baseName = getBaseName(__FILE__);
@@ -165,7 +166,7 @@ int main (int argc, char *argv[])
   vector<Vector3D> positions = getPV(nodes.GetN(), __FILE__, "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), __FILE__, "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), __FILE__, "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
-  
+
 
   // Set dynamics of the node
   for (uint32_t i=0 ; i<nodes.GetN(); i++)
