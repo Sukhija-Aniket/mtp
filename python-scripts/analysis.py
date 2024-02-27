@@ -34,7 +34,7 @@ queueMap = {
 context_map = {}
 inverse_map = ['BE', 'BK', 'VI', 'VO']
 
-folder_names = ["variable_nodes", "variable_data_rate", "variable_packet_size", "variable_lamda0", "variable_lamda1"]
+folder_names = ["variable_nodes", "variable_data_rate", "variable_packet_size", "variable_critical_rate", "variable_general_rate"]
 
 for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
@@ -114,7 +114,7 @@ def main():
     num_nodes_array = get_array(json_data['num_nodes_array'])
     fixed_num_nodes = int(json_data['num_nodes'])
     data_rate_array = get_array(json_data["data_rate_array"])
-    fixed_data_rate = float(json_data['data_rate'])
+    fixed_data_rate = int(json_data['data_rate'])
     packet_size_array = get_array(json_data["packet_size_array"])
     fixed_packet_size = int(json_data['packet_size'])
 
@@ -158,22 +158,22 @@ def main():
                 data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
             row = ['mean', 'std', 'rbl']
             col = len(data_map)/len(row) + 1
-            plot_path = os.path.join(plot_path, folder_names[idx])
-            data_path = os.path.join(data_path, folder_names[idx])
+            temp_plot_path = os.path.join(plot_path, folder_names[idx])
+            temp_data_path = os.path.join(data_path, folder_names[idx])
 
             # Create subdirectories for the plots
-            if not os.path.exists(plot_path):
-                os.makedirs(plot_path)
+            if not os.path.exists(temp_plot_path):
+                os.makedirs(temp_plot_path)
                 
-            if not os.path.exists(data_path):
-                os.makedirs(data_path)
+            if not os.path.exists(temp_data_path):
+                os.makedirs(temp_data_path)
 
             # Generate Plots
-            create_file(data_map, row, plt_data, data_path)
-            plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
+            create_file(data_map, row, plt_data, temp_data_path)
+            plot_figure_solo(data_map, row, col, plt_data, xlabel, temp_plot_path, distance)
 
             # Remove this break statement once OK
-            break 
+            # break 
 
                 
 if __name__ == "__main__":

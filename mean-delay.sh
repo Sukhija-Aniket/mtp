@@ -3,7 +3,7 @@
 # Declarations and variables
 declare -A params
 num_nodes_array=(10 15 25) # Number of nodes to simulate on
-data_rate_array=(27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
+data_rate_array=(3 6 12 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
 packet_size_array=(100 300 500) # Packet Size in bytes
 critical_rate_array=(10 30 50)
 general_rate_array=(10 30 50)
@@ -117,7 +117,7 @@ else
   echo $BASENAME
   if [[ $BASENAME == *bd ]]; then
     position_model='uniform-distance'
-    distance_array=(500)
+    distance_array=(700)
     critical_type='constant'
     bd=1
     echo "bd file provided so changing default values"
@@ -194,8 +194,7 @@ if [ $plot -ne 1 ]; then
 
   mkdir -p outputs
   cd outputs/
-  rm -rf enqueue_dequeue_trace*
-  rm -rf "${base_fileName}"*
+  rm -rf *
   cd ../
 
   mkdir -p plots
@@ -208,6 +207,11 @@ if [ $plot -ne 1 ]; then
 
   mkdir -p pcaps
   cd pcaps/
+  rm -rf *
+  cd ../
+
+  mkdir -p practical
+  cd practical/
   rm -rf *
   cd ../
 fi

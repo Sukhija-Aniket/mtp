@@ -128,7 +128,7 @@ def Printlines(headway=None, num_nodes=None, distance=None):
 
 def PrintlinesBD(arr):
     if(len(arr)==5):
-        print(f'Running for num_nodes={arr[0]}, dataRate={arr[1]}Mbps, pktSize={arr[2]}bytes, lamda0={arr[3]}pkt/seconds, lamda1={arr[4]}pkt/seconds')
+        print(f'Running for num_nodes={arr[0]}, data_rate={arr[1]}Mbps, packet_size={arr[2]}bytes, lamda0={arr[3]}packets/s, lamda1={arr[4]}packets/s')
     else:
         print(f'Insufficient Arguments')
 
