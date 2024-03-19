@@ -104,10 +104,10 @@ def main():
     input_file_template = f"{os.path.basename(file_path).split('.')[0]}-n"
     parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
-    position_model = str(json_data['position_model'])
-    distance_array = get_array(json_data['distance_array'])
-    nodes_array = get_array(json_data['num_nodes_array'])
-    headway_array = get_array(json_data['headway_array'])
+    position_model = str(json_data.get('position_model'))
+    distance_array = get_array(json_data.get('distance_array'))
+    nodes_array = get_array(json_data.get('num_nodes_array'))
+    headway_array = get_array(json_data.get('headway_array'))
 
     if str(position_model).endswith('platoon-distance'):
         for distance in distance_array:

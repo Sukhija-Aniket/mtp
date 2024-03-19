@@ -18,6 +18,8 @@ def get_rel(t_cr, headway):
         return rel_ac0, rel_ac1 # TODO change it later
     else:
         return 0,0
+    
+
 
 # Code for Obtaining the communication and Critical Delays
 
@@ -105,6 +107,8 @@ def convert_to_cli(json_data, accepted_keys):
     return cli_arguments
 
 def get_array(str):
+    if str == None:
+        return []
     try:
         arr = list(map(int, str.split(' ')))
         return arr
@@ -179,6 +183,7 @@ def plot_figure(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100
             ax[i][j].tick_params(axis='y', labelsize=fontsize)
 
     plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{distance}.png"))
+    plt.close() # Closing the figure after saved
 
 def write_content(headways, vo, vi):
     content = ''
@@ -212,8 +217,10 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
         plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
         if fileName:
             plt.savefig(os.path.join(plot_path, fileName))
+            plt.close()
         else:
             plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{key}-{distance}"))
+            plt.close()
 
     for x in row:
         plt.figure()
@@ -227,8 +234,10 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
                 plt.ylabel(f"{key.split('_')[0]} mac delays (in ms)")
         if fileName:
             plt.savefig(os.path.join(plot_path, fileName))
+            plt.close()
         else:
             plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
+            plt.close()
 
 
 # Code for testing the functions
@@ -241,5 +250,6 @@ def test():
     plt.plot(headways, pts)
     plt.xticks(headways)
     plt.savefig(os.path.join(os.path.dirname(__file__), 'test.png'))
+    plt.close()
     
 # test()

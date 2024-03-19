@@ -132,8 +132,8 @@ int main (int argc, char *argv[])
 
   uint32_t nNodes = 10;
   double simTime = 1;
-  int distance = 700;
-  uint32_t packetSize = 32;
+  int distance = 100;
+  uint32_t packetSize = 500;
   uint32_t prioPacketGenRate = 30, packetGenRate = 30;
 
   double datarate = 27;
@@ -166,6 +166,12 @@ int main (int argc, char *argv[])
   vector<Vector3D> positions = getPV(nodes.GetN(), __FILE__, "inputs/positions-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<Vector3D> velocities = getPV(nodes.GetN(), __FILE__, "inputs/velocities-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
   vector<double> startTimes = getStartTimes(nodes.GetN(), __FILE__, "inputs/startTimes-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  vector<uint32_t> packetGenRates = vector<uint32_t>(nodes.GetN(),packetGenRate);
+  vector<uint32_t> prioPacketGenRates =  vector<uint32_t>(nodes.GetN(),prioPacketGenRate);
+  if (folder == "") {
+    packetGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/packetGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+    prioPacketGenRates = getGenRates(nodes.GetN(), __FILE__, "inputs/prioPacketGenRates-" + to_string(nNodes) + '-' + to_string(distance) + ".txt");
+  }
 
 
   // Set dynamics of the node
@@ -185,15 +191,15 @@ int main (int argc, char *argv[])
   for (uint32_t i=0; i<nodes.GetN(); i++)
   {
     Ptr<CustomApplication> app_i = CreateObject<CustomApplication>();
-    double interval = 1.0/(packetGenRate + prioPacketGenRate);
+    double interval = 1.0/(packetGenRates[i] + prioPacketGenRates[i]);
     app_i->SetBroadcastInterval (Seconds(interval));
     app_i->SetStartTime (Seconds (startTimes[i]));
     app_i->SetStopTime (Seconds (simTime));
     app_i->SetPacketSize(packetSize);
     app_i->SetWifiMode (OfdmDataRate10MHzMap[datarate]);
-    app_i->SetRetransmissionProb80211bd(0.53);
+    app_i->SetRetransmissionProb80211bd(0.72);
     app_i->SetMaxRetransmissionLimit(3);
-    vector<uint32_t> data = generateData2(prioPacketGenRate, packetGenRate);
+    vector<uint32_t> data = generateData2(prioPacketGenRates[i], packetGenRates[i]);
     app_i->SetData(data);
     nodes.Get(i)->AddApplication (app_i);
   }
@@ -213,7 +219,7 @@ int main (int argc, char *argv[])
 
   string fileName = "outputs/";
   if (folder=="") {
-    fileName = fileName + baseName;
+    fileName = fileName + baseName + "-n" + to_string(nNodes) + "-d" + to_string(distance);
   } else {
     // string folderName = getCustomFileName (__FILE__, fileN+folder);
     // mkdir(folderName.c_str(), 0777); # Shifted to python

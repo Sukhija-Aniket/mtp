@@ -1,8 +1,11 @@
 inputs/
 outputs/
+savedoutputs/
 plots/
 extras/
 traces/
 __pycache__/
 nohup.out
 pcaps/
+theoratical/
+# only practical data will be shared using github

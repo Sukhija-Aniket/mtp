@@ -40,7 +40,7 @@ for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
     context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
 
-def get_mean_std_mac_delay(input_path, fileName):
+def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, distance=None):
 
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
@@ -54,7 +54,7 @@ def get_mean_std_mac_delay(input_path, fileName):
         raise FileNotFoundError(f"{fileName} doesn't exist in the {input_path} directory!!")
 
     split_char = '-'
-    outFileList = fileName.split('.')[0].split(split_char)
+    outFileList = fileName.split('.log')[0].split(split_char)
     outFileList[0] = "analysis"
     outFileName = split_char.join(outFileList)
 
@@ -77,9 +77,9 @@ def get_mean_std_mac_delay(input_path, fileName):
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
-                    uid_enqueue[uid] = -1
-                    # rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+                    rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
                     counters[value] = counters[value] + 1
+                    uid_enqueue[uid] = -1
                 elif (context.endswith(context_map[key + "enqueue"]) and (not uid_enqueue.__contains__(uid))):
                     os.write(file_descriptor, bytes(f"Enqueue time for uid {uid} is {time}ns \n", 'utf-8'))
                     uid_enqueue[uid] = time
@@ -107,48 +107,95 @@ def main():
     input_path = os.path.join(script_dir, "outputs")
     plot_path = os.path.join(script_dir, "plots")
     data_path = os.path.join(script_dir, "practical")
+    input_file_template = f"{os.path.basename(file_path).split('.')[0]}-n"
     
     parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
-    distance_array = get_array(json_data['distance_array'])
-    num_nodes_array = get_array(json_data['num_nodes_array'])
-    fixed_num_nodes = int(json_data['num_nodes'])
-    data_rate_array = get_array(json_data["data_rate_array"])
-    fixed_data_rate = int(json_data['data_rate'])
-    packet_size_array = get_array(json_data["packet_size_array"])
-    fixed_packet_size = int(json_data['packet_size'])
+    position_model = json_data.get('position_model')
+    distance_array = get_array(json_data.get('distance_array'))
+    num_nodes_array = get_array(json_data.get('num_nodes_array'))
+    fixed_num_nodes = int(json_data.get('num_nodes'))
+    data_rate_array = get_array(json_data.get("data_rate_array"))
+    fixed_data_rate = int(json_data.get('data_rate'))
+    packet_size_array = get_array(json_data.get("packet_size_array"))
+    fixed_packet_size = int(json_data.get('packet_size'))
 
-    lamda0_array = get_array(json_data["critical_rate_array"])
-    fixed_lamda0 = int(json_data["critical_rate"])
-    lamda1_array = get_array(json_data["general_rate_array"])
-    fixed_lamda1 = int(json_data["general_rate"])
-    bd = int(json_data["bd"])
+    lamda0_array = get_array(json_data.get("critical_rate_array"))
+    fixed_lamda0 = int(json_data.get("critical_rate"))
+    lamda1_array = get_array(json_data.get("general_rate_array"))
+    fixed_lamda1 = int(json_data.get("general_rate"))
     
-    for distance in distance_array:
-        parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
-        variable_array = [num_nodes_array, data_rate_array, packet_size_array, lamda0_array, lamda1_array]
-        fixed_values = [fixed_num_nodes, fixed_data_rate, fixed_packet_size, fixed_lamda0, fixed_lamda1]    
+    if str(position_model).endswith('uniform-distance'):
+        for distance in distance_array:
+            parameter_labels = ["Number of Nodes", "Data Rate", "Packet Size", "Rate of packet generation of AC0", "Rate of packet generation of AC1"]
+            variable_array = [num_nodes_array, data_rate_array, packet_size_array, lamda0_array, lamda1_array]
+            fixed_values = [fixed_num_nodes, fixed_data_rate, fixed_packet_size, fixed_lamda0, fixed_lamda1]    
 
-        for idx, variable in enumerate(variable_array):
+            for idx, variable in enumerate(variable_array):
+                if (variable is None) or (len(variable) == 0): # checking for empty lists
+                    continue # making more flexible
+                mean_delays = [[], [], [], []]
+                std_delays = [[], [], [], []]
+                rbl_delays = [[], [], [], []]
+
+                ##### Calculations #####
+
+                for _, var in enumerate(variable):
+                    temp_fixed_values = fixed_values.copy()
+                    temp_fixed_values[idx] = var
+                    input_file_template = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}.log"
+                    input_path_temp = input_path + f"/{folder_names[idx]}"
+                    temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path_temp, input_file_template)
+                    for x in range(4):
+                        mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
+                        std_delays[x].append(round(temparr_std[x]/1000000, 5))
+                        rbl_delays[x].append(temparr_rbl[x])
+
+                ##### Plotting #####
+                xlabel, plt_data = parameter_labels[idx], variable_array[idx]
+                data_map = {}
+                for x in range(4):
+                    if sum(mean_delays[x]) == 0:
+                        continue
+                    data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
+                    data_map[f'std_{inverse_map[x]}'] = std_delays[x]
+                    data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
+                row = ['mean', 'std', 'rbl']
+                col = len(data_map)/len(row) + 1
+                temp_plot_path = os.path.join(plot_path, folder_names[idx])
+                temp_data_path = os.path.join(data_path, folder_names[idx])
+
+                # Create subdirectories for the plots
+                if not os.path.exists(temp_plot_path):
+                    os.makedirs(temp_plot_path)
+                    
+                if not os.path.exists(temp_data_path):
+                    os.makedirs(temp_data_path)
+
+                # Generate Plots
+                create_file(data_map, row, plt_data, temp_data_path)
+                plot_figure_solo(data_map, row, col, plt_data, xlabel, temp_plot_path, distance)
+
+    elif str(position_model).endswith('platoon-distance'):
+        # TODO make corrections here!
+        for distance in distance_array:
+            nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
             mean_delays = [[], [], [], []]
             std_delays = [[], [], [], []]
             rbl_delays = [[], [], [], []]
-
-            ##### Calculations #####
-
-            for _, var in enumerate(variable):
-                temp_fixed_values = fixed_values.copy()
-                temp_fixed_values[idx] = var
-                input_file_template = f"testbd-n{temp_fixed_values[0]}-d{temp_fixed_values[1]}-p{temp_fixed_values[2]}-l0{temp_fixed_values[3]}-l1{temp_fixed_values[4]}.log"
-                input_path_temp = input_path + f"/{folder_names[idx]}"
-                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path_temp, input_file_template)
+            
+            for idx, nodes in enumerate(nodes_array):
+                input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
+                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
                 for x in range(4):
                     mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                     std_delays[x].append(round(temparr_std[x]/1000000, 5))
                     rbl_delays[x].append(temparr_rbl[x])
-
-            ##### Plotting #####
-            xlabel, plt_data = parameter_labels[idx], variable_array[idx]
+            xlabel, plt_data = 'Number of Nodes', nodes
+            if position_model.startswith('platoon'):
+                xlabel = 'Headway'
+                plt_data = headway_array
+            
             data_map = {}
             for x in range(4):
                 if sum(mean_delays[x]) == 0:
@@ -158,22 +205,9 @@ def main():
                 data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
             row = ['mean', 'std', 'rbl']
             col = len(data_map)/len(row) + 1
-            temp_plot_path = os.path.join(plot_path, folder_names[idx])
-            temp_data_path = os.path.join(data_path, folder_names[idx])
+            create_file(data_map, row, plt_data, data_path)
+            plot_figure_solo(data_map, row, col, plt_data, xlabel, plot_path, distance)
 
-            # Create subdirectories for the plots
-            if not os.path.exists(temp_plot_path):
-                os.makedirs(temp_plot_path)
-                
-            if not os.path.exists(temp_data_path):
-                os.makedirs(temp_data_path)
-
-            # Generate Plots
-            create_file(data_map, row, plt_data, temp_data_path)
-            plot_figure_solo(data_map, row, col, plt_data, xlabel, temp_plot_path, distance)
-
-            # Remove this break statement once OK
-            # break 
 
                 
 if __name__ == "__main__":

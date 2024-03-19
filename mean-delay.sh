@@ -2,9 +2,10 @@
 
 # Declarations and variables
 declare -A params
+# TODO: Uncomment when running again!
 num_nodes_array=(50 100 150 200 250 300 350 400 450 500) # Number of nodes to simulate on
 data_rate_array=(3 4.5 6 9 12 18 24 27)  # Data Rate as per OFDM standards for 10MHz channel width (fixed don't change)
-packet_size_array=(50 100 200 400 800 1600 3200 6400) # Packet Size in bytes
+packet_size_array=(50 100 200 400 800 1600) # Packet Size in bytes
 critical_rate_array=(10 15 20 25 30 35 40 45 50 55)
 general_rate_array=(10 15 20 25 30 35 40 45 50 55)
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
@@ -189,12 +190,12 @@ base_fileName="${fileName%.*}"
 if [ $plot -ne 1 ]; then
   mkdir -p inputs
   cd inputs/
-  rm -rf *
+  # rm -rf *
   cd ../
 
   mkdir -p outputs
   cd outputs/
-  rm -rf *
+  # rm -rf *
   cd ../
 
   mkdir -p plots
@@ -207,12 +208,12 @@ if [ $plot -ne 1 ]; then
 
   mkdir -p pcaps
   cd pcaps/
-  rm -rf *
+  # rm -rf *
   cd ../
 
   mkdir -p practical
   cd practical/
-  rm -rf *
+  # rm -rf *
   cd ../
 fi
 

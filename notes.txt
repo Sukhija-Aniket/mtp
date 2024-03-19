@@ -93,3 +93,6 @@ variables to vary :-
 - AC0 packet generation Rate --> (10 to 60)
 - AC1 packet generation Rate --> (10 to 60)
 
+1. Make plots of variable critical rates better
+2. Make plots of variable general rate better
+3. 

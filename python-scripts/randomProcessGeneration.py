@@ -125,20 +125,20 @@ if __name__ == "__main__":
     print(script_dir)
     parameters = sys.argv[2]
     json_data = convert_to_json(parameters)
-    position_model = json_data['position_model']
-    general_type = json_data['general_type']
-    general_rate = int(json_data['general_rate'])
-    critical_type = json_data['critical_type']
-    critical_rate = int(json_data['critical_rate'])
-    distance_array = get_array(json_data['distance_array'])
-    num_nodes_array = get_array(json_data['num_nodes_array'])
-    headway_array = get_array(json_data['headway_array'])
-    bd = int(json_data['bd'])
+    position_model = json_data.get('position_model')
+    general_type = json_data.get('general_type')
+    general_rate = int(json_data.get('general_rate'))
+    critical_type = json_data.get('critical_type')
+    critical_rate = int(json_data.get('critical_rate'))
+    distance_array = get_array(json_data.get('distance_array'))
+    num_nodes_array = get_array(json_data.get('num_nodes_array')) # Gives key error make it work later to give None
+    headway_array = get_array(json_data.get('headway_array'))
+    bd = int(json_data.get('bd'))
 
     # Code for bd (Only need positions files, rest of the input is provided in the executable itself)
     if bd:
         if str(position_model).endswith('uniform-distance'): # indicating headway is not present
-            fixed_num_nodes = int(json_data['num_nodes'])
+            fixed_num_nodes = int(json_data.get('num_nodes'))
             for distance in distance_array: 
                 for idx, num_nodes in enumerate(num_nodes_array):
                     # Printlines(headway=headway_array[idx], distance=distance)
@@ -154,6 +154,21 @@ if __name__ == "__main__":
                 getVelocities(num_nodes=fixed_num_nodes, distance=distance)
                 print("\n\n")
         
+        # Code for platoon (bd)
+        elif str(position_model).endswith('platoon-distance'):
+            for distance in distance_array:
+                num_nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
+                for idx, num_nodes in enumerate(num_nodes_array):
+                    Printlines(headway=headway_array[idx], distance=distance)
+                    critical_rate = getCriticalRate(headway_array[idx], json_data)
+                    getPositions(num_nodes=num_nodes, headway=headway_array[idx], position_model=position_model, distance=distance)
+                    getStartTime(num_nodes=num_nodes, distance=distance)
+                    getVelocities(num_nodes=num_nodes, distance=distance)
+                    getPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=general_rate, type=general_type, distance=distance)
+                    getPrioPacketGenerationRate(num_nodes=num_nodes, mean_packet_gen_rate=critical_rate, type=critical_type, distance=distance)
+                    print("\n\n")
+
+
     # Code for platoon (p)
     else:
         if str(position_model).endswith('platoon-distance'):
