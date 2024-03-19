@@ -61,7 +61,6 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
     output_file_path = os.path.join(input_path, outFileName)
     
     file_descriptor = os.open(output_file_path, os.O_WRONLY | os.O_CREAT, 0o644)
-
     if file_descriptor == -1:
         raise FileNotFoundError(f"{output_file_path} doesn't exist")   
     
@@ -77,7 +76,8 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
                     os.write(file_descriptor, bytes(f"Dequeue time for uid {uid} is {time}ns \n", 'utf-8'))
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
-                    rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+                    # Note: Comment below value in case you do not wish to calculate reliability
+                    # rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                     uid_enqueue[uid] = -1
                 elif (context.endswith(context_map[key + "enqueue"]) and (not uid_enqueue.__contains__(uid))):
@@ -150,7 +150,6 @@ def main():
                         mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                         std_delays[x].append(round(temparr_std[x]/1000000, 5))
                         rbl_delays[x].append(temparr_rbl[x])
-
                 ##### Plotting #####
                 xlabel, plt_data = parameter_labels[idx], variable_array[idx]
                 data_map = {}

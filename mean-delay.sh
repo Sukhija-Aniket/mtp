@@ -240,7 +240,9 @@ fi
 
 echo "Running the Process for output & Plot extraction"
 if [ $bd -ne 1 ]; then
+  echo "error in bash"
   python3 "$python_script_mean_delay" "$file_path" "$json_data"
 else
+  echo "$json_data" 
   python3 "$python_script_analysis" "$file_path" "$json_data"
 fi
