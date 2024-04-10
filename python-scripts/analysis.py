@@ -77,7 +77,7 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
                     # Note: Comment below value in case you do not wish to calculate reliability
-                    # rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+                    rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
                     counters[value] = counters[value] + 1
                     uid_enqueue[uid] = -1
                 elif (context.endswith(context_map[key + "enqueue"]) and (not uid_enqueue.__contains__(uid))):

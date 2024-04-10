@@ -131,7 +131,7 @@ int main (int argc, char *argv[])
   vector<vector<DisplayObject>*> objContainers = CreateObjContainer();
 
   uint32_t nNodes = 10;
-  double simTime = 1;
+  double simTime = 10;
   int distance = 100;
   uint32_t packetSize = 500;
   uint32_t prioPacketGenRate = 30, packetGenRate = 30;

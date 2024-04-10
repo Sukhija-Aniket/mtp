@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import math
 from functions import convert_to_json, convert_headway_to_nodes, getCriticalRate, get_array, Printlines
-par_dir = os.path.dirname((os.path.dirname(__file__)))
+par_dir = os.path.dirname(os.path.dirname(__file__))
 script_dir = par_dir
 
 

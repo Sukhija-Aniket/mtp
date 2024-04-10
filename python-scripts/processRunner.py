@@ -9,7 +9,7 @@ accepted_keys = ['time', 'pcap']
 # Functions
 def run_ns3_process(fileName, paramString, num_nodes, distance):
     command = ns3_directory + '/ns3 run "' + fileName + paramString + f' --num_nodes={num_nodes} --distance={distance}"'
-
+    print(command)
     try:
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
@@ -50,7 +50,7 @@ elif len(sys.argv) >= 2:
     ns3_executable = os.path.basename(sys.argv[1])
     script_directory = os.path.dirname(sys.argv[1])
     outpath_path = os.path.join(script_directory, "outputs")
-    parameters = sys.argv[2] if (len(sys.argv) == 3) else '\{\}'
+    parameters = sys.argv[2] if (len(sys.argv) == 3) else "{}"
     json_data = convert_to_json(parameters)
     position_model = json_data.get('position_model')
     cli_args = convert_to_cli(json_data, accepted_keys)

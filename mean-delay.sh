@@ -22,6 +22,9 @@ packet_size=500
 velocity_lead_node=25
 bd=0
 plot=0
+mom=0
+
+repitition=100
 
 # Functions
 print_usage() {
@@ -115,14 +118,14 @@ if [[ ! "$fileName" =~ \.cc$ ]]; then
   exit 1
 else
   BASENAME=${fileName%.cc}
-  echo $BASENAME
-  if [[ $BASENAME == *bd ]]; then
-    position_model='uniform-distance'
-    distance_array=(700)
-    critical_type='constant'
-    bd=1
-    echo "bd file provided so changing default values"
-  fi
+  # echo $BASENAME
+  # if [[ $BASENAME == *bd ]]; then
+  #   position_model='uniform-distance'
+  #   distance_array=(700)
+  #   critical_type='constant'
+  #   bd=1
+  #   echo "bd file provided so changing default values"
+  # fi
 fi
 shift
 
@@ -144,12 +147,16 @@ params["general_rate"]=$general_rate
 params["data_rate"]=$data_rate
 params["packet_size"]=$packet_size
 params["bd"]=$bd
+params["mom"]=$mom
 
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
       --plot)
       plot=1
+      ;;
+      --mom)
+      mom=1
       ;;
       --*=*,*,*)
       handle_array "$1"
@@ -183,6 +190,7 @@ python_script_mean_delay="${python_script_path}/mean-delay-vs-node.py"
 python_script_process_generation="${python_script_path}/randomProcessGeneration.py"
 python_script_process_runner="${python_script_path}/processRunner.py"
 python_script_analysis="${python_script_path}/analysis.py"
+python_script_mom="${python_script_path}/meanofmeans.py"
 
 # deleting the previously created inputs, outputs and plots
 
@@ -226,23 +234,29 @@ json_data+="}"
 
 # echo ${json_data}
 
-# Generating, Running and analyzing data & Processes (moving to base directory)
-cd $base_directory
-if [ $plot -ne 1 ]; then
-  echo "Running File Generation Process"
-  python3 "$python_script_process_generation" "$file_path" "$json_data"
+if [ $mom -ne 1 ]; then
+  # Generating, Running and analyzing data & Processes (moving to base directory)
+  cd $base_directory
+  if [ $plot -ne 1 ]; then
+    echo "Running File Generation Process"
+    python3 "$python_script_process_generation" "$file_path" "$json_data"
 
-  # testing of the script for Actual NS3 Process
-  echo "Running the Actual ns3 process"
-  python3 "$python_script_process_runner" "$file_path" "$json_data"
+    # testing of the script for Actual NS3 Process
+    echo "Running the Actual ns3 process"
+    python3 "$python_script_process_runner" "$file_path" "$json_data"
 
-fi
+  fi
 
-echo "Running the Process for output & Plot extraction"
-if [ $bd -ne 1 ]; then
-  echo "error in bash"
-  python3 "$python_script_mean_delay" "$file_path" "$json_data"
+  echo "Running the Process for output & Plot extraction"
+  if [ $bd -ne 1 ]; then
+    echo "error in bash"
+    python3 "$python_script_mean_delay" "$file_path" "$json_data"
+  else
+    echo "$json_data" 
+    python3 "$python_script_analysis" "$file_path" "$json_data"
+  fi
 else
-  echo "$json_data" 
-  python3 "$python_script_analysis" "$file_path" "$json_data"
+  echo "Running means of means analysis"
+  python3 "$python_script_mom" "$repitition" "$file_path" "$json_data"
 fi
+

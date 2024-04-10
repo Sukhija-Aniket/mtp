@@ -1,6 +1,7 @@
 import json, os, sys, math
 import matplotlib.pyplot as plt
 import random
+import pandas as pd
 import numpy as np
 from constants import *
 
@@ -121,7 +122,7 @@ def get_float_array(str):
 
 def Printlines(headway=None, num_nodes=None, distance=None):
     if headway and num_nodes:
-        distance = (num_nodes-1)*headway
+        distance = distance
     elif headway and distance:
         num_nodes = int(distance/headway + 1)
     
@@ -206,6 +207,29 @@ def create_file(data_map, row, headways, path):
         with open(os.path.join(path, baseName + '.txt'), 'w') as file:
             file.write(write_content(headways, vo, vi))                
 
+def create_file_means_of_means(data_map, row, headways, path):
+    for x in row:
+        baseName = x
+        vo, vi = None, None
+        for key, values in data_map.items():
+            key = str(key)
+            if key.startswith(x):
+                if key.endswith('VI'):
+                    vi = values
+                elif key.endswith('VO'):
+                    vo = values
+    
+        with open(os.path.join(path, baseName + '-VI.csv'), 'a') as file:
+            vi_str = [str(x) for x in vi]
+            log = ", ".join(vi_str) + "\n"
+            file.write(log)
+
+        with open(os.path.join(path, baseName + '-VO.csv'), 'a') as file:
+            vo_str = [str(x) for x in vo]
+            log = ", ".join(vo_str) + "\n"
+            file.write(log)
+
+
 def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distance=100, fileName=None):
     fontsize = 6
     for key, values in data_map.items():      
@@ -239,6 +263,9 @@ def plot_figure_solo(data_map, row, col, xvalue, xlabel, plot_path=None, distanc
             plt.savefig(os.path.join(plot_path, f"mtp-plot-mac-delay-{x}-{distance}"))
             plt.close()
 
+def plot_means_of_means(data_path, row, xlabel, plt_data, filename=None):
+    fontsize = 6
+    pass
 
 # Code for testing the functions
 def test():
