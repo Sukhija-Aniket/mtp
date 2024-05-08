@@ -28,7 +28,8 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
 
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
-    rbl_delays = np.zeros(4)
+    rbl_movm_delays = np.zeros(4)
+    rbl_fvd_delays = np.zeros(4)
     counters = np.zeros(4)
     # mean_delay = 0
     uid_enqueue = {}
@@ -61,7 +62,8 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
                     mean_delays[value] = mean_delays[value] + (time - uid_enqueue[uid])
                     std_delays[value] = std_delays[value] + (time - uid_enqueue[uid])**2
                     # Note: Comment below value in case you do not wish to calculate reliability
-                    rbl_delays[value] = rbl_delays[value] + 1 if (get_tcr(headway) > ((time - uid_enqueue[uid])/1000000000)) else rbl_delays[value]
+                    rbl_movm_delays[value] = rbl_movm_delays[value] + 1 if (get_tcr(headway,l=0) > ((time - uid_enqueue[uid])/1000000000)) else rbl_movm_delays[value]
+                    rbl_fvd_delays[value] = rbl_fvd_delays[value] + 1 if (get_tcr(headway,l=2) > ((time - uid_enqueue[uid])/1000000000)) else rbl_fvd_delays[value]
                     counters[value] = counters[value] + 1
                     uid_enqueue[uid] = -1
                 elif (context.endswith(context_map[key + "enqueue"]) and (not uid_enqueue.__contains__(uid))):
@@ -74,13 +76,15 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
         mean_delays[x] = mean_delays[x]/counters[x]
         std_delays[x] = std_delays[x] - (counters[x] * mean_delays[x]**2)
         std_delays[x] = np.sqrt(std_delays[x]/counters[x])
-        rbl_delays[x] = rbl_delays[x]/counters[x]
+        rbl_movm_delays[x] = rbl_movm_delays[x]/counters[x]
+        rbl_fvd_delays[x] = rbl_fvd_delays[x]/counters[x]
         os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]}ns \n", 'utf-8'))
         os.write(file_descriptor, bytes(f"std Delay for {x}: {std_delays[x]}ns \n", 'utf-8'))
-        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_movm_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_fvd_delays[x]}ns \n", 'utf-8'))
 
     os.close(file_descriptor)
-    return mean_delays, std_delays, rbl_delays
+    return mean_delays, std_delays, rbl_movm_delays, rbl_fvd_delays
 
 def runRandomProcessScript(executable, params):
     command = 'python3 ' + app_dir + '/randomProcessGeneration.py ' + executable + ' ' + f"'{params}'"
@@ -138,15 +142,17 @@ def main():
             nodes_array, headway_array = convert_headway_to_nodes(json_data, distance)
             mean_delays = [[], [], [], []]
             std_delays = [[], [], [], []]
-            rbl_delays = [[], [], [], []]
+            rbl_movm_delays = [[], [], [], []]
+            rbl_fvd_delays = [[], [], [], []]
             
             for idx, nodes in enumerate(nodes_array):
                 input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-                temparr_mean, temparr_std, temparr_rbl = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
+                temparr_mean, temparr_std, temparr_rbl_movm, temparr_rbl_fvd = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
                 for x in range(4):
                     mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                     std_delays[x].append(round(temparr_std[x]/1000000, 5))
-                    rbl_delays[x].append(temparr_rbl[x])
+                    rbl_movm_delays[x].append(temparr_rbl_movm[x])
+                    rbl_fvd_delays[x].append(temparr_rbl_fvd[x])
 
             xlabel, plt_data = 'Number of Nodes', nodes
             if position_model.startswith('platoon'):
@@ -159,8 +165,9 @@ def main():
                     continue
                 data_map[f'mean_{inverse_map[x]}'] = mean_delays[x]
                 data_map[f'std_{inverse_map[x]}'] = std_delays[x]
-                data_map[f'rbl_{inverse_map[x]}'] = rbl_delays[x]
-            row = ['mean', 'std', 'rbl']
+                data_map[f'rbl_movm_{inverse_map[x]}'] = rbl_movm_delays[x]
+                data_map[f'rbl_fvd_{inverse_map[x]}'] = rbl_fvd_delays[x]
+            row = ['mean', 'std', 'rbl_movm', 'rbl_fvd']
             col = len(data_map)/len(row) + 1
             create_file_means_of_means(data_map, row, plt_data, data_path)
 
