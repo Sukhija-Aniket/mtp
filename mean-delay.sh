@@ -9,7 +9,7 @@ packet_size_array=(50 100 200 400 800 1600) # Packet Size in bytes
 critical_rate_array=(10 15 20 25 30 35 40 45 50 55)
 general_rate_array=(10 15 20 25 30 35 40 45 50 55)
 headway_array=(2 3 4 5 6 7 8 9 10) # Distance between two consecutive nodes to simulate on
-distance_array=(100) # Total Distance to consider
+distance_array=(300) # Total Distance to consider
 
 position_model='platoon-distance'
 num_nodes=100
@@ -24,7 +24,7 @@ bd=0
 plot=0
 mom=0
 
-repitition=100
+repitition=1
 
 # Functions
 print_usage() {

@@ -279,4 +279,4 @@ def test():
     plt.savefig(os.path.join(os.path.dirname(__file__), 'test.png'))
     plt.close()
     
-# test()
+test()

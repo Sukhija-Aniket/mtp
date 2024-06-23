@@ -24,12 +24,19 @@ for key, pair in queueMap.items():
     context_map[key + "dequeue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Dequeue"
     context_map[key + "enqueue"] = f"WifiNetDevice/Mac/Txop/{key}Queue/Enqueue"
 
+def updateOtherDelays(arr, time):
+    for i in range(len(arr)):
+        if ((i+1)/1000) > time: 
+            arr[i] = arr[i] + 1 
+    return arr
+
 def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, distance=None):
 
     mean_delays = np.zeros(4)
     std_delays = np.zeros(4)
     rbl_movm_delays = np.zeros(4)
     rbl_fvd_delays = np.zeros(4)
+    other_delays = [np.zeros(22) for _ in range(4)]
     counters = np.zeros(4)
     # mean_delay = 0
     uid_enqueue = {}
@@ -64,6 +71,7 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
                     # Note: Comment below value in case you do not wish to calculate reliability
                     rbl_movm_delays[value] = rbl_movm_delays[value] + 1 if (get_tcr(headway,l=0) > ((time - uid_enqueue[uid])/1000000000)) else rbl_movm_delays[value]
                     rbl_fvd_delays[value] = rbl_fvd_delays[value] + 1 if (get_tcr(headway,l=2) > ((time - uid_enqueue[uid])/1000000000)) else rbl_fvd_delays[value]
+                    other_delays[value] = updateOtherDelays(other_delays[value], (time - uid_enqueue[uid])/1000000000)
                     counters[value] = counters[value] + 1
                     uid_enqueue[uid] = -1
                 elif (context.endswith(context_map[key + "enqueue"]) and (not uid_enqueue.__contains__(uid))):
@@ -78,13 +86,15 @@ def get_mean_std_mac_delay(input_path, fileName, nodes=None, headway=None, dista
         std_delays[x] = np.sqrt(std_delays[x]/counters[x])
         rbl_movm_delays[x] = rbl_movm_delays[x]/counters[x]
         rbl_fvd_delays[x] = rbl_fvd_delays[x]/counters[x]
+        other_delays[x] = other_delays[x]/counters[x]
         os.write(file_descriptor, bytes(f"Mean Delay for {x}: {mean_delays[x]}ns \n", 'utf-8'))
         os.write(file_descriptor, bytes(f"std Delay for {x}: {std_delays[x]}ns \n", 'utf-8'))
-        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_movm_delays[x]}ns \n", 'utf-8'))
-        os.write(file_descriptor, bytes(f"reliability for {x}: {rbl_fvd_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"reliability movm for {x}: {rbl_movm_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"reliability fvd for {x}: {rbl_fvd_delays[x]}ns \n", 'utf-8'))
+        os.write(file_descriptor, bytes(f"Other Delays for {x}: {other_delays[x]} \n", "utf-8"))
 
     os.close(file_descriptor)
-    return mean_delays, std_delays, rbl_movm_delays, rbl_fvd_delays
+    return mean_delays, std_delays, rbl_movm_delays, rbl_fvd_delays, other_delays
 
 def runRandomProcessScript(executable, params):
     command = 'python3 ' + app_dir + '/randomProcessGeneration.py ' + executable + ' ' + f"'{params}'"
@@ -144,15 +154,17 @@ def main():
             std_delays = [[], [], [], []]
             rbl_movm_delays = [[], [], [], []]
             rbl_fvd_delays = [[], [], [], []]
+            other_delays = [[], [], [], []]
             
             for idx, nodes in enumerate(nodes_array):
                 input_file = input_file_template + str(nodes) +'-d' + str(distance) + ".log"
-                temparr_mean, temparr_std, temparr_rbl_movm, temparr_rbl_fvd = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
+                temparr_mean, temparr_std, temparr_rbl_movm, temparr_rbl_fvd, temparr_other_delays = get_mean_std_mac_delay(input_path, input_file, nodes=nodes, headway=headway_array[idx], distance=distance)
                 for x in range(4):
                     mean_delays[x].append(round(temparr_mean[x]/1000000, 5))
                     std_delays[x].append(round(temparr_std[x]/1000000, 5))
                     rbl_movm_delays[x].append(temparr_rbl_movm[x])
                     rbl_fvd_delays[x].append(temparr_rbl_fvd[x])
+                    other_delays[x].append(temparr_other_delays[x])
 
             xlabel, plt_data = 'Number of Nodes', nodes
             if position_model.startswith('platoon'):
@@ -167,7 +179,8 @@ def main():
                 data_map[f'std_{inverse_map[x]}'] = std_delays[x]
                 data_map[f'rbl_movm_{inverse_map[x]}'] = rbl_movm_delays[x]
                 data_map[f'rbl_fvd_{inverse_map[x]}'] = rbl_fvd_delays[x]
-            row = ['mean', 'std', 'rbl_movm', 'rbl_fvd']
+                data_map[f'other_delays_{inverse_map[x]}'] = other_delays[x]
+            row = ['mean', 'std', 'rbl_movm', 'rbl_fvd', 'other_delays']
             col = len(data_map)/len(row) + 1
             create_file_means_of_means(data_map, row, plt_data, data_path)
 
