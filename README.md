@@ -1,4 +1,5 @@
-# Project Name
+# Simulation of the 802.11bd MAC protocol for vehicular communications in heterogeneous traffic settings
+
 
 This project uses NS3 version 3.36 to simulate network behavior with a focus on enhancing understanding and performance of network protocols under specific conditions. NS3 is a discrete-event network simulator, which is widely used in research and education.
 
